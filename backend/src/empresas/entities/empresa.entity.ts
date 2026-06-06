@@ -9,7 +9,7 @@ import {
 @Entity('empresas')
 export class Empresa {
   @PrimaryGeneratedColumn('uuid')
-  id?: string;
+  id!: string;
 
   @Column({ length: 150 })
   nombre?: string;
