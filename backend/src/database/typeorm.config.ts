@@ -13,7 +13,7 @@ export const typeormConfig: TypeOrmModuleAsyncOptions = {
 
     port: Number(configService.get<string>('DB_PORT')),
 
-    username: configService.get<string>('DB_USER'),
+    username: configService.get<string>('DB_USERNAME'),
 
     password: configService.get<string>('DB_PASSWORD'),
 
