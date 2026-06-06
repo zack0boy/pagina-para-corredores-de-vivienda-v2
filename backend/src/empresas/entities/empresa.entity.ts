@@ -9,10 +9,10 @@ import {
 @Entity('empresas')
 export class Empresa {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id?: string;
 
   @Column({ length: 150 })
-  nombre: string;
+  nombre?: string;
 
   @Column({ nullable: true })
   descripcion?: string;
@@ -24,15 +24,15 @@ export class Empresa {
   email?: string;
 
   @Column({ default: true })
-  activa: boolean;
+  activa?: boolean;
 
   @CreateDateColumn({
     name: 'created_at',
   })
-  createdAt: Date;
+  createdAt?: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
   })
-  updatedAt: Date;
+  updatedAt?: Date;
 }

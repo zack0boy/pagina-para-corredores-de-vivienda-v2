@@ -1,5 +1,5 @@
 export class CreateEmpresaDto {
-  nombre: string;
+  nombre?: string;
 
   descripcion?: string;
 
