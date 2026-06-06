@@ -17,7 +17,7 @@ import { typeormConfig } from './database/typeorm.config';
 
     TypeOrmModule.forRootAsync(typeormConfig),
 
-    // EmpresasModule,
+    //EmpresasModule,
   ],
 
   controllers: [AppController],
