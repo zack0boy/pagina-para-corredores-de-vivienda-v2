@@ -7,7 +7,7 @@ import { AppService } from './app.service';
 
 import { typeormConfig } from './database/typeorm.config';
 
-// import { EmpresasModule } from './empresas/empresas.module';
+import { EmpresasModule } from './empresas/empresas.module';
 
 @Module({
   imports: [
