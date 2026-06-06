@@ -23,17 +23,17 @@ export class EmpresasService {
     return this.empresaRepository.find();
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.empresaRepository.findOneBy({ id });
   }
 
-  async update(id: number, updateEmpresaDto: UpdateEmpresaDto) {
+  async update(id: string, updateEmpresaDto: UpdateEmpresaDto) {
     await this.empresaRepository.update(id, updateEmpresaDto);
 
     return this.findOne(id);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.empresaRepository.delete(id);
 
     return {

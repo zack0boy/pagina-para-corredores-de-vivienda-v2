@@ -8,27 +8,31 @@ import {
 
 @Entity('empresas')
 export class Empresa {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ length: 150 })
   nombre: string;
 
   @Column({ nullable: true })
-  descripcion: string;
+  descripcion?: string;
 
   @Column({ nullable: true })
-  telefono: string;
+  telefono?: string;
 
   @Column({ nullable: true })
-  email: string;
+  email?: string;
 
   @Column({ default: true })
   activa: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({
+    name: 'created_at',
+  })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({
+    name: 'updated_at',
+  })
   updatedAt: Date;
 }
