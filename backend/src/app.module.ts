@@ -17,7 +17,7 @@ import { EmpresasModule } from './empresas/empresas.module';
 
     TypeOrmModule.forRootAsync(typeormConfig),
 
-    //EmpresasModule,
+    EmpresasModule,
   ],
 
   controllers: [AppController],
