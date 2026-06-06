@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-//import { EmpresasModule } from './empresas/empresas.module';
+import { typeormConfig } from './database/typeorm.config';
+
+// import { EmpresasModule } from './empresas/empresas.module';
 
 @Module({
   imports: [
@@ -14,23 +15,7 @@ import { AppService } from './app.service';
       isGlobal: true,
     }),
 
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-
-      host: process.env.DB_HOST,
-
-      port: Number(process.env.DB_PORT),
-
-      username: process.env.DB_USER,
-
-      password: process.env.DB_PASSWORD,
-
-      database: process.env.DB_NAME,
-
-      autoLoadEntities: true,
-
-      synchronize: true,
-    }),
+    TypeOrmModule.forRootAsync(typeormConfig),
 
     // EmpresasModule,
   ],
