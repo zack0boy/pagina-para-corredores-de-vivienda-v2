@@ -10,6 +10,8 @@ import { typeormConfig } from './database/typeorm.config';
 import { EmpresasModule } from './empresas/empresas.module';
 import { CategoriaModule } from './categoria/categoria.module';
 import { PropiedadesModule } from './propiedades/propiedades.module';
+import { PropiedadImagenController } from './propiedad-imagen/propiedad-imagen.controller';
+import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.module';
 
 @Module({
   imports: [
@@ -22,6 +24,7 @@ import { PropiedadesModule } from './propiedades/propiedades.module';
     EmpresasModule,
     CategoriaModule,
     PropiedadesModule,
+    PropiedadImagenModule,
   ],
 
   controllers: [AppController],
