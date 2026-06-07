@@ -2,16 +2,19 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Param,
-  Patch,
   Delete,
+  Patch,
+  Body,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { PropiedadImagenService } from './propiedad-imagen.service';
 
-import { CreatePropiedadImagenDto } from './dto/create-propiedad-imagen.dto';
-import { UpdatePropiedadImagenDto } from './dto/update-propiedad-imagen.dto';
+import {Multer} from "multer";
 
 @Controller('propiedad-imagen')
 export class PropiedadImagenController {
@@ -19,13 +22,20 @@ export class PropiedadImagenController {
     private readonly propiedadImagenService: PropiedadImagenService,
   ) {}
 
-  @Post()
-  create(
-    @Body()
-    createPropiedadImagenDto: CreatePropiedadImagenDto,
+  @Post(':propiedad_id')
+  @UseInterceptors(
+    FileInterceptor('imagen'),
+  )
+  upload(
+    @Param('propiedad_id')
+    propiedad_id: string,
+
+    @UploadedFile()
+    file: Express.Multer.File,
   ) {
-    return this.propiedadImagenService.create(
-      createPropiedadImagenDto,
+    return this.propiedadImagenService.uploadImage(
+      propiedad_id,
+      file,
     );
   }
 
@@ -35,24 +45,32 @@ export class PropiedadImagenController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param('id')
+    id: string,
+  ) {
     return this.propiedadImagenService.findOne(id);
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body()
-    updatePropiedadImagenDto: UpdatePropiedadImagenDto,
+  @Patch(':id/orden')
+  updateOrden(
+    @Param('id')
+    id: string,
+
+    @Body('orden')
+    orden: number,
   ) {
-    return this.propiedadImagenService.update(
+    return this.propiedadImagenService.updateOrden(
       id,
-      updatePropiedadImagenDto,
+      orden,
     );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(
+    @Param('id')
+    id: string,
+  ) {
     return this.propiedadImagenService.remove(id);
   }
 }

@@ -12,6 +12,7 @@ import { CategoriaModule } from './categoria/categoria.module';
 import { PropiedadesModule } from './propiedades/propiedades.module';
 import { PropiedadImagenController } from './propiedad-imagen/propiedad-imagen.controller';
 import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.modul
     CategoriaModule,
     PropiedadesModule,
     PropiedadImagenModule,
+    CloudinaryModule,
   ],
 
   controllers: [AppController],
