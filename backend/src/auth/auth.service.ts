@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-
+import { RolUsuario, EstadoGeneral } from '../common/enum/estado.enum';
 
 @Injectable()
 export class AuthService {

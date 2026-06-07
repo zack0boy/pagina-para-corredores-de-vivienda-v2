@@ -3,17 +3,22 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateClienteDto, UpdateClienteDto } from '../dto/create-cliente.dto';
-import { CreateCorredorDto, UpdateCorredorDto } from '../dto/create-corredor.dto';
-import { RolUsuario, EstadoGeneral } from '../../../common/enums/estado.enum';
+import { Usuario } from './entities/usuario.entity';
+import { Cliente } from './entities/cliente.entity';
+import { Corredor } from './entities/corredor.entity';
+import { CreateClienteDto, UpdateClienteDto } from './dto/create-cliente.dto';
+import { CreateCorredorDto, UpdateCorredorDto } from './dto/create-corredor.dto';
+import { RolUsuario, EstadoGeneral } from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
-import { UsersGoogle } from '../entities/users-google.entity';
+import { UsersGoogle } from './entities/user.google.entity';
 
 @Injectable()
 export class UsersService {
 constructor(
     @InjectRepository(UsersGoogle)
     private usersGoogleRepository: Repository<UsersGoogle>,
+    @InjectRepository(Usuario)
+    private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Cliente)
     private clienteRepository: Repository<Cliente>,
     @InjectRepository(Corredor)
@@ -92,7 +97,6 @@ constructor(
   async getCliente(idUsuario: number): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({
       where: { idUsuario },
-      relations: ['usuario'],
     });
 
     if (!cliente) {
@@ -105,7 +109,6 @@ constructor(
   async getCorredor(idUsuario: number): Promise<Corredor> {
     const corredor = await this.corredorRepository.findOne({
       where: { idUsuario },
-      relations: ['usuario'],
     });
 
     if (!corredor) {
@@ -153,11 +156,11 @@ constructor(
   }
 
   async getAllClientes(): Promise<Cliente[]> {
-    return this.clienteRepository.find({ relations: ['usuario'] });
+  return this.clienteRepository.find();
   }
 
   async getAllCorredores(): Promise<Corredor[]> {
-    return this.corredorRepository.find({ relations: ['usuario'] });
+    return this.corredorRepository.find({ relations: { usuario: true } });
   }
   async createUsuario(data: Partial<Usuario>) {
   const usuario =
@@ -170,7 +173,7 @@ async findGoogleUserByEmail(email: string) {
     where: {
       googleEmail: email,
     },
-    relations: ['usuario'],
+    relations: { usuario: true },
   });
 }
 async createGoogleUser(
