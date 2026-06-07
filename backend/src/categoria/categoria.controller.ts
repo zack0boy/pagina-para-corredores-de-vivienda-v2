@@ -12,6 +12,12 @@ import { CategoriasService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria.dto';
 import { UpdateCategoriaDto } from './dto/update-categoria.dto';
 
+//POST	http://localhost:3000/categorias
+//GET	http://localhost:3000/categorias
+//GET	http://localhost:3000/categorias/:id
+//PATCH	http://localhost:3000/categorias/:id
+//DELETE	http://localhost:3000/categorias/:id
+
 @Controller('categorias')
 export class CategoriasController {
   constructor(
