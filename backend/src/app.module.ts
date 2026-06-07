@@ -13,6 +13,8 @@ import { PropiedadesModule } from './propiedades/propiedades.module';
 import { PropiedadImagenController } from './propiedad-imagen/propiedad-imagen.controller';
 import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { LeadsController } from './lead/lead.controller';
+import { LeadsModule } from './lead/lead.module';
 
 @Module({
   imports: [
@@ -27,9 +29,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     PropiedadesModule,
     PropiedadImagenModule,
     CloudinaryModule,
+    LeadsModule,
   ],
 
-  controllers: [AppController],
+  controllers: [AppController, LeadsController],
 
   providers: [AppService],
 })
