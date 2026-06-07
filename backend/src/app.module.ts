@@ -8,9 +8,6 @@ import { AppService } from './app.service';
 import { typeormConfig } from './database/typeorm.config';
 
 import { EmpresasModule } from './empresas/empresas.module';
-
-import { CategoriaController } from './categoria/categoria.controller';
-import { CategoriaService } from './categoria/categoria.service';
 import { CategoriaModule } from './categoria/categoria.module';
 
 @Module({
@@ -22,12 +19,11 @@ import { CategoriaModule } from './categoria/categoria.module';
     TypeOrmModule.forRootAsync(typeormConfig),
 
     EmpresasModule,
-    CategoriasModule,
     CategoriaModule,
   ],
 
-  controllers: [AppController, CategoríasController, CategoriaController],
+  controllers: [AppController],
 
-  providers: [AppService, CategoríasService, CategoriaService],
+  providers: [AppService],
 })
 export class AppModule {}
