@@ -4,9 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('propiedades')
+@Index(['empresa_id'])
+@Index(['categoria_id'])
+@Index(['estado'])
+@Index(['tipo_operacion'])
 export class Propiedades {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -14,10 +19,16 @@ export class Propiedades {
   @Column('uuid')
   empresa_id!: string;
 
+  @Column('uuid', { nullable: true })
+  corredor_id?: string;
+
   @Column('uuid')
   categoria_id!: string;
 
-  @Column({ length: 200 })
+  @Column({ length: 50, unique: true })
+  codigo!: string;
+
+  @Column({ length: 250 })
   titulo!: string;
 
   @Column({
@@ -25,6 +36,9 @@ export class Propiedades {
     nullable: true,
   })
   descripcion?: string;
+
+  @Column()
+  direccion!: string;
 
   @Column('decimal', {
     precision: 15,
@@ -34,9 +48,6 @@ export class Propiedades {
 
   @Column()
   tipo_operacion!: string;
-
-  @Column()
-  direccion!: string;
 
   @Column({
     type: 'decimal',
@@ -58,6 +69,34 @@ export class Propiedades {
     default: 'DISPONIBLE',
   })
   estado!: string;
+
+  @Column({ type: 'integer', default: 0, nullable: true })
+  habitaciones?: number;
+
+  @Column({ type: 'integer', default: 0, nullable: true })
+  banos?: number;
+
+  @Column({ type: 'integer', default: 0, nullable: true })
+  estacionamientos?: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  metros_totales?: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  metros_construidos?: number;
+
+  @Column('uuid', { nullable: true })
+  created_by?: string;
 
   @CreateDateColumn()
   created_at!: Date;

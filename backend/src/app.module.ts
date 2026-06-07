@@ -15,6 +15,8 @@ import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.modul
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { LeadsModule } from './lead/lead.module';
 import { CorredoresModule } from './corredores/corredores.module';
+import { VisitasController } from './visitas/visitas.controller';
+import { VisitasModule } from './visitas/visitas.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { CorredoresModule } from './corredores/corredores.module';
     CloudinaryModule,
     CorredoresModule,
     LeadsModule,
+    VisitasModule,
   ],
 
   controllers: [AppController],

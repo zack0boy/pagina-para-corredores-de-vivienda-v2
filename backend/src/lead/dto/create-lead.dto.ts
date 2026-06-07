@@ -7,6 +7,9 @@ import {
 
 export class CreateLeadDto {
   @IsUUID()
+  empresa_id!: string;
+
+  @IsUUID()
   propiedad_id!: string;
 
   @IsString()
@@ -22,4 +25,8 @@ export class CreateLeadDto {
   @IsOptional()
   @IsString()
   mensaje?: string;
+
+  @IsOptional()
+  @IsUUID()
+  cliente_id?: string;
 }

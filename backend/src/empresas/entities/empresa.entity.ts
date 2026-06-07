@@ -12,27 +12,43 @@ export class Empresa {
   id!: string;
 
   @Column({ length: 150 })
-  nombre?: string;
+  nombre!: string;
 
-  @Column({ nullable: true })
-  descripcion?: string;
-
-  @Column({ nullable: true })
-  telefono?: string;
+  @Column({ length: 20, nullable: true })
+  rut?: string;
 
   @Column({ nullable: true })
   email?: string;
 
-  @Column({ default: true })
-  activa?: boolean;
+  @Column({ nullable: true })
+  telefono?: string;
+
+  @Column({ type: 'text', nullable: true })
+  direccion?: string;
+
+  @Column({ nullable: true })
+  logo_url?: string;
+
+  @Column({ length: 50, default: 'BASICO' })
+  plan?: string;
+
+  @Column({ type: 'date', nullable: true })
+  fecha_vencimiento?: Date;
+
+  @Column({
+    type: 'enum',
+    enum: ['ACTIVA', 'SUSPENDIDA'],
+    default: 'ACTIVA',
+  })
+  estado!: string;
 
   @CreateDateColumn({
     name: 'created_at',
   })
-  createdAt?: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
   })
-  updatedAt?: Date;
+  updated_at!: Date;
 }

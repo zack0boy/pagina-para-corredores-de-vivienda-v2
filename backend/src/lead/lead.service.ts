@@ -46,6 +46,13 @@ export class LeadsService {
       );
     }
 
+    // Validar que la empresa_id coincida
+    if (propiedad.empresa_id !== createLeadDto.empresa_id) {
+      throw new Error(
+        'La propiedad no pertenece a esta empresa',
+      );
+    }
+
     // ROUND ROBIN: Obtener siguiente corredor automáticamente
     const proximoCorredor =
       await this.corredoresService.getNextCorredorRoundRobin(
@@ -64,6 +71,10 @@ export class LeadsService {
 
     if (proximoCorredor) {
       leadData.corredor_id = proximoCorredor.id;
+    }
+
+    if (createLeadDto.cliente_id) {
+      leadData.cliente_id = createLeadDto.cliente_id;
     }
 
     const lead = this.leadRepository.create(leadData);

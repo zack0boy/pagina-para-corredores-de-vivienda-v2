@@ -1,9 +1,37 @@
+import {
+  IsString,
+  IsOptional,
+  IsEmail,
+  MinLength,
+  IsUrl,
+} from 'class-validator';
+
 export class CreateEmpresaDto {
-  nombre?: string;
+  @IsString()
+  @MinLength(3)
+  nombre!: string;
 
-  descripcion?: string;
+  @IsOptional()
+  @IsString()
+  rut?: string;
 
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
   telefono?: string;
 
-  email?: string;
+  @IsOptional()
+  @IsString()
+  direccion?: string;
+
+  @IsOptional()
+  @IsUrl()
+  logo_url?: string;
+
+  @IsOptional()
+  @IsString()
+  plan?: string;
 }
