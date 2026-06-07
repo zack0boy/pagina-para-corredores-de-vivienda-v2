@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Lead } from './entities/lead.entity';
+import { LeadAuditoria } from './entities/lead-auditoria.entity';
 
 import { LeadsController } from './lead.controller';
 import { LeadsService } from './lead.service';
@@ -14,6 +15,7 @@ import { CorredoresModule } from '../corredores/corredores.module';
   imports: [
     TypeOrmModule.forFeature([
       Lead,
+      LeadAuditoria,
       Propiedades,
     ]),
     CorredoresModule,
