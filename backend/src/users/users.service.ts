@@ -3,9 +3,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Usuario } from '../entities/usuario.entity';
-import { Cliente } from '../entities/cliente.entity';
-import { Corredor } from '../entities/corredor.entity';
 import { CreateClienteDto, UpdateClienteDto } from '../dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto } from '../dto/create-corredor.dto';
 import { RolUsuario, EstadoGeneral } from '../../../common/enums/estado.enum';
@@ -17,8 +14,6 @@ export class UsersService {
 constructor(
     @InjectRepository(UsersGoogle)
     private usersGoogleRepository: Repository<UsersGoogle>,
-    @InjectRepository(Usuario)
-    private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Cliente)
     private clienteRepository: Repository<Cliente>,
     @InjectRepository(Corredor)

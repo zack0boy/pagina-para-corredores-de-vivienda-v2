@@ -1,34 +1,61 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-
+import { CreateClienteDto, UpdateClienteDto } from './dto/create-cliente.dto';
+import { CreateCorredorDto, UpdateCorredorDto } from './dto/create-corredor.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { Roles, RolesGuard } from '../../common/guards/roles.guard';
+import { RolUsuario } from '../common/enum/estado.enum';
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private userService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  // ========== CLIENTES ==========
+  @Post('clientes')
+  async createCliente(@Body() dto: CreateClienteDto) {
+    return this.userService.createCliente(dto);
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  @Get('clientes')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.ADMIN)
+  async getAllClientes() {
+    return this.userService.getAllClientes();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get('clientes/:id')
+  @UseGuards(JwtAuthGuard)
+  async getCliente(@Param('id') id: number) {
+    return this.userService.getCliente(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @Patch('clientes/:id')
+  @UseGuards(JwtAuthGuard)
+  async updateCliente(@Param('id') id: number, @Body() dto: UpdateClienteDto) {
+    return this.userService.updateCliente(id, dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  // ========== CORREDORES ==========
+  @Post('corredores')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.ADMIN)
+  async createCorredor(@Body() dto: CreateCorredorDto) {
+    return this.userService.createCorredor(dto);
+  }
+
+  @Get('corredores')
+  async getAllCorredores() {
+    return this.userService.getAllCorredores();
+  }
+
+  @Get('corredores/:id')
+  @UseGuards(JwtAuthGuard)
+  async getCorredor(@Param('id') id: number) {
+    return this.userService.getCorredor(id);
+  }
+
+  @Patch('corredores/:id')
+  @UseGuards(JwtAuthGuard)
+  async updateCorredor(@Param('id') id: number, @Body() dto: UpdateCorredorDto) {
+    return this.userService.updateCorredor(id, dto);
   }
 }
