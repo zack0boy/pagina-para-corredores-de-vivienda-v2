@@ -9,6 +9,7 @@ import { typeormConfig } from './database/typeorm.config';
 
 import { EmpresasModule } from './empresas/empresas.module';
 import { CategoriaModule } from './categoria/categoria.module';
+import { PropiedadesModule } from './propiedades/propiedades.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CategoriaModule } from './categoria/categoria.module';
 
     EmpresasModule,
     CategoriaModule,
+    PropiedadesModule,
   ],
 
   controllers: [AppController],
