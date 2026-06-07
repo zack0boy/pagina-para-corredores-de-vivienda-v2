@@ -9,6 +9,10 @@ import { typeormConfig } from './database/typeorm.config';
 
 import { EmpresasModule } from './empresas/empresas.module';
 
+import { CategoriaController } from './categoria/categoria.controller';
+import { CategoriaService } from './categoria/categoria.service';
+import { CategoriaModule } from './categoria/categoria.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,10 +22,12 @@ import { EmpresasModule } from './empresas/empresas.module';
     TypeOrmModule.forRootAsync(typeormConfig),
 
     EmpresasModule,
+    CategoriasModule,
+    CategoriaModule,
   ],
 
-  controllers: [AppController],
+  controllers: [AppController, CategoríasController, CategoriaController],
 
-  providers: [AppService],
+  providers: [AppService, CategoríasService, CategoriaService],
 })
 export class AppModule {}
