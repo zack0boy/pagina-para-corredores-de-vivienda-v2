@@ -8,6 +8,7 @@ import { LeadsController } from './lead.controller';
 import { LeadsService } from './lead.service';
 
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
+import { CorredoresModule } from '../corredores/corredores.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Propiedades } from '../propiedades/entities/propiedades.entity';
       Lead,
       Propiedades,
     ]),
+    CorredoresModule,
   ],
   controllers: [
     LeadsController,

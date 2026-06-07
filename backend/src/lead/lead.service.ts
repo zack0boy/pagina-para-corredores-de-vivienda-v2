@@ -6,11 +6,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Lead } from './entities/lead.entity';
+import { Lead, LeadEstado } from './entities/lead.entity';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
+import { CorredoresService } from '../corredores/corredores.service';
+
 
 @Injectable()
 export class LeadsService {
@@ -20,6 +22,8 @@ export class LeadsService {
 
     @InjectRepository(Propiedades)
     private readonly propiedadRepository: Repository<Propiedades>,
+
+    private readonly corredoresService: CorredoresService,
   ) {}
 
   async create(
@@ -38,14 +42,27 @@ export class LeadsService {
       );
     }
 
-    const lead = this.leadRepository.create({
+    // ROUND ROBIN: Obtener siguiente corredor automáticamente
+    const proximoCorredor =
+      await this.corredoresService.getNextCorredorRoundRobin(
+        propiedad.empresa_id,
+      );
+
+    const leadData: any = {
       empresa_id: propiedad.empresa_id,
       propiedad_id: propiedad.id,
       nombre: createLeadDto.nombre,
       telefono: createLeadDto.telefono,
       email: createLeadDto.email,
       mensaje: createLeadDto.mensaje,
-    });
+      estado: proximoCorredor ? LeadEstado.ASIGNADO : LeadEstado.NUEVO,
+    };
+
+    if (proximoCorredor) {
+      leadData.corredor_id = proximoCorredor.id;
+    }
+
+    const lead = this.leadRepository.create(leadData);
 
     return await this.leadRepository.save(
       lead,
