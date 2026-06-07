@@ -3,11 +3,95 @@ import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  //ruta para login con google POST http://localhost:3000/auth/google
-  constructor(private authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+  ) {}
 
+  // ==========================
+  // Login con email/password
+  // POST /auth/login
+  // ==========================
+  @Post('login')
+  async login(
+    @Body()
+    body: {
+      email: string;
+      password: string;
+    },
+  ) {
+    return this.authService.login(
+      body.email,
+      body.password,
+    );
+  }
+
+  // ==========================
+  // Registro
+  // POST /auth/register
+  // ==========================
+  @Post('register')
+async register(
+  @Body()
+  body: {
+    nombre: string;
+    email: string;
+    password: string;
+  },
+) {
+  return this.authService.register(
+    body.nombre,
+    body.email,
+    body.password,
+  );
+}
+
+  // ==========================
+  // Login con Google
+  // POST /auth/google
+  // ==========================
   @Post('google')
-  async googleLogin(@Body() body: { token: string }) {
-    return this.authService.googleLogin(body.token);
+  async googleLogin(
+    @Body()
+    body: {
+      token: string;
+    },
+  ) {
+    return this.authService.googleLogin(
+      body.token,
+    );
+  }
+
+  // ==========================
+  // Recuperar contraseña
+  // POST /auth/forgot-password
+  // ==========================
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body()
+    body: {
+      email: string;
+    },
+  ) {
+    return this.authService.forgotPassword(
+      body.email,
+    );
+  }
+
+  // ==========================
+  // Resetear contraseña
+  // POST /auth/reset-password
+  // ==========================
+  @Post('reset-password')
+  async resetPassword(
+    @Body()
+    body: {
+      token: string;
+      password: string;
+    },
+  ) {
+    return this.authService.resetPassword(
+      body.token,
+      body.password,
+    );
   }
 }

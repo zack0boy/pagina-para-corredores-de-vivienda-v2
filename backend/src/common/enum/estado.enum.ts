@@ -23,8 +23,3 @@ export enum MetodoPago {
   WEBPAY = 'webpay',
 }
 
-export enum RolUsuario {
-  ADMIN = 'admin',
-  CLIENTE = 'cliente',
-  CORREDOR = 'corredor',
-}

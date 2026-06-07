@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn, OneToMany } from 'typeorm';
 import { UsersGoogle } from './user.google.entity';
+import { Usuario } from './usuario.entity';
 @Entity({ name: 'cliente' })
 export class Cliente {
   @PrimaryColumn({ name: 'id_usuario' })
@@ -18,9 +19,9 @@ export class Cliente {
   createdAt!: Date;
 
   // Relaciones
-  @OneToOne(() => UsersGoogle)
-  @JoinColumn({ name: 'id_usuario' })
-  usersGoogle!: UsersGoogle;
+  @OneToOne(()=>Usuario)
+  @JoinColumn({name:"id_usuario"})
+  usuario!:Usuario;
 
 
 }

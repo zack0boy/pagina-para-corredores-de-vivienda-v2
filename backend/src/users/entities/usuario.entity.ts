@@ -9,13 +9,11 @@ import {
   Unique,
 } from 'typeorm';
 
-import { EstadoGeneral, RolUsuario } from '../../common/enum/estado.enum';
-import { Role } from '../../common/enum/roles.enum';
-
+import { EstadoGeneral } from '../../common/enum/estado.enum';
 import { Cliente } from './cliente.entity';
 import { Corredor } from './corredor.entity';
 import { UsersGoogle } from '../entities/user.google.entity';
-
+import { RolUsuario } from '../../common/enum/roles.enum';
 
 @Entity({ name: 'usuario' })
 @Unique(['email'])
@@ -50,14 +48,22 @@ export class Usuario {
   updatedAt!: Date;
 
   // Relaciones
-  @OneToOne(() => Cliente, { nullable: true })
+  @OneToOne(
+    () => Cliente,
+    (cliente) => cliente.usuario,
+  )
   cliente?: Cliente;
 
-  @OneToOne(() => Corredor, { nullable: true })
+  @OneToOne(
+    () => Corredor,
+    (corredor) => corredor.usuario,
+  )
   corredor?: Corredor;
 
-  @OneToOne(() => UsersGoogle, { nullable: true })
+  @OneToOne(
+    () => UsersGoogle,
+    (usersGoogle) => usersGoogle.usuario,
+  )
   usersGoogle?: UsersGoogle;
-
 
 }

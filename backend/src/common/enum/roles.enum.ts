@@ -1,6 +1,11 @@
-export enum Role {
-  CLIENT = 'Cliente',
-  CORREDOR = 'Corredor',
-  ADMIN = 'Admin',
-}
+export enum RolUsuario{
 
+SUPER_ADMIN='SUPER_ADMIN',
+
+ADMIN_EMPRESA='ADMIN_EMPRESA',
+
+CORREDOR='CORREDOR',
+
+CLIENTE='CLIENTE'
+
+}

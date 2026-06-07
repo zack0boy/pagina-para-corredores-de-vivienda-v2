@@ -8,9 +8,10 @@ import { Cliente } from './entities/cliente.entity';
 import { Corredor } from './entities/corredor.entity';
 import { CreateClienteDto, UpdateClienteDto } from './dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto } from './dto/create-corredor.dto';
-import { RolUsuario, EstadoGeneral } from '../common/enum/estado.enum';
+import { EstadoGeneral } from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { UsersGoogle } from './entities/user.google.entity';
+import { RolUsuario } from '../common/enum/roles.enum';
 
 @Injectable()
 export class UsersService {
@@ -162,11 +163,16 @@ constructor(
   async getAllCorredores(): Promise<Corredor[]> {
     return this.corredorRepository.find({ relations: { usuario: true } });
   }
-  async createUsuario(data: Partial<Usuario>) {
+async createUsuario(
+  data: Partial<Usuario>,
+): Promise<Usuario> {
+
   const usuario =
     this.usuarioRepository.create(data);
 
-  return this.usuarioRepository.save(usuario);
+  return await this.usuarioRepository.save(
+    usuario,
+  );
 }
 async findGoogleUserByEmail(email: string) {
   return this.usersGoogleRepository.findOne({
@@ -185,5 +191,35 @@ async createGoogleUser(
   return this.usersGoogleRepository.save(
     googleUser,
   );
+}
+async findByEmail(email: string) {
+  return this.usuarioRepository.findOne({
+    where: { email },
+  });
+}
+
+async updatePassword(
+  idUsuario: number,
+  password: string,
+): Promise<void> {
+  await this.usuarioRepository.update(
+    { idUsuario },
+    {
+      password,
+    },
+  );
+}
+async findById(
+  idUsuario:number,
+):Promise<Usuario|null>{
+
+  return await this.usuarioRepository.findOne({
+
+    where:{
+      idUsuario,
+    },
+
+  });
+
 }
 }
