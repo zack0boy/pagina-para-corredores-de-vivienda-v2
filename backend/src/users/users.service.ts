@@ -12,8 +12,6 @@ import { EstadoGeneral } from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { UsersGoogle } from './entities/user.google.entity';
 import { RolUsuario } from '../common/enum/roles.enum';
-import { FilterClienteDto } from './dto/filter-cliente.dto';
-import { FilterUsuarioDto } from './dto/filter-usuario.dto';
 
 @Injectable()
 export class UsersService {
@@ -49,9 +47,9 @@ constructor(
       nombre: dto.nombre,
       email: dto.email,
       password: hashedPassword,
-      rol: RolUsuario.CLIENTE,
+      rol: RolUsuario.CORREDOR,
       estado: EstadoGeneral.ACTIVO,
-    });
+    } as Partial<Usuario>);
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
@@ -83,7 +81,7 @@ constructor(
       password: hashedPassword,
       rol: RolUsuario.CORREDOR,
       estado: EstadoGeneral.ACTIVO,
-    });
+    } as Partial<Usuario>);
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
@@ -165,94 +163,6 @@ constructor(
   async getAllCorredores(): Promise<Corredor[]> {
     return this.corredorRepository.find({ relations: { usuario: true } });
   }
-
-  async findClientesWithFilters(filters: FilterClienteDto) {
-    const query = this.clienteRepository.createQueryBuilder('cliente')
-      .leftJoinAndSelect('cliente.usuario', 'usuario');
-
-    if (filters.nombre) {
-      query.andWhere('usuario.nombre ILIKE :nombre', { nombre: `%${filters.nombre}%` });
-    }
-
-    if (filters.apellido) {
-      query.andWhere('usuario.apellido ILIKE :apellido', { apellido: `%${filters.apellido}%` });
-    }
-
-    if (filters.email) {
-      query.andWhere('usuario.email ILIKE :email', { email: `%${filters.email}%` });
-    }
-
-    if (filters.telefono) {
-      query.andWhere('cliente.telefono ILIKE :telefono', { telefono: `%${filters.telefono}%` });
-    }
-
-    if (filters.documento) {
-      query.andWhere('cliente.rut ILIKE :documento', { documento: `%${filters.documento}%` });
-    }
-
-    if (filters.ciudad) {
-      query.andWhere('cliente.ciudad ILIKE :ciudad', { ciudad: `%${filters.ciudad}%` });
-    }
-
-    if (filters.activo !== undefined) {
-      query.andWhere('usuario.estado = :estado', { estado: filters.activo ? EstadoGeneral.ACTIVO : EstadoGeneral.INACTIVO });
-    }
-
-    const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
-    query.skip(skip).take(filters.limit || 10);
-
-    const [data, total] = await query.getManyAndCount();
-
-    return {
-      data,
-      total,
-      page: filters.page || 1,
-      limit: filters.limit || 10,
-      pages: Math.ceil(total / (filters.limit || 10)),
-    };
-  }
-
-  async findUsuariosWithFilters(filters: FilterUsuarioDto) {
-    const query = this.usuarioRepository.createQueryBuilder('usuario');
-
-    if (filters.nombre) {
-      query.andWhere('usuario.nombre ILIKE :nombre', { nombre: `%${filters.nombre}%` });
-    }
-
-    if (filters.apellido) {
-      query.andWhere('usuario.apellido ILIKE :apellido', { apellido: `%${filters.apellido}%` });
-    }
-
-    if (filters.email) {
-      query.andWhere('usuario.email ILIKE :email', { email: `%${filters.email}%` });
-    }
-
-    if (filters.telefono) {
-      query.andWhere('usuario.telefono ILIKE :telefono', { telefono: `%${filters.telefono}%` });
-    }
-
-    if (filters.rol) {
-      query.andWhere('usuario.rol = :rol', { rol: filters.rol });
-    }
-
-    if (filters.activo !== undefined) {
-      query.andWhere('usuario.estado = :estado', { estado: filters.activo ? EstadoGeneral.ACTIVO : EstadoGeneral.INACTIVO });
-    }
-
-    const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
-    query.skip(skip).take(filters.limit || 10);
-
-    const [data, total] = await query.getManyAndCount();
-
-    return {
-      data,
-      total,
-      page: filters.page || 1,
-      limit: filters.limit || 10,
-      pages: Math.ceil(total / (filters.limit || 10)),
-    };
-  }
-
 async createUsuario(
   data: Partial<Usuario>,
 ): Promise<Usuario> {
@@ -288,12 +198,12 @@ async findByEmail(email: string) {
   });
 }
 
-async updatePassword(
+  async updatePassword(
   idUsuario: number,
   password: string,
 ): Promise<void> {
   await this.usuarioRepository.update(
-    { idUsuario },
+    idUsuario,
     {
       password,
     },

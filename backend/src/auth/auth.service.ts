@@ -5,7 +5,7 @@ import { UsersService } from '../users/users.service';
 import { EstadoGeneral} from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { RolUsuario } from '../common/enum/roles.enum';
-
+import { Usuario } from '../users/entities/usuario.entity';
 @Injectable()
 export class AuthService {
   constructor(
@@ -39,14 +39,14 @@ export class AuthService {
         nombre,
         email,
         password: hashedPassword,
-        rol: RolUsuario.CLIENTE,
+        rol: RolUsuario.CORREDOR,
         estado: EstadoGeneral.ACTIVO,
       });
 
     return {
       message: 'Usuario registrado correctamente',
       user: {
-        id: usuario.idUsuario,
+        idUsuario: usuario.idUsuario,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -70,7 +70,7 @@ export class AuthService {
     const passwordMatch =
       await bcrypt.compare(
         password,
-        usuario.password,
+        usuario.password
       );
 
     if (!passwordMatch) {
@@ -89,7 +89,7 @@ export class AuthService {
     return {
       token,
       user: {
-        id: usuario.idUsuario,
+        idUsuario: usuario.idUsuario,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -128,8 +128,8 @@ export class AuthService {
             nombre: payload.name ?? '',
             email: payload.email,
             password: 'GOOGLE_AUTH',
-            rol: RolUsuario.CLIENTE,
             estado: EstadoGeneral.ACTIVO,
+            rol: RolUsuario.CORREDOR,
           });
       }
 
