@@ -22,6 +22,7 @@ import { VisitasModule } from './visitas/visitas.module';
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
+import { ComprobanteModule } from './comprobante/comprobante.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { CuotasModule } from './cuotas/cuotas.module';
     ContratosModule,
     UsersModule,
     AuthModule,
+    ComprobanteModule,
   ],
 
   controllers: [AppController],
