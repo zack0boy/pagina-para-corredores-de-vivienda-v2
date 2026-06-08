@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,14 +26,16 @@ export class VisitasService {
     let googleEventId: string | undefined;
 
     try {
+      // Crear evento en Google Calendar
       googleEventId = await this.googleCalendarService.createEvent({
-        titulo: `Visita propiedad`,
+        titulo: `Visita propiedad - ${createVisitaDto.propiedad_id.substring(0, 8)}`,
         descripcion: createVisitaDto.observaciones,
         fechaInicio: new Date(createVisitaDto.fecha_inicio),
         fechaFin: new Date(createVisitaDto.fecha_fin),
       });
-    } catch {
+    } catch (error) {
       // Si Google Calendar falla, la visita igual se crea
+      console.warn('Google Calendar sincronización fallida:', error);
     }
 
     const visita = this.visitaRepository.create({
@@ -63,6 +66,7 @@ export class VisitasService {
   async update(id: string, updateVisitaDto: UpdateVisitaDto): Promise<Visita> {
     const visita = await this.findOne(id);
 
+    // Actualizar evento en Google Calendar si existe
     if (
       visita.google_event_id &&
       (updateVisitaDto.fecha_inicio || updateVisitaDto.fecha_fin)
@@ -76,7 +80,8 @@ export class VisitasService {
             ? new Date(updateVisitaDto.fecha_fin)
             : undefined,
         });
-      } catch {
+      } catch (error) {
+        console.warn('Error actualizando Google Calendar:', error);
         // Si falla, igual actualiza en BD
       }
     }
@@ -89,10 +94,16 @@ export class VisitasService {
   async cancelar(id: string): Promise<Visita> {
     const visita = await this.findOne(id);
 
+    if (visita.estado === EstadoVisita.CANCELADA) {
+      throw new BadRequestException('La visita ya está cancelada');
+    }
+
+    // Eliminar evento de Google Calendar
     if (visita.google_event_id) {
       try {
         await this.googleCalendarService.deleteEvent(visita.google_event_id);
-      } catch {
+      } catch (error) {
+        console.warn('Error eliminando de Google Calendar:', error);
         // Si falla, igual cancela en BD
       }
     }
@@ -102,17 +113,118 @@ export class VisitasService {
     return await this.visitaRepository.save(visita);
   }
 
+  async marcarRealizada(id: string): Promise<Visita> {
+    const visita = await this.findOne(id);
+
+    if (
+      visita.estado !== EstadoVisita.PROGRAMADA &&
+      visita.estado !== EstadoVisita.CONFIRMADA
+    ) {
+      throw new BadRequestException(
+        'Solo se pueden marcar como realizadas visitas programadas o confirmadas',
+      );
+    }
+
+    visita.estado = EstadoVisita.REALIZADA;
+
+    return await this.visitaRepository.save(visita);
+  }
+
+  async marcarNoAsistio(id: string): Promise<Visita> {
+    const visita = await this.findOne(id);
+
+    if (
+      visita.estado !== EstadoVisita.PROGRAMADA &&
+      visita.estado !== EstadoVisita.CONFIRMADA
+    ) {
+      throw new BadRequestException(
+        'Solo se pueden marcar como no asistidas visitas programadas o confirmadas',
+      );
+    }
+
+    visita.estado = EstadoVisita.NO_ASISTIO;
+
+    return await this.visitaRepository.save(visita);
+  }
+
+  async confirmar(id: string): Promise<Visita> {
+    const visita = await this.findOne(id);
+
+    if (visita.estado !== EstadoVisita.PROGRAMADA) {
+      throw new BadRequestException('Solo se pueden confirmar visitas programadas');
+    }
+
+    visita.estado = EstadoVisita.CONFIRMADA;
+
+    return await this.visitaRepository.save(visita);
+  }
+
   async remove(id: string) {
     const visita = await this.findOne(id);
 
+    // Eliminar de Google Calendar si existe
     if (visita.google_event_id) {
       try {
         await this.googleCalendarService.deleteEvent(visita.google_event_id);
-      } catch {}
+      } catch (error) {
+        console.warn('Error eliminando de Google Calendar:', error);
+      }
     }
 
     await this.visitaRepository.remove(visita);
 
     return { message: 'Visita eliminada correctamente' };
+  }
+
+  async sincronizarVisita(id: string): Promise<Visita> {
+    const visita = await this.findOne(id);
+
+    if (visita.estado === EstadoVisita.CANCELADA) {
+      throw new BadRequestException(
+        'No se puede sincronizar una visita cancelada',
+      );
+    }
+
+    try {
+      if (visita.google_event_id) {
+        // Si ya existe, actualizar
+        await this.googleCalendarService.updateEvent(visita.google_event_id, {
+          titulo: `Visita propiedad - ${visita.propiedad_id.substring(0, 8)}`,
+          fechaInicio: visita.fecha_inicio,
+          fechaFin: visita.fecha_fin,
+        });
+      } else {
+        // Si no existe, crear
+        const googleEventId =
+          await this.googleCalendarService.createEvent({
+            titulo: `Visita propiedad - ${visita.propiedad_id.substring(0, 8)}`,
+            descripcion: visita.observaciones,
+            fechaInicio: visita.fecha_inicio,
+            fechaFin: visita.fecha_fin,
+          });
+
+        visita.google_event_id = googleEventId;
+      }
+
+      return await this.visitaRepository.save(visita);
+    } catch (error) {
+      throw new BadRequestException(
+        'Error al sincronizar con Google Calendar',
+      );
+    }
+  }
+
+  async obtenerVisitasPorCorredor(corredor_id: string): Promise<Visita[]> {
+    return await this.visitaRepository.find({
+      where: { corredor_id },
+      order: { fecha_inicio: 'ASC' },
+    });
+  }
+
+  async obtenerVisitasPorEmpresa(empresa_id: string): Promise<Visita[]> {
+    return await this.visitaRepository.find({
+      where: { empresa_id },
+      order: { fecha_inicio: 'ASC' },
+    });
   }
 }
