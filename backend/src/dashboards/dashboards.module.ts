@@ -8,6 +8,8 @@ import { Empresa } from '../empresas/entities/empresa.entity';
 import { Usuario } from '../users/entities/usuario.entity';
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { Lead } from '../lead/entities/lead.entity';
+import { Corredor } from '../corredores/entities/corredor.entity';
+import { Contrato } from '../contratos/entities/contrato.entity';
 
 @Module({
   imports: [
@@ -16,9 +18,11 @@ import { Lead } from '../lead/entities/lead.entity';
       Usuario,
       Propiedades,
       Lead,
+      Corredor,
+      Contrato,
     ]),
   ],
   controllers: [DashboardController],
   providers: [DashboardService],
 })
-export class DashboardModule {}
+export class DashboardsModule {}

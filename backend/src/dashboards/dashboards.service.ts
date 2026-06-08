@@ -6,6 +6,8 @@ import { Empresa } from '../empresas/entities/empresa.entity';
 import { Usuario } from '../users/entities/usuario.entity';
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { Lead } from '../lead/entities/lead.entity';
+import { Corredor } from '../corredores/entities/corredor.entity';
+import { Contrato } from '../contratos/entities/contrato.entity';
 
 @Injectable()
 export class DashboardService {
@@ -21,6 +23,12 @@ export class DashboardService {
 
     @InjectRepository(Lead)
     private readonly leadRepository: Repository<Lead>,
+
+    @InjectRepository(Corredor)
+    private readonly corredorRepository: Repository<Corredor>,
+
+    @InjectRepository(Contrato)
+    private readonly contratoRepository: Repository<Contrato>,
   ) {}
 
   async superAdmin() {
@@ -41,6 +49,27 @@ export class DashboardService {
       usuarios,
       propiedades,
       leads,
+    };
+  }
+
+  async adminEmpresa(empresaId: string) {
+    const [
+      corredores,
+      propiedades,
+      leads,
+      contratos,
+    ] = await Promise.all([
+      this.corredorRepository.count({ where: { empresa_id: empresaId } }),
+      this.propiedadRepository.count({ where: { empresa_id: empresaId } }),
+      this.leadRepository.count({ where: { empresa_id: empresaId } }),
+      this.contratoRepository.count({ where: { empresa_id: empresaId } }),
+    ]);
+
+    return {
+      corredores,
+      propiedades,
+      leads,
+      contratos,
     };
   }
 }
