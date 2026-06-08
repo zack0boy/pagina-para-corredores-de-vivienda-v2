@@ -17,55 +17,89 @@ import { UpdateCuotaDto } from './dto/update-cuota.dto';
 export class CuotasController {
   constructor(private readonly cuotasService: CuotasService) {}
 
-  // ====================================
-  // POST /cuotas
-  // Crear una nueva cuota manualmente
-  // ====================================
   @Post()
   create(@Body() createCuotaDto: CreateCuotaDto) {
     return this.cuotasService.create(createCuotaDto);
   }
 
-  // ====================================
-  // GET /cuotas
-  // Obtener todas las cuotas
-  // ====================================
   @Get()
-  findAll() {
+  findAll(@Query('estado') estado?: string) {
+    if (!estado) {
+      return this.cuotasService.findAll();
+    }
     return this.cuotasService.findAll();
   }
 
-  // ====================================
-  // GET /cuotas/:id
-  // Obtener una cuota por ID
-  // ====================================
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.cuotasService.findOne(id);
+  @Get('pendientes/listado')
+  obtenerPendientes() {
+    return this.cuotasService.obtenerCuotasPendientes();
   }
 
-  // ====================================
-  // GET /cuotas/contrato/:contrato_id
-  // Obtener cuotas de un contrato
-  // ====================================
+  @Get('pendientes/contrato/:contrato_id')
+  obtenerPendientesPorContrato(@Param('contrato_id') contrato_id: string) {
+    return this.cuotasService.obtenerCuotasPendientesPorContrato(contrato_id);
+  }
+
+  @Get('pagadas/listado')
+  obtenerPagadas() {
+    return this.cuotasService.obtenerCuotasPagadas();
+  }
+
+  @Get('pagadas/contrato/:contrato_id')
+  obtenerPagadasPorContrato(@Param('contrato_id') contrato_id: string) {
+    return this.cuotasService.obtenerCuotasPagadasPorContrato(contrato_id);
+  }
+
+  @Get('vencidas/listado')
+  obtenerVencidas() {
+    return this.cuotasService.obtenerCuotasVencidas();
+  }
+
+  @Get('vencidas/contrato/:contrato_id')
+  obtenerVencidasPorContrato(@Param('contrato_id') contrato_id: string) {
+    return this.cuotasService.obtenerCuotasVencidasPorContrato(contrato_id);
+  }
+
+  @Get('parciales/listado')
+  obtenerParciales() {
+    return this.cuotasService.obtenerCuotasParciales();
+  }
+
+  @Get('parciales/contrato/:contrato_id')
+  obtenerParcialesPorContrato(@Param('contrato_id') contrato_id: string) {
+    return this.cuotasService.obtenerCuotasParcialesPorContrato(contrato_id);
+  }
+
+  @Get('sin-pagar/listado')
+  obtenerSinPagar() {
+    return this.cuotasService.obtenerCuotasSinPagar();
+  }
+
+  @Get('sin-pagar/contrato/:contrato_id')
+  obtenerSinPagarPorContrato(@Param('contrato_id') contrato_id: string) {
+    return this.cuotasService.obtenerCuotasSinPagarPorContrato(contrato_id);
+  }
+
+  @Get('resumen/empresa/:empresa_id')
+  obtenerResumenPorEmpresa(@Param('empresa_id') empresa_id: string) {
+    return this.cuotasService.obtenerResumenCuotasPorEmpresa(empresa_id);
+  }
+
   @Get('contrato/:contrato_id')
   findByContrato(@Param('contrato_id') contrato_id: string) {
     return this.cuotasService.findByContrato(contrato_id);
   }
 
-  // ====================================
-  // GET /cuotas/reporte/:contrato_id
-  // Obtener reporte de cuotas de un contrato
-  // ====================================
   @Get('reporte/:contrato_id')
   obtenerReporte(@Param('contrato_id') contrato_id: string) {
     return this.cuotasService.obtenerReporteCuotas(contrato_id);
   }
 
-  // ====================================
-  // PATCH /cuotas/:id
-  // Actualizar una cuota
-  // ====================================
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.cuotasService.findOne(id);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -74,10 +108,6 @@ export class CuotasController {
     return this.cuotasService.update(id, updateCuotaDto);
   }
 
-  // ====================================
-  // PATCH /cuotas/:id/pago
-  // Registrar un pago en la cuota
-  // ====================================
   @Patch(':id/pago')
   registrarPago(
     @Param('id') id: string,
@@ -90,30 +120,24 @@ export class CuotasController {
     );
   }
 
-  // ====================================
-  // PATCH /cuotas/:id/vencida
-  // Marcar cuota como vencida
-  // ====================================
   @Patch(':id/vencida')
   marcarVencida(@Param('id') id: string) {
     return this.cuotasService.marcarVencida(id);
   }
 
-  // ====================================
-  // PATCH /cuotas/:id/anular
-  // Anular una cuota
-  // ====================================
   @Patch(':id/anular')
   anular(@Param('id') id: string) {
     return this.cuotasService.anular(id);
   }
 
-  // ====================================
-  // DELETE /cuotas/:id
-  // Eliminar una cuota
-  // ====================================
+  @Patch('batch/marcar-vencidas')
+  marcarVencidasPorFecha() {
+    return this.cuotasService.marcarVencidasPorFecha();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.cuotasService.remove(id);
   }
 }
+

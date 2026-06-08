@@ -259,6 +259,136 @@ export class CuotasService {
   }
 
   // ====================================
+  // Gestión de Cuotas por Estado
+  // ====================================
+
+  async obtenerCuotasPendientes(): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { estado: EstadoCuota.PENDIENTE },
+      order: { fecha_vencimiento: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasPendientesPorContrato(contrato_id: string): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { 
+        contrato_id,
+        estado: EstadoCuota.PENDIENTE 
+      },
+      order: { numero_cuota: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasPagadas(): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { estado: EstadoCuota.PAGADA },
+      order: { fecha_pago: 'DESC' },
+    });
+  }
+
+  async obtenerCuotasPagadasPorContrato(contrato_id: string): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { 
+        contrato_id,
+        estado: EstadoCuota.PAGADA 
+      },
+      order: { numero_cuota: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasVencidas(): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { estado: EstadoCuota.VENCIDA },
+      order: { fecha_vencimiento: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasVencidasPorContrato(contrato_id: string): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { 
+        contrato_id,
+        estado: EstadoCuota.VENCIDA 
+      },
+      order: { numero_cuota: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasParciales(): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { estado: EstadoCuota.PARCIAL },
+      order: { fecha_vencimiento: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasParcialesPorContrato(contrato_id: string): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: { 
+        contrato_id,
+        estado: EstadoCuota.PARCIAL 
+      },
+      order: { numero_cuota: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasSinPagar(): Promise<Cuota[]> {
+    return await this.cuotaRepository.find({
+      where: [
+        { estado: EstadoCuota.PENDIENTE },
+        { estado: EstadoCuota.PARCIAL },
+        { estado: EstadoCuota.VENCIDA },
+      ],
+      order: { fecha_vencimiento: 'ASC' },
+    });
+  }
+
+  async obtenerCuotasSinPagarPorContrato(contrato_id: string): Promise<Cuota[]> {
+    return await this.cuotaRepository
+      .createQueryBuilder('cuota')
+      .where('cuota.contrato_id = :contrato_id', { contrato_id })
+      .andWhere('cuota.estado IN (:...estados)', {
+        estados: [EstadoCuota.PENDIENTE, EstadoCuota.PARCIAL, EstadoCuota.VENCIDA],
+      })
+      .orderBy('cuota.numero_cuota', 'ASC')
+      .getMany();
+  }
+
+  async obtenerResumenCuotasPorEmpresa(empresa_id: string): Promise<any> {
+    const cuotas = await this.cuotaRepository
+      .createQueryBuilder('cuota')
+      .innerJoin('cuota.contrato_id', 'contrato')
+      .where('contrato.empresa_id = :empresa_id', { empresa_id })
+      .getMany();
+
+    return {
+      totalCuotas: cuotas.length,
+      pagadas: cuotas.filter(c => c.estado === EstadoCuota.PAGADA).length,
+      pendientes: cuotas.filter(c => c.estado === EstadoCuota.PENDIENTE).length,
+      parciales: cuotas.filter(c => c.estado === EstadoCuota.PARCIAL).length,
+      vencidas: cuotas.filter(c => c.estado === EstadoCuota.VENCIDA).length,
+      montoTotal: cuotas.reduce((sum, c) => sum + Number(c.monto_total), 0),
+      montoPagado: cuotas.reduce((sum, c) => sum + Number(c.monto_pagado), 0),
+      saldoPendiente: cuotas.reduce((sum, c) => sum + Number(c.saldo_pendiente), 0),
+    };
+  }
+
+  async marcarVencidasPorFecha(): Promise<number> {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const resultado = await this.cuotaRepository
+      .createQueryBuilder()
+      .update(Cuota)
+      .set({ estado: EstadoCuota.VENCIDA })
+      .where('fecha_vencimiento < :hoy', { hoy })
+      .andWhere('estado IN (:...estados)', {
+        estados: [EstadoCuota.PENDIENTE, EstadoCuota.PARCIAL],
+      })
+      .execute();
+
+    return resultado.affected || 0;
+  }
+
+  // ====================================
   // Métodos Internos
   // ====================================
 
