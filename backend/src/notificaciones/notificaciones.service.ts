@@ -145,7 +145,7 @@ export class NotificacionesService {
     hoy.setHours(0, 0, 0, 0);
 
     const proximosDias = [1, 3, 7];
-    const cuotasProximas = [];
+    const cuotasProximas: any[] = [];
 
     for (const dias of proximosDias) {
       const fecha = new Date(hoy);
