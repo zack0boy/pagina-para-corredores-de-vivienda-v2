@@ -10,6 +10,7 @@ import { Lead, LeadEstado } from './entities/lead.entity';
 import { LeadAuditoria } from './entities/lead-auditoria.entity';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
+import { FilterLeadDto } from './dto/filter-lead.dto';
 
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { CorredoresService } from '../corredores/corredores.service';
@@ -116,6 +117,61 @@ export class LeadsService {
     }
 
     return lead;
+  }
+
+  async findWithFilters(filters: FilterLeadDto) {
+    const query = this.leadRepository.createQueryBuilder('lead');
+
+    if (filters.estado) {
+      query.andWhere('lead.estado = :estado', { estado: filters.estado });
+    }
+
+    if (filters.corredorId) {
+      query.andWhere('lead.corredor_id = :corredorId', { corredorId: filters.corredorId });
+    }
+
+    if (filters.propiedadId) {
+      query.andWhere('lead.propiedad_id = :propiedadId', { propiedadId: filters.propiedadId });
+    }
+
+    if (filters.nombre) {
+      query.andWhere('lead.nombre ILIKE :nombre', { nombre: `%${filters.nombre}%` });
+    }
+
+    if (filters.email) {
+      query.andWhere('lead.email ILIKE :email', { email: `%${filters.email}%` });
+    }
+
+    if (filters.telefono) {
+      query.andWhere('lead.telefono ILIKE :telefono', { telefono: `%${filters.telefono}%` });
+    }
+
+    if (filters.empresaId) {
+      query.andWhere('lead.empresa_id = :empresaId', { empresaId: filters.empresaId });
+    }
+
+    if (filters.fechaDesde) {
+      query.andWhere('lead.created_at >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+    }
+
+    if (filters.fechaHasta) {
+      query.andWhere('lead.created_at <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+
+    query.orderBy('lead.created_at', 'DESC');
+
+    const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
+    query.skip(skip).take(filters.limit || 10);
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page: filters.page || 1,
+      limit: filters.limit || 10,
+      pages: Math.ceil(total / (filters.limit || 10)),
+    };
   }
 
   async update(

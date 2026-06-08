@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { Visita } from './entities/visita.entity';
 import { CreateVisitaDto } from './dto/create-visita.dto';
 import { UpdateVisitaDto } from './dto/update-visita.dto';
+import { FilterVisitaDto } from './dto/filter-visita.dto';
 import { EstadoVisita } from './entities/estado-visita.enum';
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
@@ -77,6 +78,53 @@ export class VisitasService {
     }
 
     return visita;
+  }
+
+  async findWithFilters(filters: FilterVisitaDto) {
+    const query = this.visitaRepository.createQueryBuilder('visita');
+
+    if (filters.estado) {
+      query.andWhere('visita.estado = :estado', { estado: filters.estado });
+    }
+
+    if (filters.clienteId) {
+      query.andWhere('visita.cliente_id = :clienteId', { clienteId: filters.clienteId });
+    }
+
+    if (filters.corredorId) {
+      query.andWhere('visita.corredor_id = :corredorId', { corredorId: filters.corredorId });
+    }
+
+    if (filters.propiedadId) {
+      query.andWhere('visita.propiedad_id = :propiedadId', { propiedadId: filters.propiedadId });
+    }
+
+    if (filters.empresaId) {
+      query.andWhere('visita.empresa_id = :empresaId', { empresaId: filters.empresaId });
+    }
+
+    if (filters.fechaDesde) {
+      query.andWhere('visita.fecha_inicio >= :fechaDesde', { fechaDesde: filters.fechaDesde });
+    }
+
+    if (filters.fechaHasta) {
+      query.andWhere('visita.fecha_fin <= :fechaHasta', { fechaHasta: filters.fechaHasta });
+    }
+
+    query.orderBy('visita.fecha_inicio', 'ASC');
+
+    const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
+    query.skip(skip).take(filters.limit || 10);
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      total,
+      page: filters.page || 1,
+      limit: filters.limit || 10,
+      pages: Math.ceil(total / (filters.limit || 10)),
+    };
   }
 
   async update(id: string, updateVisitaDto: UpdateVisitaDto): Promise<Visita> {

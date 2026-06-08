@@ -13,6 +13,7 @@ import { VisitasService } from './visitas.service';
 
 import { CreateVisitaDto } from './dto/create-visita.dto';
 import { UpdateVisitaDto } from './dto/update-visita.dto';
+import { FilterVisitaDto } from './dto/filter-visita.dto';
 
 @Controller('visitas')
 export class VisitasController {
@@ -40,20 +41,22 @@ export class VisitasController {
   // ====================================
   @Get()
   findAll(
+    @Query() filters: FilterVisitaDto,
     @Query('corredor_id') corredor_id?: string,
     @Query('empresa_id') empresa_id?: string,
   ) {
-    if (corredor_id) {
-      return this.visitasService.obtenerVisitasPorCorredor(
-        corredor_id,
-      );
+    // Compatibilidad con query params antiguos
+    if (corredor_id && !filters.corredorId) {
+      filters.corredorId = corredor_id;
     }
-    if (empresa_id) {
-      return this.visitasService.obtenerVisitasPorEmpresa(
-        empresa_id,
-      );
+    if (empresa_id && !filters.empresaId) {
+      filters.empresaId = empresa_id;
     }
-    return this.visitasService.findAll();
+
+    if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
+      return this.visitasService.findAll();
+    }
+    return this.visitasService.findWithFilters(filters);
   }
 
   // ====================================

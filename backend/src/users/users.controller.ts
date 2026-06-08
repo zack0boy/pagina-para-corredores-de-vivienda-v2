@@ -9,6 +9,7 @@ import {
   Request,
   ForbiddenException,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateClienteDto, UpdateClienteDto, } from './dto/create-cliente.dto';
@@ -16,6 +17,8 @@ import { CreateCorredorDto, UpdateCorredorDto, } from './dto/create-corredor.dto
 import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
 import { RolesGuard, Roles } from '../common/guards/roles.guard';
 import { RolUsuario } from '../common/enum/roles.enum';
+import { FilterClienteDto } from './dto/filter-cliente.dto';
+import { FilterUsuarioDto } from './dto/filter-usuario.dto';
 
 @Controller('users')
 export class UsersController {
@@ -40,8 +43,11 @@ export class UsersController {
     RolUsuario.SUPER_ADMIN,
     RolUsuario.ADMIN_EMPRESA,
   )
-  async getAllClientes() {
-    return this.userService.getAllClientes();
+  async getAllClientes(@Query() filters: FilterClienteDto) {
+    if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
+      return this.userService.getAllClientes();
+    }
+    return this.userService.findClientesWithFilters(filters);
   }
 
   @Get('clientes/:id')

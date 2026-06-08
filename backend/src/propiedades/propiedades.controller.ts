@@ -6,12 +6,14 @@ import {
   Param,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 
 import { PropiedadesService } from './propiedades.service';
 
 import { CreatePropiedadesDto } from './dto/create-propiedades.dto';
 import { UpdatePropiedadesDto } from './dto/update-propiedades.dto';
+import { FilterPropiedadesDto } from './dto/filter-propiedades.dto';
 
 //POST   /propiedades
 //GET    /propiedades
@@ -35,8 +37,11 @@ export class PropiedadesController {
   }
 
   @Get()
-  findAll() {
-    return this.propiedadesService.findAll();
+  findAll(@Query() filters: FilterPropiedadesDto) {
+    if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
+      return this.propiedadesService.findAll();
+    }
+    return this.propiedadesService.findWithFilters(filters);
   }
 
   @Get(':id')

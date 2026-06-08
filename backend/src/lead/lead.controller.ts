@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 
 import { LeadsService } from './lead.service';
@@ -16,6 +17,7 @@ import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { ReassignLeadDto } from './dto/reassign-lead.dto';
 import { MoveLeadDto } from './dto/move-lead.dto';
+import { FilterLeadDto } from './dto/filter-lead.dto';
 
 @Controller('leads')
 export class LeadsController {
@@ -34,8 +36,11 @@ export class LeadsController {
   }
 
   @Get()
-  findAll() {
-    return this.leadsService.findAll();
+  findAll(@Query() filters: FilterLeadDto) {
+    if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
+      return this.leadsService.findAll();
+    }
+    return this.leadsService.findWithFilters(filters);
   }
 
   @Get(':id')
