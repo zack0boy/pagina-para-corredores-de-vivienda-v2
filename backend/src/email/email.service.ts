@@ -46,14 +46,16 @@ export class EmailService {
     contenido: string,
     variables: Record<string, string>,
   ): Promise<any> {
+    let asuntoFinal = asunto;
     let contenidoFinal = contenido;
 
-    // Reemplazar cada variable
+    // Reemplazar cada variable en asunto y contenido
     Object.entries(variables).forEach(([clave, valor]) => {
       const regex = new RegExp(`{{${clave}}}`, 'g');
+      asuntoFinal = asuntoFinal.replace(regex, valor);
       contenidoFinal = contenidoFinal.replace(regex, valor);
     });
 
-    return this.enviarEmail(destinatario, asunto, contenidoFinal);
+    return this.enviarEmail(destinatario, asuntoFinal, contenidoFinal);
   }
 }
