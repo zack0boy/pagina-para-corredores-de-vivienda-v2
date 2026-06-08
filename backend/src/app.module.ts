@@ -24,6 +24,7 @@ import { PlantillasEmailModule } from './plantillas-email/plantillas-email.modul
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
 import { ComprobanteModule } from './comprobante/comprobante.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -48,6 +49,9 @@ import { ComprobanteModule } from './comprobante/comprobante.module';
     CuotasModule,
     ContratosModule,
     ComprobanteModule,
+    EmailModule,
+    UsersModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
