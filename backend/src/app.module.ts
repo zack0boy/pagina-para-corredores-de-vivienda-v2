@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-
 import { typeormConfig } from './database/typeorm.config';
 
 import { EmpresasModule } from './empresas/empresas.module';
@@ -29,15 +28,34 @@ import { CuotasModule } from './cuotas/cuotas.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
-
-    TypeOrmModule.forRootAsync(typeormConfig),
-
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('DB_HOST', 'localhost'),
+        port: Number(config.get<number>('DB_PORT', 5432)),
+        username: config.get<string>('DB_USERNAME', 'postgres'),
+        password: config.get<string>('DB_PASSWORD', 'postgres'),
+        database: config.get<string>('DB_DATABASE', 'postgres'),
+        entities: [__dirname + '/**/*.entity.{ts,js}'],
+        synchronize: false,
+        autoLoadEntities: true,
+      }),
+    }),
+    UsersModule,
+    AuthModule,
     EmpresasModule,
     CategoriaModule,
     PropiedadesModule,
     PropiedadImagenModule,
     CloudinaryModule,
+<<<<<<< HEAD
+    CorredoresModule,
+    LeadsModule,
+    VisitasModule,
     CorredoresModule,
     LeadsModule,
     VisitasModule,
@@ -48,10 +66,6 @@ import { CuotasModule } from './cuotas/cuotas.module';
     ContratosModule,
     UsersModule,
     AuthModule,
-  ],
-
-  controllers: [AppController],
-
   providers: [AppService],
 })
 export class AppModule {}
