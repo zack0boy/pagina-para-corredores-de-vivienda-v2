@@ -1,17 +1,18 @@
-import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Contrato, EstadoContrato } from './entities/contrato.entity';
 import { CreateContratoDto } from './dto/create-contrato.dto';
 import { UpdateContratoDto } from './dto/update-contrato.dto';
+import { CuotasService } from '../cuotas/cuotas.service';
 
 @Injectable()
 export class ContratosService {
   constructor(
     @InjectRepository(Contrato)
     private contratoRepository: Repository<Contrato>,
-    @Inject('CuotasService') private cuotasService: any,
+    @Optional() @Inject(CuotasService) private cuotasService?: CuotasService,
   ) {}
 
   async create(createContratoDto: CreateContratoDto): Promise<Contrato> {
