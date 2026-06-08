@@ -21,6 +21,7 @@ import { VisitasController } from './visitas/visitas.controller';
 import { VisitasModule } from './visitas/visitas.module';
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
+import { PlantillasEmailModule } from './plantillas-email/plantillas-email.module';
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
 
@@ -42,6 +43,7 @@ import { CuotasModule } from './cuotas/cuotas.module';
     VisitasModule,
     GoogleCalendarModule,
     NotificacionesModule,
+    PlantillasEmailModule,
     CuotasModule,
     ContratosModule,
     UsersModule,
