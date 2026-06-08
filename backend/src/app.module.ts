@@ -17,6 +17,7 @@ import { LeadsModule } from './lead/lead.module';
 import { CorredoresModule } from './corredores/corredores.module';
 import { VisitasController } from './visitas/visitas.controller';
 import { VisitasModule } from './visitas/visitas.module';
+import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { VisitasModule } from './visitas/visitas.module';
     CorredoresModule,
     LeadsModule,
     VisitasModule,
+    GoogleCalendarModule,
   ],
 
   controllers: [AppController],

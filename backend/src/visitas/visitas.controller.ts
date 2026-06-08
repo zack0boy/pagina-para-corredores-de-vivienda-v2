@@ -67,4 +67,9 @@ export class VisitasController {
       id,
     );
   }
+
+@Patch(':id/cancelar')
+cancelar(@Param('id') id: string) {
+  return this.visitasService.cancelar(id);
+}
 }
