@@ -24,7 +24,7 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
 
-@Module({
+  @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
