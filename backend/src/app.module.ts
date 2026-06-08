@@ -24,6 +24,7 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
 import { PlantillasEmailModule } from './plantillas-email/plantillas-email.module';
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
+import { DashboardsModule } from './dashboards/dashboards.module';
 
   @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CuotasModule } from './cuotas/cuotas.module';
     ContratosModule,
     UsersModule,
     AuthModule,
+    DashboardsModule,
   ],
 
   controllers: [AppController],
