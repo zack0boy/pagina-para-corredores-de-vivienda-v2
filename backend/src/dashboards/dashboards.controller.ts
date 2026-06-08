@@ -25,4 +25,13 @@ export class DashboardController {
   ) {
     return this.dashboardService.adminEmpresa(empresaId);
   }
+
+  @Get('corredor/:corredorId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.CORREDOR)
+  async corredor(
+    @Param('corredorId') corredorId: string,
+  ) {
+    return this.dashboardService.corredor(corredorId);
+  }
 }

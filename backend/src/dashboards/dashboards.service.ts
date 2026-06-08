@@ -8,6 +8,8 @@ import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { Lead } from '../lead/entities/lead.entity';
 import { Corredor } from '../corredores/entities/corredor.entity';
 import { Contrato } from '../contratos/entities/contrato.entity';
+import { Visita } from '../visitas/entities/visita.entity';
+import { Cuota } from '../cuotas/entities/cuota.entity';
 
 @Injectable()
 export class DashboardService {
@@ -29,6 +31,12 @@ export class DashboardService {
 
     @InjectRepository(Contrato)
     private readonly contratoRepository: Repository<Contrato>,
+
+    @InjectRepository(Visita)
+    private readonly visitaRepository: Repository<Visita>,
+
+    @InjectRepository(Cuota)
+    private readonly cuotaRepository: Repository<Cuota>,
   ) {}
 
   async superAdmin() {
@@ -70,6 +78,31 @@ export class DashboardService {
       propiedades,
       leads,
       contratos,
+    };
+  }
+
+  async corredor(corredorId: string) {
+    const [
+      leads,
+      visitas,
+      contratos,
+      cuotas,
+    ] = await Promise.all([
+      this.leadRepository.count({ where: { corredor_id: corredorId } }),
+      this.visitaRepository.count({ where: { corredor_id: corredorId } }),
+      this.contratoRepository.count({ where: { corredor_id: corredorId } }),
+      this.cuotaRepository
+        .createQueryBuilder('cuota')
+        .innerJoin(Contrato, 'contrato', 'cuota.contrato_id = contrato.id')
+        .where('contrato.corredor_id = :corredorId', { corredorId })
+        .getCount(),
+    ]);
+
+    return {
+      leads,
+      visitas,
+      contratos,
+      cuotas,
     };
   }
 }

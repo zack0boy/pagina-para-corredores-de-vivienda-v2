@@ -10,6 +10,8 @@ import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { Lead } from '../lead/entities/lead.entity';
 import { Corredor } from '../corredores/entities/corredor.entity';
 import { Contrato } from '../contratos/entities/contrato.entity';
+import { Visita } from '../visitas/entities/visita.entity';
+import { Cuota } from '../cuotas/entities/cuota.entity';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { Contrato } from '../contratos/entities/contrato.entity';
       Lead,
       Corredor,
       Contrato,
+      Visita,
+      Cuota,
     ]),
   ],
   controllers: [DashboardController],
