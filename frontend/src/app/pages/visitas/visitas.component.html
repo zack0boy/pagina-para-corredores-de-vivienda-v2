@@ -1,0 +1,10 @@
+<div class="page-container">
+  <h1>Visitas</h1>
+  <div class="action-bar">
+    <button class="btn-create" (click)="showForm = !showForm">
+      {{ showForm ? 'Cerrar' : '+ Nueva Visita' }}
+    </button>
+  </div>
+  <div *ngIf="showForm"><app-visita-form (submitted)="onFormSubmit($event)"></app-visita-form></div>
+  <div *ngIf="visitas.length === 0" class="empty-state"><p>No hay visitas programadas</p></div>
+</div>

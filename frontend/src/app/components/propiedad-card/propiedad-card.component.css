@@ -1,0 +1,160 @@
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-header {
+  padding: 15px;
+  border-bottom: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.badge.DISPONIBLE {
+  background-color: #2ecc71;
+}
+
+.badge.VENDIDA {
+  background-color: #e74c3c;
+}
+
+.badge.ALQUILADA {
+  background-color: #f39c12;
+}
+
+.card-content {
+  padding: 15px;
+}
+
+.location {
+  margin: 0 0 10px 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.description {
+  margin: 0 0 15px 0;
+  color: #34495e;
+  line-height: 1.5;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+  padding: 15px 0;
+  border-top: 1px solid #ecf0f1;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #34495e;
+}
+
+.icon {
+  font-size: 18px;
+}
+
+.price {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 15px 0;
+  padding: 15px;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+}
+
+.price .label {
+  color: #7f8c8d;
+  font-weight: 600;
+}
+
+.price .value {
+  color: #2ecc71;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.operation-type {
+  margin-bottom: 15px;
+}
+
+.type {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.type.VENTA {
+  background-color: #3498db;
+}
+
+.type.ALQUILER {
+  background-color: #9b59b6;
+}
+
+.card-footer {
+  padding: 15px;
+  background-color: #f5f5f5;
+  display: flex;
+  gap: 10px;
+}
+
+.btn-view, .btn-edit {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.btn-view {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-view:hover {
+  background-color: #2980b9;
+}
+
+.btn-edit {
+  background-color: #f39c12;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #e67e22;
+}

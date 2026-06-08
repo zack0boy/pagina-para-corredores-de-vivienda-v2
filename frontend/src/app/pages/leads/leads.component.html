@@ -1,0 +1,45 @@
+<div class="page-container">
+  <h1>Leads</h1>
+
+  <div class="action-bar">
+    <button class="btn-create" (click)="showForm = !showForm">
+      {{ showForm ? 'Cerrar Formulario' : '+ Nuevo Lead' }}
+    </button>
+  </div>
+
+  <div *ngIf="showForm" class="form-section">
+    <app-lead-form (submitted)="onFormSubmit($event)"></app-lead-form>
+  </div>
+
+  <div class="table-container">
+    <table *ngIf="leads.length > 0" class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Teléfono</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let lead of leads">
+          <td>{{ lead.nombre }}</td>
+          <td>{{ lead.email }}</td>
+          <td>{{ lead.telefono }}</td>
+          <td>
+            <span class="badge" [ngClass]="lead.estado">{{ lead.estado }}</span>
+          </td>
+          <td>
+            <button class="btn-edit">Editar</button>
+            <button class="btn-delete">Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="leads.length === 0" class="empty-state">
+      <p>No hay leads para mostrar</p>
+    </div>
+  </div>
+</div>

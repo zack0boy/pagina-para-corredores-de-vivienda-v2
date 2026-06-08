@@ -1,0 +1,50 @@
+<form [formGroup]="propiedadForm" (ngSubmit)="onSubmit()" class="form-container">
+  <h3>Nueva Propiedad</h3>
+
+  <div class="form-group">
+    <label for="titulo">Título</label>
+    <input type="text" id="titulo" formControlName="titulo" placeholder="Ej: Apartamento en Centro">
+  </div>
+
+  <div class="form-group">
+    <label for="descripcion">Descripción</label>
+    <textarea id="descripcion" formControlName="descripcion" placeholder="Descripción de la propiedad"></textarea>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="precio">Precio</label>
+      <input type="number" id="precio" formControlName="precio" placeholder="Precio">
+    </div>
+    <div class="form-group">
+      <label for="tipo_operacion">Tipo de Operación</label>
+      <select id="tipo_operacion" formControlName="tipo_operacion">
+        <option value="">Seleccionar</option>
+        <option value="VENTA">Venta</option>
+        <option value="ALQUILER">Alquiler</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="ubicacion">Ubicación</label>
+    <input type="text" id="ubicacion" formControlName="ubicacion" placeholder="Dirección completa">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="habitaciones">Habitaciones</label>
+      <input type="number" id="habitaciones" formControlName="habitaciones" placeholder="Número">
+    </div>
+    <div class="form-group">
+      <label for="banos">Baños</label>
+      <input type="number" id="banos" formControlName="banos" placeholder="Número">
+    </div>
+    <div class="form-group">
+      <label for="estacionamientos">Estacionamientos</label>
+      <input type="number" id="estacionamientos" formControlName="estacionamientos" placeholder="Número">
+    </div>
+  </div>
+
+  <button type="submit" class="btn-submit">Guardar Propiedad</button>
+</form>

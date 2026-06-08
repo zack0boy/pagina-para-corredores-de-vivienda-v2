@@ -1,0 +1,37 @@
+<form [formGroup]="clienteForm" (ngSubmit)="onSubmit()" class="form-container">
+  <h3>Nuevo Cliente</h3>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" formControlName="nombre" placeholder="Nombre">
+    </div>
+    <div class="form-group">
+      <label for="apellido">Apellido</label>
+      <input type="text" id="apellido" formControlName="apellido" placeholder="Apellido">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="email">Email</label>
+    <input type="email" id="email" formControlName="email" placeholder="correo@ejemplo.com">
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="telefono">Teléfono</label>
+      <input type="tel" id="telefono" formControlName="telefono" placeholder="Teléfono">
+    </div>
+    <div class="form-group">
+      <label for="documento">RUT/Documento</label>
+      <input type="text" id="documento" formControlName="documento" placeholder="RUT">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="ciudad">Ciudad</label>
+    <input type="text" id="ciudad" formControlName="ciudad" placeholder="Ciudad">
+  </div>
+
+  <button type="submit" class="btn-submit">Guardar Cliente</button>
+</form>

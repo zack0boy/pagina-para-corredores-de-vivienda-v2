@@ -1,0 +1,38 @@
+<form [formGroup]="pagoForm" (ngSubmit)="onSubmit()" class="form-container">
+  <h3>Nuevo Pago</h3>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="contrato_id">Contrato</label>
+      <input type="text" id="contrato_id" formControlName="contrato_id" placeholder="ID Contrato">
+    </div>
+    <div class="form-group">
+      <label for="monto">Monto</label>
+      <input type="number" id="monto" formControlName="monto" placeholder="Monto a pagar">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="fecha_pago">Fecha Pago</label>
+      <input type="date" id="fecha_pago" formControlName="fecha_pago">
+    </div>
+    <div class="form-group">
+      <label for="metodo_pago">Método Pago</label>
+      <select id="metodo_pago" formControlName="metodo_pago">
+        <option value="">Seleccionar</option>
+        <option value="TRANSFERENCIA">Transferencia</option>
+        <option value="EFECTIVO">Efectivo</option>
+        <option value="CHEQUE">Cheque</option>
+        <option value="TARJETA">Tarjeta</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="referencia">Referencia</label>
+    <input type="text" id="referencia" formControlName="referencia" placeholder="Referencia del pago">
+  </div>
+
+  <button type="submit" class="btn-submit">Guardar Pago</button>
+</form>
