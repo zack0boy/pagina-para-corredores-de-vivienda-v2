@@ -1,0 +1,32 @@
+<div class="notification-bell-container">
+  <button class="bell-button" (click)="toggleDropdown()" (clickOutside)="closeDropdown()">
+    🔔
+    <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+  </button>
+
+  <div class="dropdown-menu" *ngIf="isOpen">
+    <div class="dropdown-header">
+      <h4>Notificaciones</h4>
+      <button class="close-btn" (click)="closeDropdown()">✕</button>
+    </div>
+
+    <div class="notifications-list" *ngIf="notificaciones.length > 0; else emptyNotifications">
+      <div class="notification-item" 
+           *ngFor="let notif of notificaciones"
+           [class.unread]="!notif.leida"
+           (click)="markAsRead(notif)">
+        <span class="notification-icon">{{ getIcon(notif.tipo) }}</span>
+        <div class="notification-content">
+          <p class="notification-message">{{ notif.mensaje }}</p>
+          <small class="notification-time">{{ notif.fecha_creacion | date: 'short' }}</small>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #emptyNotifications>
+      <div class="empty-message">
+        <p>No tienes notificaciones</p>
+      </div>
+    </ng-template>
+  </div>
+</div>
