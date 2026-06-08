@@ -4,6 +4,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 import { typeormConfig } from './database/typeorm.config';
 
@@ -36,6 +38,8 @@ import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
     LeadsModule,
     VisitasModule,
     GoogleCalendarModule,
+    UsersModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
