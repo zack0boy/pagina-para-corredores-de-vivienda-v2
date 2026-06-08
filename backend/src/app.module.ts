@@ -25,6 +25,7 @@ import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
 import { ComprobanteModule } from './comprobante/comprobante.module';
 import { EmailModule } from './email/email.module';
+import { DashboardsModule } from './dashboards/dashboards.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EmailModule } from './email/email.module';
     EmailModule,
     UsersModule,
     AuthModule,
+    DashboardsModule,
   ],
 
   controllers: [AppController],
