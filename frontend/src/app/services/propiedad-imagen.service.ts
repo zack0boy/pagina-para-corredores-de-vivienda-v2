@@ -5,8 +5,8 @@ import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class NotificacionesService {
-  private apiUrl = 'http://localhost:3000/notificaciones';
+export class PropiedadImagenService {
+  private apiUrl = 'http://localhost:3000/propiedad-imagen';
 
   constructor(private http: HttpClient) {}
 
@@ -14,8 +14,8 @@ export class NotificacionesService {
     return this.http.get(`${this.apiUrl}`);
   }
 
-  getByUser(userId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/user/${userId}`);
+  getByPropiedad(propiedadId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/propiedad/${propiedadId}`);
   }
 
   getById(id: string): Observable<any> {
@@ -26,8 +26,8 @@ export class NotificacionesService {
     return this.http.post(`${this.apiUrl}`, data);
   }
 
-  markAsRead(id: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}/read`, {});
+  update(id: string, data: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}`, data);
   }
 
   delete(id: string): Observable<any> {
