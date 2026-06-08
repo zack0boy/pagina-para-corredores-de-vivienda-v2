@@ -2,7 +2,6 @@ import {Injectable,UnauthorizedException,ConflictException} from '@nestjs/common
 import { OAuth2Client } from 'google-auth-library';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { EstadoGeneral} from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { RolUsuario } from '../common/enum/roles.enum';
 import { Usuario } from '../users/entities/usuario.entity';
@@ -19,6 +18,7 @@ export class AuthService {
 
   async register(
     nombre: string,
+    apellido: string | undefined,
     email: string,
     password: string,
   ) {
@@ -37,16 +37,17 @@ export class AuthService {
     const usuario =
       await this.usersService.createUsuario({
         nombre,
+        apellido: apellido ?? '',
         email,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         rol: RolUsuario.CORREDOR,
-        estado: EstadoGeneral.ACTIVO,
+        activo: true,
       });
 
     return {
       message: 'Usuario registrado correctamente',
       user: {
-        idUsuario: usuario.idUsuario,
+        id: usuario.id,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -70,7 +71,7 @@ export class AuthService {
     const passwordMatch =
       await bcrypt.compare(
         password,
-        usuario.password
+        usuario.passwordHash
       );
 
     if (!passwordMatch) {
@@ -81,7 +82,7 @@ export class AuthService {
 
     const token =
       await this.jwtService.signAsync({
-        sub: usuario.idUsuario,
+        sub: usuario.id,
         email: usuario.email,
         role: usuario.rol,
       });
@@ -89,7 +90,7 @@ export class AuthService {
     return {
       token,
       user: {
-        idUsuario: usuario.idUsuario,
+        id: usuario.id,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -123,18 +124,23 @@ export class AuthService {
         );
 
       if (!usuario) {
+        const nameParts = (payload.name ?? '').trim().split(/\s+/);
+        const firstName = nameParts.shift() ?? '';
+        const lastName = nameParts.join(' ') || '';
+
         usuario =
           await this.usersService.createUsuario({
-            nombre: payload.name ?? '',
+            nombre: firstName,
+            apellido: lastName,
             email: payload.email,
-            password: 'GOOGLE_AUTH',
-            estado: EstadoGeneral.ACTIVO,
+            passwordHash: 'GOOGLE_AUTH',
+            activo: true,
             rol: RolUsuario.CORREDOR,
           });
       }
 
       await this.usersService.createGoogleUser({
-        idUsuario: usuario.idUsuario,
+        idUsuario: usuario.id as any,
         googleId: payload.sub,
         googleEmail: payload.email,
         googlePicture: payload.picture,
@@ -154,7 +160,7 @@ export class AuthService {
 
     const jwt =
       await this.jwtService.signAsync({
-        sub: googleUser.usuario.idUsuario,
+        sub: googleUser.usuario.id,
         email: googleUser.usuario.email,
         role: googleUser.usuario.rol,
       });
@@ -163,7 +169,7 @@ export class AuthService {
       message: 'Login Google exitoso',
       token: jwt,
       user: {
-        id: googleUser.usuario.idUsuario,
+        id: googleUser.usuario.id,
         nombre: googleUser.usuario.nombre,
         email: googleUser.usuario.email,
         rol: googleUser.usuario.rol,
@@ -186,7 +192,7 @@ export class AuthService {
     const resetToken =
       await this.jwtService.signAsync(
         {
-          sub: usuario.idUsuario,
+          sub: usuario.id,
         },
         {
           expiresIn: '15m',

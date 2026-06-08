@@ -8,7 +8,7 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateClienteDto, UpdateClienteDto, } from './dto/create-cliente.dto';
@@ -60,7 +60,7 @@ export class UsersController {
     RolUsuario.CORREDOR,
   )
   async getCorredor(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Request() request: any,
   ) {
     if (
@@ -82,7 +82,7 @@ export class UsersController {
     RolUsuario.CORREDOR,
   )
   async updateCorredor(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Request() request: any,
     @Body() dto: UpdateCorredorDto,
   ) {

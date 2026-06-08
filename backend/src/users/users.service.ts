@@ -8,7 +8,7 @@ import { Cliente } from './entities/cliente.entity';
 import { Corredor } from './entities/corredor.entity';
 import { CreateClienteDto, UpdateClienteDto } from './dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto } from './dto/create-corredor.dto';
-import { EstadoGeneral } from '../common/enum/estado.enum';
+import { /* EstadoGeneral */ } from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { UsersGoogle } from './entities/user.google.entity';
 import { RolUsuario } from '../common/enum/roles.enum';
@@ -46,16 +46,16 @@ constructor(
     const usuario = this.usuarioRepository.create({
       nombre: dto.nombre,
       email: dto.email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       rol: RolUsuario.CORREDOR,
-      estado: EstadoGeneral.ACTIVO,
+      activo: true,
     } as Partial<Usuario>);
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
     // Crear cliente
     const cliente = this.clienteRepository.create({
-      idUsuario: savedUsuario.idUsuario,
+      idUsuario: savedUsuario.id as any,
       telefono: dto.telefono,
       rut: dto.rut,
       direccion: dto.direccion,
@@ -78,16 +78,16 @@ constructor(
     const usuario = this.usuarioRepository.create({
       nombre: dto.nombre,
       email: dto.email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       rol: RolUsuario.CORREDOR,
-      estado: EstadoGeneral.ACTIVO,
+      activo: true,
     } as Partial<Usuario>);
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
     // Crear corredor
     const corredor = this.corredorRepository.create({
-      idUsuario: savedUsuario.idUsuario,
+      idUsuario: savedUsuario.id as any,
       licenciaProfesional: dto.licenciaProfesional,
       descripcion: dto.descripcion,
     });
@@ -95,7 +95,7 @@ constructor(
     return this.corredorRepository.save(corredor);
   }
 
-  async getCliente(idUsuario: number): Promise<Cliente> {
+  async getCliente(idUsuario: string): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({
       where: { idUsuario },
     });
@@ -107,7 +107,7 @@ constructor(
     return cliente;
   }
 
-  async getCorredor(idUsuario: number): Promise<Corredor> {
+  async getCorredor(idUsuario: string): Promise<Corredor> {
     const corredor = await this.corredorRepository.findOne({
       where: { idUsuario },
     });
@@ -119,7 +119,7 @@ constructor(
     return corredor;
   }
 
-  async updateCliente(idUsuario: number, dto: UpdateClienteDto): Promise<Cliente> {
+  async updateCliente(idUsuario: string, dto: UpdateClienteDto): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({ where: { idUsuario } });
     if (!cliente) {
       throw new NotFoundException('Cliente no encontrado');
@@ -138,7 +138,7 @@ constructor(
     return this.clienteRepository.save(cliente);
   }
 
-  async updateCorredor(idUsuario: number, dto: UpdateCorredorDto): Promise<Corredor> {
+  async updateCorredor(idUsuario: string, dto: UpdateCorredorDto): Promise<Corredor> {
     const corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
     if (!corredor) {
       throw new NotFoundException('Corredor no encontrado');
@@ -168,7 +168,10 @@ async createUsuario(
 ): Promise<Usuario> {
 
   const usuario =
-    this.usuarioRepository.create(data);
+    this.usuarioRepository.create({
+      ...data,
+      apellido: data.apellido ?? '',
+    });
 
   return await this.usuarioRepository.save(
     usuario,
@@ -198,28 +201,27 @@ async findByEmail(email: string) {
   });
 }
 
-  async updatePassword(
-  idUsuario: number,
-  password: string,
-): Promise<void> {
-  await this.usuarioRepository.update(
-    idUsuario,
-    {
-      password,
-    },
-  );
-}
-async findById(
-  idUsuario:number,
-):Promise<Usuario|null>{
-
-  return await this.usuarioRepository.findOne({
-
-    where:{
+   async updatePassword(
+    idUsuario: string,
+    password: string,
+  ): Promise<void> {
+    await this.usuarioRepository.update(
       idUsuario,
-    },
+      {
+        passwordHash: password,
+      },
+    );
+  }
+  async findById(
+    idUsuario: string,
+  ):Promise<Usuario|null>{
 
-  });
+    return await this.usuarioRepository.findOne({
 
-}
+      where:{
+        id: idUsuario,
+      },
+
+    });
+  }
 }

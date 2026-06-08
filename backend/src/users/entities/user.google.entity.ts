@@ -8,8 +8,8 @@
     @PrimaryGeneratedColumn({ name: 'id_google' })
     idGoogle!: number;
 
-    @Column({ name: 'id_usuario' })
-    idUsuario!: number;
+    @Column({ name: 'id_usuario', type: 'uuid' })
+    idUsuario!: string;
 
     @Column({ name: 'google_id', length: 255 })
     googleId!: string;

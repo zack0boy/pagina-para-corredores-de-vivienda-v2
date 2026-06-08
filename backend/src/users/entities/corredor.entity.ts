@@ -4,8 +4,8 @@ import { UsersGoogle } from './user.google.entity';
 
 @Entity({ name: 'corredor' })
 export class Corredor {
-  @PrimaryColumn({ name: 'id_usuario' })
-  idUsuario!: number;
+  @PrimaryColumn({ name: 'id_usuario', type: 'uuid' })
+  idUsuario!: string;
 
   @Column({ name: 'licencia_profesional', length: 50, nullable: true })
   licenciaProfesional?: string;

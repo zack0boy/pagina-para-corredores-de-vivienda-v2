@@ -3,8 +3,8 @@ import { UsersGoogle } from './user.google.entity';
 import { Usuario } from './usuario.entity';
 @Entity({ name: 'cliente' })
 export class Cliente {
-  @PrimaryColumn({ name: 'id_usuario' })
-  idUsuario!: number;
+  @PrimaryColumn({ name: 'id_usuario', type: 'uuid' })
+  idUsuario!: string;
 
   @Column({ name: 'telefono', length: 20, nullable: true })
   telefono?: string;

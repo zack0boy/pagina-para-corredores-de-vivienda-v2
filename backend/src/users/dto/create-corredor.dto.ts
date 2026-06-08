@@ -39,7 +39,7 @@ export class UpdateCorredorDto {
 }
 
 export class CorredorResponseDto {
-  idUsuario!: number;
+  idUsuario!: string;
   nombre!: string;
   email!: string;
   licenciaProfesional?: string;

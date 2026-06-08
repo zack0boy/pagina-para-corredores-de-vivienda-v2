@@ -48,7 +48,7 @@ export class UpdateClienteDto {
 }
 
 export class ClienteResponseDto {
-  idUsuario!: number;
+  idUsuario!: string;
   nombre!: string;
   email!: string;
   telefono?: string;
