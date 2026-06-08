@@ -24,6 +24,8 @@ import { PlantillasEmailModule } from './plantillas-email/plantillas-email.modul
 import { ContratosModule } from './contratos/contratos.module';
 import { CuotasModule } from './cuotas/cuotas.module';
 import { ComprobanteModule } from './comprobante/comprobante.module';
+
+@Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -60,8 +62,6 @@ import { ComprobanteModule } from './comprobante/comprobante.module';
     CuotasModule,
     ContratosModule,
     ComprobanteModule,
-    UsersModule,
-    AuthModule,
   ],
 
   controllers: [AppController],
