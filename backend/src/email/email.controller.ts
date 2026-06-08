@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { EmailService } from './email.service';
+import { EmailService, TipoNotificacion } from './email.service';
 
 @Controller('emails')
 export class EmailController {
@@ -62,4 +62,35 @@ export class EmailController {
       destinatario: body.destinatario,
     };
   }
+
+  @Post('notificacion')
+  async enviarNotificacion(
+    @Body()
+    body: {
+      destinatario: string;
+      tipo: TipoNotificacion;
+      variables: Record<string, string>;
+    },
+  ) {
+    await this.emailService.enviarNotificacion(
+      body.destinatario,
+      body.tipo,
+      body.variables,
+    );
+
+    return {
+      mensaje: 'Notificación enviada correctamente',
+      destinatario: body.destinatario,
+      tipo: body.tipo,
+    };
+  }
+
+  @Post('tipos')
+  async obtenerTipos() {
+    return {
+      tipos: Object.values(TipoNotificacion),
+      descripcion: 'Tipos de notificaciones disponibles',
+    };
+  }
 }
+
