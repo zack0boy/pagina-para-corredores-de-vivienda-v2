@@ -13,6 +13,7 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { CorredoresService } from '../corredores/corredores.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 
 @Injectable()
@@ -28,6 +29,7 @@ export class LeadsService {
     private readonly auditRepository: Repository<LeadAuditoria>,
 
     private readonly corredoresService: CorredoresService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async create(
@@ -79,9 +81,18 @@ export class LeadsService {
 
     const lead = this.leadRepository.create(leadData);
 
-    return await this.leadRepository.save(
-      lead,
-    );
+    const leadGuardado = await this.leadRepository.save(lead);
+
+    // 🔔 Crear notificación si se asignó corredor
+    if (proximoCorredor) {
+      await this.notificacionesService.notificarNuevoLead(
+        propiedad.empresa_id,
+        proximoCorredor.id,
+        `${createLeadDto.nombre} - ${propiedad.titulo}`,
+      );
+    }
+
+    return leadGuardado;
   }
 
   async findAll() {
@@ -166,7 +177,19 @@ export class LeadsService {
 
     const leadActualizado = await this.leadRepository.save(lead);
 
-    // 📝 Registrar en auditoría
+    // � Notificar al nuevo corredor
+    const propiedad = await this.propiedadRepository.findOne({
+      where: { id: lead.propiedad_id },
+    });
+    if (propiedad) {
+      await this.notificacionesService.notificarNuevoLead(
+        lead.empresa_id,
+        corredor_id,
+        `${lead.nombre} - ${propiedad.titulo} (Reasignación)`,
+      );
+    }
+
+    // �📝 Registrar en auditoría
     await this.auditRepository.save({
       lead_id: id,
       accion: 'REASIGNADO',

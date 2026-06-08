@@ -6,6 +6,7 @@ import { Cuota, EstadoCuota } from './entities/cuota.entity';
 import { CreateCuotaDto } from './dto/create-cuota.dto';
 import { UpdateCuotaDto } from './dto/update-cuota.dto';
 import { Contrato } from '../contratos/entities/contrato.entity';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class CuotasService {
@@ -14,6 +15,7 @@ export class CuotasService {
     private cuotaRepository: Repository<Cuota>,
     @InjectRepository(Contrato)
     private contratoRepository: Repository<Contrato>,
+    private notificacionesService: NotificacionesService,
   ) {}
 
   // ====================================
@@ -375,6 +377,17 @@ export class CuotasService {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
+    // Obtener cuotas que vencen hoy (antes de marcarlas como vencidas)
+    const cuotasVencidasHoy = await this.cuotaRepository
+      .createQueryBuilder('cuota')
+      .innerJoin('cuota.contrato_id', 'contrato')
+      .where('DATE(cuota.fecha_vencimiento) = :hoy', { hoy })
+      .andWhere('cuota.estado IN (:...estados)', {
+        estados: [EstadoCuota.PENDIENTE, EstadoCuota.PARCIAL],
+      })
+      .getMany();
+
+    // Marcar como vencidas
     const resultado = await this.cuotaRepository
       .createQueryBuilder()
       .update(Cuota)
@@ -385,7 +398,77 @@ export class CuotasService {
       })
       .execute();
 
+    // 🔔 Crear notificaciones para las cuotas que se acaban de vencer
+    for (const cuota of cuotasVencidasHoy) {
+      try {
+        const contrato = await this.contratoRepository.findOneBy({
+          id: cuota.contrato_id,
+        });
+        if (contrato) {
+          await this.notificacionesService.notificarCuotaProxima(
+            contrato.empresa_id,
+            contrato.cliente_id,
+            cuota.numero_cuota,
+            cuota.fecha_vencimiento,
+            0, // 0 días = vencida hoy
+          );
+        }
+      } catch (error) {
+        console.warn(
+          `Error al crear notificación de cuota vencida ${cuota.id}:`,
+          error,
+        );
+      }
+    }
+
     return resultado.affected || 0;
+  }
+
+  async crearNotificacionesCuotasProximas(): Promise<number> {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let notificacionesCreadas = 0;
+    const diasAVerificar = [1, 3, 7];
+
+    for (const dias of diasAVerificar) {
+      const fechaDestino = new Date(hoy);
+      fechaDestino.setDate(fechaDestino.getDate() + dias);
+
+      const cuotasProximas = await this.cuotaRepository
+        .createQueryBuilder('cuota')
+        .innerJoin('cuota.contrato_id', 'contrato')
+        .where('DATE(cuota.fecha_vencimiento) = :fecha', { fecha: fechaDestino })
+        .andWhere('cuota.estado IN (:...estados)', {
+          estados: [EstadoCuota.PENDIENTE, EstadoCuota.PARCIAL],
+        })
+        .getMany();
+
+      for (const cuota of cuotasProximas) {
+        try {
+          const contrato = await this.contratoRepository.findOneBy({
+            id: cuota.contrato_id,
+          });
+          if (contrato) {
+            await this.notificacionesService.notificarCuotaProxima(
+              contrato.empresa_id,
+              contrato.cliente_id,
+              cuota.numero_cuota,
+              cuota.fecha_vencimiento,
+              dias,
+            );
+            notificacionesCreadas++;
+          }
+        } catch (error) {
+          console.warn(
+            `Error al crear notificación de cuota próxima ${cuota.id}:`,
+            error,
+          );
+        }
+      }
+    }
+
+    return notificacionesCreadas;
   }
 
   // ====================================

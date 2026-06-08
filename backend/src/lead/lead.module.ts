@@ -10,6 +10,7 @@ import { LeadsService } from './lead.service';
 
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
 import { CorredoresModule } from '../corredores/corredores.module';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CorredoresModule } from '../corredores/corredores.module';
       Propiedades,
     ]),
     CorredoresModule,
+    NotificacionesModule,
   ],
   controllers: [
     LeadsController,

@@ -12,6 +12,7 @@ import { CreateVisitaDto } from './dto/create-visita.dto';
 import { UpdateVisitaDto } from './dto/update-visita.dto';
 import { EstadoVisita } from './entities/estado-visita.enum';
 import { GoogleCalendarService } from '../google-calendar/google-calendar.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class VisitasService {
@@ -20,6 +21,7 @@ export class VisitasService {
     private readonly visitaRepository: Repository<Visita>,
 
     private readonly googleCalendarService: GoogleCalendarService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async create(createVisitaDto: CreateVisitaDto): Promise<Visita> {
@@ -44,7 +46,21 @@ export class VisitasService {
       google_event_id: googleEventId,
     });
 
-    return await this.visitaRepository.save(visita);
+    const visitaGuardada = await this.visitaRepository.save(visita);
+
+    // 🔔 Notificar al corredor sobre la nueva visita
+    try {
+      await this.notificacionesService.notificarNuevaVisita(
+        createVisitaDto.empresa_id,
+        createVisitaDto.corredor_id,
+        `Propiedad - ${createVisitaDto.propiedad_id.substring(0, 8)}`,
+        new Date(createVisitaDto.fecha_inicio),
+      );
+    } catch (error) {
+      console.warn('Error al crear notificación de visita:', error);
+    }
+
+    return visitaGuardada;
   }
 
   async findAll(): Promise<Visita[]> {
