@@ -1,0 +1,59 @@
+<aside class="sidebar" [class.closed]="!isSidebarOpen">
+  <div class="sidebar-header">
+    <h3>Menú</h3>
+    <button class="toggle-btn" (click)="toggleSidebar()">☰</button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul>
+      <li>
+        <a routerLink="/dashboard" routerLinkActive="active">
+          <span class="icon">📊</span>
+          <span class="label">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/propiedades" routerLinkActive="active">
+          <span class="icon">🏠</span>
+          <span class="label">Propiedades</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/leads" routerLinkActive="active">
+          <span class="icon">👥</span>
+          <span class="label">Leads</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/clientes" routerLinkActive="active">
+          <span class="icon">👤</span>
+          <span class="label">Clientes</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/usuarios" routerLinkActive="active">
+          <span class="icon">🧑‍💼</span>
+          <span class="label">Usuarios</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/visitas" routerLinkActive="active">
+          <span class="icon">📅</span>
+          <span class="label">Visitas</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/contratos" routerLinkActive="active">
+          <span class="icon">📄</span>
+          <span class="label">Contratos</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/pagos" routerLinkActive="active">
+          <span class="icon">💰</span>
+          <span class="label">Pagos</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>

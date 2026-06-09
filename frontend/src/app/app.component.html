@@ -1,0 +1,16 @@
+<ng-container *ngIf="!isLoginOrPortal">
+  <app-navbar></app-navbar>
+  <div class="main-layout">
+    <app-sidebar></app-sidebar>
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+  <app-footer></app-footer>
+</ng-container>
+
+<ng-container *ngIf="isLoginOrPortal">
+  <router-outlet></router-outlet>
+</ng-container>
+
+<app-toast-container></app-toast-container>

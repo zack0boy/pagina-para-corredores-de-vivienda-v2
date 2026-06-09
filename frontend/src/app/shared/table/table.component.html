@@ -1,0 +1,39 @@
+<div class="table-container">
+  <table class="data-table" *ngIf="!isLoading">
+    <thead>
+      <tr>
+        <th *ngFor="let col of displayColumns">{{ getColumnLabel(col) }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of data" class="table-row">
+        <td *ngFor="let col of displayColumns">
+          <ng-container *ngIf="col !== 'actions'">
+            {{ getValue(row, col) }}
+          </ng-container>
+          <ng-container *ngIf="col === 'actions'" class="actions-cell">
+            <button *ngIf="actions === 'edit' || actions === 'both'" 
+                    class="btn btn-edit" 
+                    (click)="onEdit(row)">
+              ✏️
+            </button>
+            <button *ngIf="actions === 'delete' || actions === 'both'" 
+                    class="btn btn-delete" 
+                    (click)="onDelete(row)">
+              🗑️
+            </button>
+          </ng-container>
+        </td>
+      </tr>
+      <tr *ngIf="data.length === 0" class="empty-row">
+        <td [attr.colspan]="displayColumns.length" class="text-center">
+          No hay datos
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="isLoading" class="loading-message">
+    Cargando datos...
+  </div>
+</div>

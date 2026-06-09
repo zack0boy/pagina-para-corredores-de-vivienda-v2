@@ -1,0 +1,24 @@
+<div class="uploader-container">
+  <div class="upload-zone" 
+       [class.dragging]="isDragging"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave()"
+       (drop)="onDrop($event)">
+    <div class="upload-icon">📷</div>
+    <h3>Arrastra imágenes aquí</h3>
+    <p>o</p>
+    <label class="upload-btn">
+      Selecciona un archivo
+      <input type="file" 
+             accept="image/*" 
+             (change)="onFileSelected($event)" 
+             hidden>
+    </label>
+    <p class="upload-hint">PNG, JPG, GIF hasta 5MB</p>
+  </div>
+
+  <div class="uploaded-file" *ngIf="uploadedFileName">
+    <span class="file-icon">✓</span>
+    <span class="file-name">{{ uploadedFileName }}</span>
+  </div>
+</div>

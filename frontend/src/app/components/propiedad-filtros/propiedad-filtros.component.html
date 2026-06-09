@@ -1,0 +1,63 @@
+<div class="filtros-container">
+  <h4>Filtros</h4>
+  <form [formGroup]="filtrosForm" class="filtros-form">
+    <div class="filtro-group">
+      <label for="nombre">Buscar por Nombre</label>
+      <input type="text" id="nombre" formControlName="nombre" placeholder="Nombre de propiedad">
+    </div>
+
+    <div class="filtro-group">
+      <label for="tipoOperacion">Tipo de Operación</label>
+      <select id="tipoOperacion" formControlName="tipoOperacion">
+        <option value="">Todos</option>
+        <option value="VENTA">Venta</option>
+        <option value="ALQUILER">Alquiler</option>
+      </select>
+    </div>
+
+    <div class="filtro-group">
+      <label for="estado">Estado</label>
+      <select id="estado" formControlName="estado">
+        <option value="">Todos</option>
+        <option value="DISPONIBLE">Disponible</option>
+        <option value="VENDIDA">Vendida</option>
+        <option value="ALQUILADA">Alquilada</option>
+      </select>
+    </div>
+
+    <div class="filtro-row">
+      <div class="filtro-group">
+        <label for="precioMin">Precio Mín.</label>
+        <input type="number" id="precioMin" formControlName="precioMin" placeholder="Min">
+      </div>
+      <div class="filtro-group">
+        <label for="precioMax">Precio Máx.</label>
+        <input type="number" id="precioMax" formControlName="precioMax" placeholder="Max">
+      </div>
+    </div>
+
+    <div class="filtro-row">
+      <div class="filtro-group">
+        <label for="habitaciones">Habitaciones</label>
+        <select id="habitaciones" formControlName="habitaciones">
+          <option value="">Cualquiera</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4+</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label for="banos">Baños</label>
+        <select id="banos" formControlName="banos">
+          <option value="">Cualquiera</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3+</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="button" (click)="resetFiltros()" class="btn-reset">Limpiar Filtros</button>
+  </form>
+</div>

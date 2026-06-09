@@ -1,0 +1,32 @@
+<form [formGroup]="visitaForm" (ngSubmit)="onSubmit()" class="form-container">
+  <h3>Nueva Visita</h3>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="propiedad_id">Propiedad</label>
+      <input type="text" id="propiedad_id" formControlName="propiedad_id" placeholder="ID Propiedad">
+    </div>
+    <div class="form-group">
+      <label for="cliente_id">Cliente</label>
+      <input type="text" id="cliente_id" formControlName="cliente_id" placeholder="ID Cliente">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="fecha_inicio">Fecha Inicio</label>
+      <input type="datetime-local" id="fecha_inicio" formControlName="fecha_inicio">
+    </div>
+    <div class="form-group">
+      <label for="fecha_fin">Fecha Fin</label>
+      <input type="datetime-local" id="fecha_fin" formControlName="fecha_fin">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="observaciones">Observaciones</label>
+    <textarea id="observaciones" formControlName="observaciones" placeholder="Observaciones"></textarea>
+  </div>
+
+  <button type="submit" class="btn-submit">Guardar Visita</button>
+</form>
