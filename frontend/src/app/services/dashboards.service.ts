@@ -6,31 +6,30 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class DashboardsService {
-  private apiUrl = 'http://localhost:3000/dashboards';
+
+  private apiUrl = 'http://localhost:3000/dashboard';
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<any> {
-    return this.http.get(`${this.apiUrl}`);
+  getSuperAdminDashboard(): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/super-admin`
+    );
   }
 
-  getStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/stats`);
+  getAdminEmpresaDashboard(
+    empresaId: string
+  ): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/admin-empresa/${empresaId}`
+    );
   }
 
-  getById(id: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${id}`);
+  getCorredorDashboard(
+    corredorId: string
+  ): Observable<any> {
+    return this.http.get(
+      `${this.apiUrl}/corredor/${corredorId}`
+    );
   }
-
-  create(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}`, data);
-  }
-
-  update(id: string, data: any): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}`, data);
-  }
-
-  delete(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
-  }
-}
+} 

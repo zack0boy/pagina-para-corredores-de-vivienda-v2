@@ -21,12 +21,16 @@ export class HttpInterceptorService implements HttpInterceptor {
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Agregar token a la solicitud
     const token = this.authService.getToken();
+    
     if (token) {
+      console.log('[INTERCEPTOR] Agregando token al request:', request.url);
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
+    } else {
+      console.log('[INTERCEPTOR] No hay token disponible para:', request.url);
     }
 
     return next.handle(request).pipe(
@@ -39,6 +43,8 @@ export class HttpInterceptorService implements HttpInterceptor {
         } else {
           // Error del servidor
           if (error.status === 401) {
+            console.error('[INTERCEPTOR] 401 Unauthorized para:', error.url);
+            console.log('[INTERCEPTOR] Token al momento del 401:', token ? 'existe' : 'NO existe');
             errorMessage = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
             this.authService.logout();
           } else if (error.status === 403) {

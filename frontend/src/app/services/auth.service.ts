@@ -16,6 +16,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 
   isAuthenticated(): boolean {
@@ -24,5 +25,18 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem('token');
+  }
+
+  getUser(): { id: string; nombre: string; email: string; rol: string; empresaId?: string; [key: string]: any } | null {
+    const userJson = localStorage.getItem('user');
+    if (!userJson) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(userJson);
+    } catch {
+      return null;
+    }
   }
 }
