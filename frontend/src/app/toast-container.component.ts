@@ -27,7 +27,9 @@ import { ToastService, ToastMessage } from './services/toast.service';
   `]
 })
 export class ToastContainerComponent {
-  toasts$ = this.toastService.toasts$;
+  get toasts$() {
+    return this.toastService.toasts$;
+  }
 
   constructor(private toastService: ToastService) {}
 }
