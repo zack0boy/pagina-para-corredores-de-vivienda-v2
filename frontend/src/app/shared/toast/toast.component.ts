@@ -23,7 +23,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 export class ToastComponent implements OnInit, OnDestroy {
   @Input() message = '';
   @Input() type: 'success' | 'error' | 'warning' | 'info' = 'info';
-  @Input() duration = 3000;
+  @Input() duration: number | undefined = 3000;
   
   isVisible = true;
   private timeout: any;
