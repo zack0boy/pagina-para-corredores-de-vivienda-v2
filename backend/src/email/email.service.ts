@@ -110,16 +110,6 @@ export class EmailService {
         <p>Ya puedes iniciar sesión y comenzar a usar la plataforma.</p>
       `,
     },
-    [TipoNotificacion.RESETEO_CONTRASENA]: {
-      asunto: '🔐 Restablecer Contraseña',
-      contenido: `
-        <h2>Restablecer Contraseña</h2>
-        <p>Hola {{nombre}},</p>
-        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-        <p><a href="{{enlace_reset}}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Restablecer Contraseña</a></p>
-        <p>Si no solicitaste esto, ignora este mensaje.</p>
-      `,
-    },
     [TipoNotificacion.VISITANTE_CONFIRMADO]: {
       asunto: '✅ Visita Confirmada - {{propiedad}}',
       contenido: `
@@ -158,6 +148,23 @@ export class EmailService {
         <p>Gracias por confiar en nosotros.</p>
       `,
     },
+    [TipoNotificacion.RESETEO_CONTRASENA]: {
+      asunto: '🔐 Código para restablecer tu contraseña',
+      contenido: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+          <h2>Restablecer Contraseña</h2>
+          <p>Hola <strong>{{nombre}}</strong>,</p>
+          <p>Recibimos una solicitud para restablecer tu contraseña. Por favor, ingresa el siguiente código de 6 dígitos en la aplicación:</p>
+          
+          <div style="background-color: #f4f4f5; padding: 20px; text-align: center; border-radius: 8px; margin: 25px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2563eb;">{{codigo}}</span>
+          </div>
+          
+          <p style="font-size: 14px; color: #666;">Este código expirará en 15 minutos.</p>
+          <p style="font-size: 14px; color: #666;">Si no solicitaste esto, puedes ignorar este mensaje de forma segura.</p>
+        </div>
+      `,
+    },
   };
 
   constructor() {
@@ -178,9 +185,19 @@ export class EmailService {
     contenido: string,
   ): Promise<any> {
     try {
+      const MODO_PRUEBAS = true; // Cambia a false cuando tu sistema esté en producción
+      const CORREO_PRUEBAS = 'npro0330@gmail.com';
+
+      let correoDestino = destinatario;
+
+      if (MODO_PRUEBAS) {
+        correoDestino = CORREO_PRUEBAS;
+        asunto = `[PRUEBA para ${destinatario}] ${asunto}`;
+      }
+      
       const resultado = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: destinatario,
+        to: correoDestino,
         subject: asunto,
         html: contenido,
       });
