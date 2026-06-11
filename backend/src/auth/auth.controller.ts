@@ -50,12 +50,12 @@ async register(
   // POST /auth/google
   // ==========================
   @Post('google')
-  async googleLogin(
-    @Body()
-    body: {
-      token: string;
-    },
-  ) {
+  async googleLogin(@Body() body: any) {
+    console.log('====================');
+    console.log('📥 BODY RECIBIDO EN CONTROLLER:');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('====================');
+
     return this.authService.googleLogin(
       body.token,
     );

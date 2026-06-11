@@ -1,11 +1,10 @@
-import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Usuario } from '../entities/usuario.entity';
-import { UsersGoogle } from './user.google.entity';
 
 @Entity({ name: 'corredor' })
 export class Corredor {
-  @PrimaryColumn({ name: 'id_usuario' })
-  idUsuario!: number;
+  @PrimaryColumn('uuid', { name: 'id_usuario' })
+  idUsuario!: string;
 
   @Column({ name: 'licencia_profesional', length: 50, nullable: true })
   licenciaProfesional?: string;
@@ -20,6 +19,4 @@ export class Corredor {
   @OneToOne(() => Usuario)
   @JoinColumn({ name: 'id_usuario' })
   usuario!: Usuario;
-
- 
 }

@@ -1,10 +1,10 @@
-import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn, OneToMany } from 'typeorm';
-import { UsersGoogle } from './user.google.entity';
+import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Usuario } from './usuario.entity';
+
 @Entity({ name: 'cliente' })
 export class Cliente {
-  @PrimaryColumn({ name: 'id_usuario' })
-  idUsuario!: number;
+  @PrimaryColumn('uuid', { name: 'id_usuario' })
+  idUsuario!: string;
 
   @Column({ name: 'telefono', length: 20, nullable: true })
   telefono?: string;
@@ -19,9 +19,7 @@ export class Cliente {
   createdAt!: Date;
 
   // Relaciones
-  @OneToOne(()=>Usuario)
-  @JoinColumn({name:"id_usuario"})
-  usuario!:Usuario;
-
-
+  @OneToOne(() => Usuario)
+  @JoinColumn({ name: 'id_usuario' })
+  usuario!: Usuario;
 }

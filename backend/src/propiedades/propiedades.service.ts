@@ -29,9 +29,14 @@ export class PropiedadesService {
   async findWithFilters(filters: FilterPropiedadesDto) {
     const query = this.propiedadRepository.createQueryBuilder('propiedad');
 
-    if (filters.categoriaId) {
-      query.andWhere('propiedad.categoria_id = :categoriaId', { categoriaId: filters.categoriaId });
+    if (filters.categoriaId && filters.categoriaId !== 'undefined' && filters.categoriaId !== 'null') {
+      const isUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(filters.categoriaId);
+      
+      if (isUUID) {
+        query.andWhere('propiedad.categoria_id = :categoriaId', { categoriaId: filters.categoriaId });
+      }
     }
+
 
     if (filters.corredorId) {
       query.andWhere('propiedad.corredor_id = :corredorId', { corredorId: filters.corredorId });
@@ -54,7 +59,7 @@ export class PropiedadesService {
     }
 
     if (filters.habitaciones) {
-      query.andWhere('propiedad.dormitorios = :habitaciones', { habitaciones: filters.habitaciones });
+        query.andWhere('propiedad.habitaciones >= :habitaciones', { habitaciones: filters.habitaciones });
     }
 
     if (filters.banos) {
@@ -66,7 +71,7 @@ export class PropiedadesService {
     }
 
     if (filters.nombre) {
-      query.andWhere('propiedad.titulo ILIKE :nombre', { nombre: `%${filters.nombre}%` });
+        query.andWhere('propiedad.titulo ILIKE :nombre', { nombre: `%${filters.nombre}%` });
     }
 
     if (filters.empresaId) {

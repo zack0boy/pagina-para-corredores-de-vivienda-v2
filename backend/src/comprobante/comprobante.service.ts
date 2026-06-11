@@ -5,7 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Comprobante, ComprobanteEstado } from './entities/comprobante.entity';
+import { Comprobante } from './entities/comprobante.entity';
 import { CreateComprobanteDto } from './dto/create-comprobante.dto';
 import { UpdateComprobanteDto } from './dto/update-comprobante.dto';
 import { ValidarComprobanteDto } from './dto/validar-comprobante.dto';
@@ -43,7 +43,6 @@ export class ComprobanteService {
       nombreArchivo: file.originalname,
       tipoArchivo: file.mimetype,
       observaciones,
-      estado: ComprobanteEstado.PENDIENTE,
     });
 
     return await this.comprobanteRepository.save(comprobante);
@@ -54,8 +53,6 @@ export class ComprobanteService {
     dto: ValidarComprobanteDto,
   ) {
     const comprobante = await this.findOne(id);
-
-    comprobante.estado = dto.estado;
 
     if (dto.observaciones) {
       comprobante.observaciones = dto.observaciones;

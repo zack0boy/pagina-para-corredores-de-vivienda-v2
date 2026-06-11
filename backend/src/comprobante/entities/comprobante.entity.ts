@@ -48,13 +48,6 @@ export class Comprobante {
   })
   observaciones?: string;
 
-  @Column({
-    type: 'enum',
-    enum: ComprobanteEstado,
-    default: ComprobanteEstado.PENDIENTE,
-  })
-  estado!: ComprobanteEstado;
-
   @CreateDateColumn({
     name: 'created_at',
   })

@@ -1,5 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
-import { ComprobanteEstado } from '../entities/comprobante.entity';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateComprobanteDto {
   @IsString()
@@ -21,8 +20,4 @@ export class CreateComprobanteDto {
   @IsOptional()
   @IsString()
   observaciones?: string;
-
-  @IsOptional()
-  @IsEnum(ComprobanteEstado)
-  estado?: ComprobanteEstado;
 }

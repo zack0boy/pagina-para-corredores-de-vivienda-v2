@@ -8,18 +8,14 @@ import { Cliente } from './entities/cliente.entity';
 import { Corredor } from './entities/corredor.entity';
 import { CreateClienteDto, UpdateClienteDto } from './dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto } from './dto/create-corredor.dto';
-import { EstadoGeneral } from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
-import { UsersGoogle } from './entities/user.google.entity';
 import { RolUsuario } from '../common/enum/roles.enum';
 import { FilterClienteDto } from './dto/filter-cliente.dto';
 import { FilterUsuarioDto } from './dto/filter-usuario.dto';
 
 @Injectable()
 export class UsersService {
-constructor(
-    @InjectRepository(UsersGoogle)
-    private usersGoogleRepository: Repository<UsersGoogle>,
+  constructor(
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
     @InjectRepository(Cliente)
@@ -50,14 +46,14 @@ constructor(
       email: dto.email,
       password: hashedPassword,
       rol: RolUsuario.CLIENTE,
-      estado: EstadoGeneral.ACTIVO,
+      activo: true,
     });
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
     // Crear cliente
     const cliente = this.clienteRepository.create({
-      idUsuario: savedUsuario.idUsuario,
+      idUsuario: savedUsuario.id,
       telefono: dto.telefono,
       rut: dto.rut,
       direccion: dto.direccion,
@@ -82,14 +78,14 @@ constructor(
       email: dto.email,
       password: hashedPassword,
       rol: RolUsuario.CORREDOR,
-      estado: EstadoGeneral.ACTIVO,
+      activo: true,
     });
 
     const savedUsuario = await this.usuarioRepository.save(usuario);
 
     // Crear corredor
     const corredor = this.corredorRepository.create({
-      idUsuario: savedUsuario.idUsuario,
+      idUsuario: savedUsuario.id,
       licenciaProfesional: dto.licenciaProfesional,
       descripcion: dto.descripcion,
     });
@@ -97,7 +93,7 @@ constructor(
     return this.corredorRepository.save(corredor);
   }
 
-  async getCliente(idUsuario: number): Promise<Cliente> {
+  async getCliente(idUsuario: string): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({
       where: { idUsuario },
     });
@@ -109,7 +105,7 @@ constructor(
     return cliente;
   }
 
-  async getCorredor(idUsuario: number): Promise<Corredor> {
+  async getCorredor(idUsuario: string): Promise<Corredor> {
     const corredor = await this.corredorRepository.findOne({
       where: { idUsuario },
     });
@@ -121,7 +117,7 @@ constructor(
     return corredor;
   }
 
-  async updateCliente(idUsuario: number, dto: UpdateClienteDto): Promise<Cliente> {
+  async updateCliente(idUsuario: string, dto: UpdateClienteDto): Promise<Cliente> {
     const cliente = await this.clienteRepository.findOne({ where: { idUsuario } });
     if (!cliente) {
       throw new NotFoundException('Cliente no encontrado');
@@ -140,7 +136,7 @@ constructor(
     return this.clienteRepository.save(cliente);
   }
 
-  async updateCorredor(idUsuario: number, dto: UpdateCorredorDto): Promise<Corredor> {
+  async updateCorredor(idUsuario: string, dto: UpdateCorredorDto): Promise<Corredor> {
     const corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
     if (!corredor) {
       throw new NotFoundException('Corredor no encontrado');
@@ -195,7 +191,7 @@ constructor(
     }
 
     if (filters.activo !== undefined) {
-      query.andWhere('usuario.estado = :estado', { estado: filters.activo ? EstadoGeneral.ACTIVO : EstadoGeneral.INACTIVO });
+      query.andWhere('usuario.activo = :activo', { activo: filters.activo });
     }
 
     const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
@@ -236,7 +232,7 @@ constructor(
     }
 
     if (filters.activo !== undefined) {
-      query.andWhere('usuario.estado = :estado', { estado: filters.activo ? EstadoGeneral.ACTIVO : EstadoGeneral.INACTIVO });
+      query.andWhere('usuario.activo = :activo', { activo: filters.activo });
     }
 
     const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
@@ -264,24 +260,11 @@ async createUsuario(
     usuario,
   );
 }
-async findGoogleUserByEmail(email: string) {
-  return this.usersGoogleRepository.findOne({
-    where: {
-      googleEmail: email,
-    },
-    relations: { usuario: true },
-  });
-}
-async createGoogleUser(
-  data: Partial<UsersGoogle>,
-) {
-  const googleUser =
-    this.usersGoogleRepository.create(data);
 
-  return this.usersGoogleRepository.save(
-    googleUser,
-  );
+async save(usuario: Usuario): Promise<Usuario> {
+  return this.usuarioRepository.save(usuario);
 }
+
 async findByEmail(email: string) {
   return this.usuarioRepository.findOne({
     where: { email },
@@ -289,27 +272,20 @@ async findByEmail(email: string) {
 }
 
 async updatePassword(
-  idUsuario: number,
+  id: string,
   password: string,
 ): Promise<void> {
   await this.usuarioRepository.update(
-    { idUsuario },
+    { id },
     {
       password,
     },
   );
 }
-async findById(
-  idUsuario:number,
-):Promise<Usuario|null>{
 
+async findById(id: string): Promise<Usuario | null> {
   return await this.usuarioRepository.findOne({
-
-    where:{
-      idUsuario,
-    },
-
+    where: { id },
   });
-
 }
 }

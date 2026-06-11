@@ -1,21 +1,26 @@
-import {Injectable,UnauthorizedException,ConflictException} from '@nestjs/common';
+import {Injectable,UnauthorizedException,ConflictException,BadRequestException} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { EstadoGeneral} from '../common/enum/estado.enum';
 import * as bcrypt from 'bcrypt';
 import { RolUsuario } from '../common/enum/roles.enum';
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-  ) {}
-
-  private client = new OAuth2Client(
-    process.env.GOOGLE_CLIENT_ID,
-  );
+    private readonly configService: ConfigService,
+  ) {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!clientId) {
+      console.warn('⚠️ GOOGLE_CLIENT_ID no está configurado en variables de entorno');
+    }
+    this.googleClient = new OAuth2Client(clientId);
+  }
 
   async register(
     nombre: string,
@@ -37,16 +42,17 @@ export class AuthService {
     const usuario =
       await this.usersService.createUsuario({
         nombre,
+        apellido: '',
         email,
         password: hashedPassword,
         rol: RolUsuario.CLIENTE,
-        estado: EstadoGeneral.ACTIVO,
+        activo: true,
       });
 
     return {
       message: 'Usuario registrado correctamente',
       user: {
-        id: usuario.idUsuario,
+        id: usuario.id,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -81,7 +87,7 @@ export class AuthService {
 
     const token =
       await this.jwtService.signAsync({
-        sub: usuario.idUsuario,
+        sub: usuario.id,
         email: usuario.email,
         role: usuario.rol,
       });
@@ -89,7 +95,7 @@ export class AuthService {
     return {
       token,
       user: {
-        id: usuario.idUsuario,
+        id: usuario.id,
         nombre: usuario.nombre,
         email: usuario.email,
         rol: usuario.rol,
@@ -98,78 +104,105 @@ export class AuthService {
   }
 
   async googleLogin(token: string) {
-    const ticket = await this.client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    try {
+      console.log('====================');
+      console.log('🔵 GOOGLE LOGIN INICIADO');
+      console.log('====================');
 
-    const payload = ticket.getPayload();
+      console.log('📬 TOKEN RECIBIDO (primeros 50 chars):', token?.substring(0, 50) || 'UNDEFINED');
 
-    if (!payload?.email) {
-      throw new UnauthorizedException(
-        'Token Google inválido',
-      );
-    }
+      const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+      
+      console.log('🔑 CLIENT_ID:', clientId || '❌ NO CONFIGURADO');
 
-    let googleUser =
-      await this.usersService.findGoogleUserByEmail(
-        payload.email,
-      );
-
-    if (!googleUser) {
-      let usuario =
-        await this.usersService.findByEmail(
-          payload.email,
-        );
-
-      if (!usuario) {
-        usuario =
-          await this.usersService.createUsuario({
-            nombre: payload.name ?? '',
-            email: payload.email,
-            password: 'GOOGLE_AUTH',
-            rol: RolUsuario.CLIENTE,
-            estado: EstadoGeneral.ACTIVO,
-          });
+      if (!clientId) {
+        console.error('❌ GOOGLE_CLIENT_ID no está configurado en .env');
+        throw new BadRequestException('GOOGLE_CLIENT_ID no está configurado');
       }
 
-      await this.usersService.createGoogleUser({
-        idUsuario: usuario.idUsuario,
-        googleId: payload.sub,
-        googleEmail: payload.email,
-        googlePicture: payload.picture,
+      if (!token || token.trim() === '') {
+        console.error('❌ Token vacío o undefined');
+        throw new BadRequestException('Token no proporcionado');
+      }
+
+      console.log('⏳ Verificando token con OAuth2Client...');
+      
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken: token,
+        audience: clientId,
       });
 
-      googleUser =
-        await this.usersService.findGoogleUserByEmail(
-          payload.email,
-        );
-    }
+      console.log('✅ Token verificado correctamente');
 
-    if (!googleUser?.usuario) {
+      const payload = ticket.getPayload();
+
+      console.log('👤 Email del token:', payload?.email);
+      console.log('👤 Nombre del token:', payload?.name);
+      console.log('👤 Google ID:', payload?.sub);
+
+      if (!payload?.email) {
+        console.error('❌ Token no contiene email');
+        throw new UnauthorizedException(
+          'Token Google inválido: no contiene email',
+        );
+      }
+
+      console.log('🔍 Buscando usuario por email...');
+
+      let usuario = await this.usersService.findByEmail(payload.email);
+
+      if (!usuario) {
+        console.log('➕ Usuario no existe, creando...');
+        usuario = await this.usersService.createUsuario({
+          nombre: payload.given_name ?? payload.name?.split(' ')[0] ?? '',
+          apellido: payload.family_name ?? '',
+          email: payload.email,
+          password: 'GOOGLE_AUTH',
+          rol: RolUsuario.CLIENTE,
+          activo: true,
+        });
+        console.log('✅ Usuario creado:', usuario.id);
+      } else {
+        console.log('✅ Usuario existe.');
+      }
+
+      console.log('🎟️ Generando JWT...');
+
+      const jwtToken = await this.jwtService.signAsync({
+        sub: usuario.id,
+        email: usuario.email,
+        role: usuario.rol,
+      });
+
+      console.log('✅ JWT GENERADO CORRECTAMENTE');
+      console.log('====================');
+
+      return {
+        message: 'Login Google exitoso',
+        token: jwtToken,
+        user: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          rol: usuario.rol,
+        },
+      };
+    } catch (error: any) {
+      console.error('====================');
+      console.error('❌ ERROR EN GOOGLE LOGIN:');
+      console.error('Tipo:', error.constructor.name);
+      console.error('Mensaje:', error.message);
+      console.error('Stack:', error.stack);
+      console.error('====================');
+      
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
+
       throw new UnauthorizedException(
-        'No fue posible autenticar el usuario',
+        `Error autenticando con Google: ${error.message}`,
       );
     }
-
-    const jwt =
-      await this.jwtService.signAsync({
-        sub: googleUser.usuario.idUsuario,
-        email: googleUser.usuario.email,
-        role: googleUser.usuario.rol,
-      });
-
-    return {
-      message: 'Login Google exitoso',
-      token: jwt,
-      user: {
-        id: googleUser.usuario.idUsuario,
-        nombre: googleUser.usuario.nombre,
-        email: googleUser.usuario.email,
-        rol: googleUser.usuario.rol,
-        picture: googleUser.googlePicture,
-      },
-    };
   }
 
   async forgotPassword(email: string) {
@@ -186,7 +219,7 @@ export class AuthService {
     const resetToken =
       await this.jwtService.signAsync(
         {
-          sub: usuario.idUsuario,
+          sub: usuario.id,
         },
         {
           expiresIn: '15m',

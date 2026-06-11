@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Request } from '@nestjs/common';
 import { DashboardService } from './dashboards.service';
 import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
 import { RolesGuard, Roles } from '../common/guards/roles.guard';
@@ -33,5 +33,11 @@ export class DashboardController {
     @Param('corredorId') corredorId: string,
   ) {
     return this.dashboardService.corredor(corredorId);
+  }
+
+  @Get('cliente')
+  @UseGuards(JwtAuthGuard)
+  async clienteDashboard(@Request() request: any) {
+    return this.dashboardService.cliente(request.user.id);
   }
 }

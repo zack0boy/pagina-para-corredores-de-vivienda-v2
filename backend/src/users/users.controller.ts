@@ -8,7 +8,6 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
-  ParseIntPipe,
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -27,6 +26,18 @@ export class UsersController {
   ) {}
 
   //========================
+  // PERFIL DEL USUARIO ACTUAL
+  //========================
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getCurrentUser(
+    @Request() request: any,
+  ) {
+    return this.userService.findById(request.user.id);
+  }
+
+  //========================
   // CLIENTES
   //========================
 
@@ -42,6 +53,7 @@ export class UsersController {
   @Roles(
     RolUsuario.SUPER_ADMIN,
     RolUsuario.ADMIN_EMPRESA,
+    RolUsuario.CLIENTE,
   )
   async getAllClientes(@Query() filters: FilterClienteDto) {
     if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
@@ -58,7 +70,7 @@ export class UsersController {
     RolUsuario.CLIENTE,
   )
   async getCliente(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Request() request: any,
   ) {
     if (
@@ -80,7 +92,7 @@ export class UsersController {
     RolUsuario.CLIENTE,
   )
   async updateCliente(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Request() request: any,
     @Body() dto: UpdateClienteDto,
   ) {
@@ -134,7 +146,7 @@ export class UsersController {
     RolUsuario.CORREDOR,
   )
   async getCorredor(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Request() request: any,
   ) {
     if (
@@ -156,7 +168,7 @@ export class UsersController {
     RolUsuario.CORREDOR,
   )
   async updateCorredor(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Request() request: any,
     @Body() dto: UpdateCorredorDto,
   ) {

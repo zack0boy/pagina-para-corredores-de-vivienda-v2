@@ -105,4 +105,27 @@ export class DashboardService {
       cuotas,
     };
   }
+
+  async cliente(clienteId: string) {
+    // Para clientes: mostrar información básica
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id: clienteId },
+    });
+
+    if (!usuario) {
+      return { error: 'Usuario no encontrado' };
+    }
+
+    return {
+      usuario: {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        rol: usuario.rol,
+      },
+      resumen: {
+        mensaje: 'Bienvenido al dashboard de cliente',
+      },
+    };
+  }
 }

@@ -1,6 +1,0 @@
-.page-container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
-.page-container h1 { color: #2c3e50; margin-bottom: 20px; }
-.action-bar { margin-bottom: 20px; }
-.btn-create { background-color: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
-.btn-create:hover { background-color: #27ae60; }
-.empty-state { text-align: center; padding: 40px; color: #7f8c8d; background: white; border-radius: 8px; }
