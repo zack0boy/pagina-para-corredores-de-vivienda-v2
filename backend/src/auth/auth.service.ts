@@ -5,6 +5,9 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { RolUsuario } from '../common/enum/roles.enum';
+import { DataSource } from 'typeorm';
+import { EmailService, TipoNotificacion } from '../email/email.service';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +17,9 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
+    @InjectDataSource() private readonly dataSource: DataSource,
+    
   ) {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     if (!clientId) {
@@ -206,49 +212,80 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const usuario =
-      await this.usersService.findByEmail(email);
+    const usuario = await this.usersService.findByEmail(email);
 
     if (!usuario) {
+      // Respuesta genérica por seguridad
       return {
-        message:
-          'Si el correo existe, recibirá instrucciones',
+        message: 'Si el correo existe, recibirá instrucciones',
       };
     }
 
-    const resetToken =
-      await this.jwtService.signAsync(
-        {
-          sub: usuario.id,
-        },
-        {
-          expiresIn: '15m',
-        },
-      );
+    // Generar código aleatorio de 6 dígitos
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-    return {
-      resetToken,
-    };
-  }
+    // Guardar el código directamente en la tabla de Aiven (Sin usar Entity)
+    await this.dataSource.query(
+      `INSERT INTO password_resets (email, token, expires_at) 
+       VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+      [email, codigo]
+    );
 
-  async resetPassword(
-    token: string,
-    newPassword: string,
-  ) {
-    const payload =
-      await this.jwtService.verifyAsync(token);
-
-    const hashedPassword =
-      await bcrypt.hash(newPassword, 10);
-
-    await this.usersService.updatePassword(
-      payload.sub,
-      hashedPassword,
+    // Enviar el correo usando tu EmailService y la plantilla de reseteo
+    await this.emailService.enviarNotificacion(
+      email,
+      TipoNotificacion.RESETEO_CONTRASENA,
+      {
+        nombre: usuario.nombre,
+        codigo: codigo,
+      },
     );
 
     return {
-      message:
-        'Contraseña actualizada correctamente',
+      message: 'Si el correo existe, recibirá instrucciones',
+    };
+  }
+
+  // 4. MODIFICAR RESET PASSWORD PARA VALIDAR EL CÓDIGO DE 6 DÍGITOS
+  async resetPassword(
+    email: string,
+    codigo: string,
+    newPassword: string,
+  ) {
+    // Verificar si el código existe y no ha expirado en Aiven
+    const resultado = await this.dataSource.query(
+      `SELECT * FROM password_resets 
+       WHERE email = $1 AND token = $2 AND expires_at > NOW()`,
+      [email, codigo]
+    );
+
+    // Si la consulta no devuelve filas, el código no es válido o ya expiró
+    if (!resultado || resultado.length === 0) {
+      throw new BadRequestException('Código inválido o expirado');
+    }
+
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Obtener el usuario para tener su ID y actualizar la contraseña
+    const usuario = await this.usersService.findByEmail(email);
+    if (!usuario) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
+
+    await this.usersService.updatePassword(
+      usuario.id,
+      hashedPassword,
+    );
+
+    // Eliminar el código de la base de datos para que sea de un solo uso
+    await this.dataSource.query(
+      'DELETE FROM password_resets WHERE email = $1 AND token = $2',
+      [email, codigo]
+    );
+
+    return {
+      message: 'Contraseña actualizada correctamente',
     };
   }
 }

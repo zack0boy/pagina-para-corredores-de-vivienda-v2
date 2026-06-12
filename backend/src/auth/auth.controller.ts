@@ -81,17 +81,15 @@ async register(
   // Resetear contraseña
   // POST /auth/reset-password
   // ==========================
-  @Post('reset-password')
+@Post('reset-password')
   async resetPassword(
-    @Body()
-    body: {
-      token: string;
-      password: string;
-    },
+    @Body() body: { email: string; codigo: string; newPassword: string }
   ) {
+    // Aquí le pasas los 3 argumentos que el servicio ahora exige
     return this.authService.resetPassword(
-      body.token,
-      body.password,
+      body.email,
+      body.codigo,
+      body.newPassword,
     );
   }
 }
