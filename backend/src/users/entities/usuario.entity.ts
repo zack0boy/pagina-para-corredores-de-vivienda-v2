@@ -4,12 +4,8 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
   Unique,
 } from 'typeorm';
-
-import { Cliente } from './cliente.entity';
-import { Corredor } from './corredor.entity';
 import { RolUsuario } from '../../common/enum/roles.enum';
 
 @Entity({ name: 'usuarios' })
@@ -17,6 +13,9 @@ import { RolUsuario } from '../../common/enum/roles.enum';
 export class Usuario {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id!: string;
+
+  @Column({ name: 'empresa_id', type: 'uuid', nullable: true })
+  empresaId?: string;
 
   @Column({ name: 'nombre' })
   nombre!: string;
@@ -33,6 +32,9 @@ export class Usuario {
   @Column({ name: 'password_hash' })
   password!: string;
 
+  @Column({ name: 'google_id', nullable: true })
+  googleId?: string;
+
   @Column({ name: 'rol' })
   rol!: RolUsuario;
 
@@ -44,11 +46,4 @@ export class Usuario {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
-
-  // Relaciones
-  @OneToOne(() => Cliente, (cliente) => cliente.usuario)
-  cliente?: Cliente;
-
-  @OneToOne(() => Corredor, (corredor) => corredor.usuario)
-  corredor?: Corredor;
 }

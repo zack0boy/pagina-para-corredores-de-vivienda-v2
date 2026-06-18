@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -11,12 +11,10 @@ import { typeormConfig } from './database/typeorm.config';
 import { EmpresasModule } from './empresas/empresas.module';
 import { CategoriaModule } from './categoria/categoria.module';
 import { PropiedadesModule } from './propiedades/propiedades.module';
-import { PropiedadImagenController } from './propiedad-imagen/propiedad-imagen.controller';
 import { PropiedadImagenModule } from './propiedad-imagen/propiedad-imagen.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { LeadsModule } from './lead/lead.module';
 import { CorredoresModule } from './corredores/corredores.module';
-import { VisitasController } from './visitas/visitas.controller';
 import { VisitasModule } from './visitas/visitas.module';
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 import { NotificacionesModule } from './notificaciones/notificaciones.module';
@@ -26,7 +24,9 @@ import { CuotasModule } from './cuotas/cuotas.module';
 import { ComprobanteModule } from './comprobante/comprobante.module';
 import { EmailModule } from './email/email.module';
 import { DashboardsModule } from './dashboards/dashboards.module';
-
+import { PagosModule } from './pagos/pagos.module';
+import { SolicitudesClienteModule } from './solicitudes-cliente/solicitudes-cliente.module';
+import { EventosCalendarioModule } from './eventos-calendario/eventos-calendario.module';
 
 @Module({
   imports: [
@@ -50,13 +50,13 @@ import { DashboardsModule } from './dashboards/dashboards.module';
     PlantillasEmailModule,
     CuotasModule,
     ContratosModule,
+    PagosModule,
     ComprobanteModule,
     EmailModule,
-    UsersModule,
-    AuthModule,
     DashboardsModule,
+    SolicitudesClienteModule,
+    EventosCalendarioModule,
   ],
-
   controllers: [AppController],
   providers: [AppService],
 })

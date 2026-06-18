@@ -81,7 +81,7 @@ export class UsersController {
         'No puede acceder a los datos de otro cliente',
       );
     }
-    return this.userService.getCliente(id);
+    return this.userService.findClienteById(id);
   }
 
   @Patch('clientes/:id')

@@ -28,7 +28,7 @@ export class Propiedades {
   @Column({ length: 50, unique: true })
   codigo!: string;
 
-  @Column({ length: 250 })
+  @Column({ length: 100 })
   titulo!: string;
 
   @Column({

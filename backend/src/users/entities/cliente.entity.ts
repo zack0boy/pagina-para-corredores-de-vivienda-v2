@@ -1,25 +1,53 @@
-import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn, CreateDateColumn } from 'typeorm';
-import { Usuario } from './usuario.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
+import { EstadoCliente } from '../../common/enum/estado.enum';
 
-@Entity({ name: 'cliente' })
+@Entity({ name: 'clientes' })
+@Index(['empresa_id'])
 export class Cliente {
-  @PrimaryColumn('uuid', { name: 'id_usuario' })
-  idUsuario!: string;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
-  @Column({ name: 'telefono', length: 20, nullable: true })
-  telefono?: string;
+  @Column('uuid')
+  empresa_id!: string;
 
-  @Column({ name: 'rut', length: 12, unique: true })
-  rut!: string;
+  @Column({ length: 100 })
+  nombre!: string;
 
-  @Column({ name: 'direccion', type: 'text', nullable: true })
-  direccion?: string;
+  @Column({ length: 100 })
+  apellido!: string;
+
+  @Column({ length: 150, nullable: true, unique: true })
+  email?: string;
+
+  @Column({ length: 30 })
+  telefono!: string;
+
+  @Column({ type: 'text', nullable: true, name: 'password_hash' })
+  password?: string;
+
+  @Column({ nullable: true, name: 'google_id' })
+  googleId?: string;
+
+  @Column({ default: true })
+  activo!: boolean;
+
+  @Column({
+    type: 'enum',
+    enum: EstadoCliente,
+    default: EstadoCliente.PENDIENTE_VALIDACION,
+  })
+  estado!: EstadoCliente;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 
-  // Relaciones
-  @OneToOne(() => Usuario)
-  @JoinColumn({ name: 'id_usuario' })
-  usuario!: Usuario;
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt!: Date;
 }

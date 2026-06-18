@@ -1,13 +1,18 @@
-import {Injectable,UnauthorizedException,ConflictException,BadRequestException} from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
-import { RolUsuario } from '../common/enum/roles.enum';
 import { DataSource } from 'typeorm';
 import { EmailService, TipoNotificacion } from '../email/email.service';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { EstadoCliente } from '../common/enum/estado.enum';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +24,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     @InjectDataSource() private readonly dataSource: DataSource,
-    
   ) {
     const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
     if (!clientId) {
@@ -28,160 +32,187 @@ export class AuthService {
     this.googleClient = new OAuth2Client(clientId);
   }
 
+  // Registro exclusivo para clientes (crea en tabla 'clientes')
   async register(
     nombre: string,
+    apellido: string,
     email: string,
     password: string,
+    telefono: string,
+    empresa_id: string,
   ) {
-    const existingUser =
-      await this.usersService.findByEmail(email);
+    const existente = await this.usersService.findClienteByEmail(email);
+    if (existente) throw new ConflictException('El email ya está registrado');
 
-    if (existingUser) {
-      throw new ConflictException(
-        'El email ya está registrado',
-      );
-    }
-
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
-
-    const usuario =
-      await this.usersService.createUsuario({
-        nombre,
-        apellido: '',
-        email,
-        password: hashedPassword,
-        rol: RolUsuario.CLIENTE,
-        activo: true,
-      });
+    const cliente = await this.usersService.createCliente({
+      empresa_id,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      password,
+    });
 
     return {
-      message: 'Usuario registrado correctamente',
+      message: 'Cliente registrado correctamente. Pendiente de validación.',
       user: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
+        id: cliente.id,
+        nombre: cliente.nombre,
+        email: cliente.email,
+        tipo: 'cliente',
+        estado: cliente.estado,
       },
     };
   }
 
-  async login(
-    email: string,
-    password: string,
-  ) {
-    const usuario =
-      await this.usersService.findByEmail(email);
+  // Login unificado: primero busca en usuarios (staff), luego en clientes
+  async login(email: string, password: string) {
+    // Intentar como staff primero
+    const usuario = await this.usersService.findByEmail(email);
+    if (usuario) {
+      const match = await bcrypt.compare(password, usuario.password);
+      if (!match) throw new UnauthorizedException('Credenciales inválidas');
 
-    if (!usuario) {
-      throw new UnauthorizedException(
-        'Credenciales inválidas',
-      );
-    }
-
-    const passwordMatch =
-      await bcrypt.compare(
-        password,
-        usuario.password,
-      );
-
-    if (!passwordMatch) {
-      throw new UnauthorizedException(
-        'Credenciales inválidas',
-      );
-    }
-
-    const token =
-      await this.jwtService.signAsync({
+      const token = await this.jwtService.signAsync({
         sub: usuario.id,
         email: usuario.email,
         role: usuario.rol,
+        tipo: 'staff',
       });
+
+      return {
+        token,
+        user: {
+          id: usuario.id,
+          nombre: usuario.nombre,
+          email: usuario.email,
+          rol: usuario.rol,
+          tipo: 'staff',
+        },
+      };
+    }
+
+    // Intentar como cliente
+    const cliente = await this.usersService.findClienteByEmail(email);
+    if (!cliente || !cliente.password) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const match = await bcrypt.compare(password, cliente.password);
+    if (!match) throw new UnauthorizedException('Credenciales inválidas');
+
+    if (!cliente.activo) {
+      throw new UnauthorizedException('Cuenta desactivada. Contacte a su corredor.');
+    }
+
+    const token = await this.jwtService.signAsync({
+      sub: cliente.id,
+      email: cliente.email,
+      role: 'CLIENTE',
+      tipo: 'cliente',
+      empresa_id: cliente.empresa_id,
+    });
 
     return {
       token,
       user: {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        email: usuario.email,
-        rol: usuario.rol,
+        id: cliente.id,
+        nombre: cliente.nombre,
+        email: cliente.email,
+        rol: 'CLIENTE',
+        tipo: 'cliente',
+        estado: cliente.estado,
+        empresa_id: cliente.empresa_id,
       },
     };
   }
 
+  // Google login para staff (busca en usuarios)
   async googleLogin(token: string) {
     try {
       console.log('====================');
       console.log('🔵 GOOGLE LOGIN INICIADO');
       console.log('====================');
 
-      console.log('📬 TOKEN RECIBIDO (primeros 50 chars):', token?.substring(0, 50) || 'UNDEFINED');
-
       const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
-      
-      console.log('🔑 CLIENT_ID:', clientId || '❌ NO CONFIGURADO');
+      if (!clientId) throw new BadRequestException('GOOGLE_CLIENT_ID no está configurado');
+      if (!token || token.trim() === '') throw new BadRequestException('Token no proporcionado');
 
-      if (!clientId) {
-        console.error('❌ GOOGLE_CLIENT_ID no está configurado en .env');
-        throw new BadRequestException('GOOGLE_CLIENT_ID no está configurado');
-      }
-
-      if (!token || token.trim() === '') {
-        console.error('❌ Token vacío o undefined');
-        throw new BadRequestException('Token no proporcionado');
-      }
-
-      console.log('⏳ Verificando token con OAuth2Client...');
-      
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken: token,
-        audience: clientId,
-      });
-
-      console.log('✅ Token verificado correctamente');
-
+      const ticket = await this.googleClient.verifyIdToken({ idToken: token, audience: clientId });
       const payload = ticket.getPayload();
 
-      console.log('👤 Email del token:', payload?.email);
-      console.log('👤 Nombre del token:', payload?.name);
-      console.log('👤 Google ID:', payload?.sub);
-
       if (!payload?.email) {
-        console.error('❌ Token no contiene email');
-        throw new UnauthorizedException(
-          'Token Google inválido: no contiene email',
-        );
+        throw new UnauthorizedException('Token Google inválido: no contiene email');
       }
 
-      console.log('🔍 Buscando usuario por email...');
+      console.log('👤 Email:', payload.email);
 
+      // Buscar primero en staff
       let usuario = await this.usersService.findByEmail(payload.email);
-
-      if (!usuario) {
-        console.log('➕ Usuario no existe, creando...');
-        usuario = await this.usersService.createUsuario({
-          nombre: payload.given_name ?? payload.name?.split(' ')[0] ?? '',
-          apellido: payload.family_name ?? '',
-          email: payload.email,
-          password: 'GOOGLE_AUTH',
-          rol: RolUsuario.CLIENTE,
-          activo: true,
+      if (usuario) {
+        const jwtToken = await this.jwtService.signAsync({
+          sub: usuario.id,
+          email: usuario.email,
+          role: usuario.rol,
+          tipo: 'staff',
         });
-        console.log('✅ Usuario creado:', usuario.id);
-      } else {
-        console.log('✅ Usuario existe.');
+
+        return {
+          message: 'Login Google exitoso',
+          token: jwtToken,
+          user: {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            rol: usuario.rol,
+            tipo: 'staff',
+          },
+        };
       }
 
-      console.log('🎟️ Generando JWT...');
+      // Buscar en clientes
+      const cliente = await this.usersService.findClienteByEmail(payload.email);
+      if (cliente) {
+        const jwtToken = await this.jwtService.signAsync({
+          sub: cliente.id,
+          email: cliente.email,
+          role: 'CLIENTE',
+          tipo: 'cliente',
+          empresa_id: cliente.empresa_id,
+        });
+
+        return {
+          message: 'Login Google exitoso',
+          token: jwtToken,
+          user: {
+            id: cliente.id,
+            nombre: cliente.nombre,
+            email: cliente.email,
+            rol: 'CLIENTE',
+            tipo: 'cliente',
+            estado: cliente.estado,
+            empresa_id: cliente.empresa_id,
+          },
+        };
+      }
+
+      // Usuario nuevo via Google: crear como staff CLIENTE (sin empresa aún)
+      usuario = await this.usersService.createUsuario({
+        nombre: payload.given_name ?? payload.name?.split(' ')[0] ?? '',
+        apellido: payload.family_name ?? '',
+        email: payload.email,
+        password: 'GOOGLE_AUTH_NO_PASSWORD',
+        googleId: payload.sub,
+      });
+
+      console.log('✅ Usuario staff creado via Google:', usuario.id);
 
       const jwtToken = await this.jwtService.signAsync({
         sub: usuario.id,
         email: usuario.email,
         role: usuario.rol,
+        tipo: 'staff',
       });
-
-      console.log('✅ JWT GENERADO CORRECTAMENTE');
-      console.log('====================');
 
       return {
         message: 'Login Google exitoso',
@@ -191,101 +222,73 @@ export class AuthService {
           nombre: usuario.nombre,
           email: usuario.email,
           rol: usuario.rol,
+          tipo: 'staff',
         },
       };
     } catch (error: any) {
-      console.error('====================');
-      console.error('❌ ERROR EN GOOGLE LOGIN:');
-      console.error('Tipo:', error.constructor.name);
-      console.error('Mensaje:', error.message);
-      console.error('Stack:', error.stack);
-      console.error('====================');
-      
-      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
-        throw error;
-      }
-
-      throw new UnauthorizedException(
-        `Error autenticando con Google: ${error.message}`,
-      );
+      console.error('❌ ERROR EN GOOGLE LOGIN:', error.message);
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) throw error;
+      throw new UnauthorizedException(`Error autenticando con Google: ${error.message}`);
     }
   }
 
   async forgotPassword(email: string) {
+    // Buscar en ambas tablas
     const usuario = await this.usersService.findByEmail(email);
+    const cliente = await this.usersService.findClienteByEmail(email);
 
-    if (!usuario) {
-      // Respuesta genérica por seguridad
-      return {
-        message: 'Si el correo existe, recibirá instrucciones',
-      };
+    if (!usuario && !cliente) {
+      return { message: 'Si el correo existe, recibirá instrucciones' };
     }
 
-    // Generar código aleatorio de 6 dígitos
     const codigo = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Guardar el código directamente en la tabla de Aiven (Sin usar Entity)
     await this.dataSource.query(
-      `INSERT INTO password_resets (email, token, expires_at) 
+      `INSERT INTO password_resets (email, token, expires_at)
        VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
-      [email, codigo]
+      [email, codigo],
     );
 
-    // Enviar el correo usando tu EmailService y la plantilla de reseteo
-    await this.emailService.enviarNotificacion(
-      email,
-      TipoNotificacion.RESETEO_CONTRASENA,
-      {
-        nombre: usuario.nombre,
-        codigo: codigo,
-      },
-    );
+    const nombre = usuario?.nombre ?? cliente?.nombre ?? '';
+    await this.emailService.enviarNotificacion(email, TipoNotificacion.RESETEO_CONTRASENA, {
+      nombre,
+      codigo,
+    });
 
-    return {
-      message: 'Si el correo existe, recibirá instrucciones',
-    };
+    return { message: 'Si el correo existe, recibirá instrucciones' };
   }
 
-  // 4. MODIFICAR RESET PASSWORD PARA VALIDAR EL CÓDIGO DE 6 DÍGITOS
-  async resetPassword(
-    email: string,
-    codigo: string,
-    newPassword: string,
-  ) {
-    // Verificar si el código existe y no ha expirado en Aiven
+  async resetPassword(email: string, codigo: string, newPassword: string) {
     const resultado = await this.dataSource.query(
-      `SELECT * FROM password_resets 
-       WHERE email = $1 AND token = $2 AND expires_at > NOW()`,
-      [email, codigo]
+      `SELECT * FROM password_resets WHERE email = $1 AND token = $2 AND expires_at > NOW()`,
+      [email, codigo],
     );
 
-    // Si la consulta no devuelve filas, el código no es válido o ya expiró
     if (!resultado || resultado.length === 0) {
       throw new BadRequestException('Código inválido o expirado');
     }
 
-    // Encriptar la nueva contraseña
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Obtener el usuario para tener su ID y actualizar la contraseña
+    // Actualizar en la tabla correcta
     const usuario = await this.usersService.findByEmail(email);
-    if (!usuario) {
-      throw new BadRequestException('Usuario no encontrado');
+    if (usuario) {
+      await this.usersService.updatePassword(usuario.id, hashedPassword);
+    } else {
+      const cliente = await this.usersService.findClienteByEmail(email);
+      if (cliente) {
+        await this.dataSource.query(
+          `UPDATE clientes SET password_hash = $1 WHERE id = $2`,
+          [hashedPassword, cliente.id],
+        );
+      }
     }
 
-    await this.usersService.updatePassword(
-      usuario.id,
-      hashedPassword,
-    );
-
-    // Eliminar el código de la base de datos para que sea de un solo uso
     await this.dataSource.query(
       'DELETE FROM password_resets WHERE email = $1 AND token = $2',
-      [email, codigo]
+      [email, codigo],
     );
 
-    return {
-      message: 'Contraseña actualizada correctamente',
-    };
+    return { message: 'Contraseña actualizada correctamente' };
   }
 }

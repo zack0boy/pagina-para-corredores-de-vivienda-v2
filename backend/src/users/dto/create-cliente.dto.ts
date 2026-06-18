@@ -1,30 +1,29 @@
-import { IsString, IsEmail, IsPhoneNumber, Length, IsOptional, IsNotEmpty, Matches } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsUUID, Length, MinLength } from 'class-validator';
 
 export class CreateClienteDto {
+  @IsUUID()
+  empresa_id!: string;
+
   @IsString()
   @Length(1, 100)
   nombre!: string;
 
+  @IsString()
+  @Length(1, 100)
+  apellido!: string;
+
   @IsEmail()
-  email!: string;
+  @IsOptional()
+  email?: string;
 
   @IsString()
-  @Length(8, 255)
-  password!: string;
-
-  @IsString()
-  @Length(5, 20)
+  @Length(5, 30)
   telefono!: string;
 
   @IsString()
-  @Matches(/^\d{1,2}\.\d{3}\.\d{3}[-]?[0-9Kk]$/, {
-    message: 'RUT debe estar en formato válido (ej: 12.345.678-9)',
-  })
-  rut!: string;
-
+  @MinLength(8)
   @IsOptional()
-  @IsString()
-  direccion?: string;
+  password?: string;
 }
 
 export class UpdateClienteDto {
@@ -34,25 +33,28 @@ export class UpdateClienteDto {
   nombre?: string;
 
   @IsOptional()
+  @IsString()
+  @Length(1, 100)
+  apellido?: string;
+
+  @IsOptional()
   @IsEmail()
   email?: string;
 
   @IsOptional()
   @IsString()
-  @Length(5, 20)
+  @Length(5, 30)
   telefono?: string;
-
-  @IsOptional()
-  @IsString()
-  direccion?: string;
 }
 
 export class ClienteResponseDto {
-  idUsuario!: number;
+  id!: string;
+  empresa_id!: string;
   nombre!: string;
-  email!: string;
-  telefono?: string;
-  rut!: string;
-  direccion?: string;
+  apellido!: string;
+  email?: string;
+  telefono!: string;
+  estado!: string;
+  activo!: boolean;
   createdAt!: Date;
 }

@@ -30,20 +30,26 @@ export class AuthController {
   // POST /auth/register
   // ==========================
   @Post('register')
-async register(
-  @Body()
-  body: {
-    nombre: string;
-    email: string;
-    password: string;
-  },
-) {
-  return this.authService.register(
-    body.nombre,
-    body.email,
-    body.password,
-  );
-}
+  async register(
+    @Body()
+    body: {
+      nombre: string;
+      apellido: string;
+      email: string;
+      password: string;
+      telefono: string;
+      empresa_id: string;
+    },
+  ) {
+    return this.authService.register(
+      body.nombre,
+      body.apellido,
+      body.email,
+      body.password,
+      body.telefono,
+      body.empresa_id,
+    );
+  }
 
   // ==========================
   // Login con Google
