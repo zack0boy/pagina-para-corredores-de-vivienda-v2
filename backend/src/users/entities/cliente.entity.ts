@@ -38,6 +38,9 @@ export class Cliente {
   @Column({ default: true })
   activo!: boolean;
 
+  @Column({ name: 'email_verificado', default: false })
+  emailVerificado!: boolean;
+
   @Column({
     type: 'enum',
     enum: EstadoCliente,

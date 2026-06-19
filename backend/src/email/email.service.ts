@@ -9,6 +9,7 @@ export enum TipoNotificacion {
   NUEVO_LEAD = 'nuevo_lead',
   CONFIRMACION_REGISTRO = 'confirmacion_registro',
   RESETEO_CONTRASENA = 'reseteo_contrasena',
+  VERIFICACION_EMAIL = 'verificacion_email',
   VISITANTE_CONFIRMADO = 'visitante_confirmado',
   PROPIEDAD_DISPONIBLE = 'propiedad_disponible',
   CONTACTO_CLIENTE = 'contacto_cliente',
@@ -146,6 +147,23 @@ export class EmailService {
         <p>Hemos recibido tu mensaje y nos pondremos en contacto contigo pronto.</p>
         <p><strong>Tu mensaje:</strong> {{mensaje}}</p>
         <p>Gracias por confiar en nosotros.</p>
+      `,
+    },
+    [TipoNotificacion.VERIFICACION_EMAIL]: {
+      asunto: '✅ Verifica tu correo - Código {{codigo}}',
+      contenido: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+          <h2>Verifica tu correo electrónico</h2>
+          <p>Hola <strong>{{nombre}}</strong>,</p>
+          <p>Gracias por registrarte. Para confirmar que este correo es tuyo, ingresa el siguiente código de 6 dígitos en la aplicación:</p>
+
+          <div style="background-color: #f4f4f5; padding: 20px; text-align: center; border-radius: 8px; margin: 25px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2563eb;">{{codigo}}</span>
+          </div>
+
+          <p style="font-size: 14px; color: #666;">Este código expirará en 15 minutos.</p>
+          <p style="font-size: 14px; color: #666;">Si no creaste esta cuenta, puedes ignorar este mensaje.</p>
+        </div>
       `,
     },
     [TipoNotificacion.RESETEO_CONTRASENA]: {

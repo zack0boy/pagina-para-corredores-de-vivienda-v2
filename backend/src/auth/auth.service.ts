@@ -53,8 +53,12 @@ export class AuthService {
       password,
     });
 
+    // Enviar código de verificación de correo
+    await this.enviarCodigoVerificacion(email, nombre);
+
     return {
-      message: 'Cliente registrado correctamente. Pendiente de validación.',
+      message: 'Cuenta creada. Te enviamos un código a tu correo para verificarlo.',
+      requiereVerificacion: true,
       user: {
         id: cliente.id,
         nombre: cliente.nombre,
@@ -63,6 +67,58 @@ export class AuthService {
         estado: cliente.estado,
       },
     };
+  }
+
+  // Genera un código de 6 dígitos, lo guarda y lo envía por correo
+  private async enviarCodigoVerificacion(email: string, nombre: string) {
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Borramos códigos previos de este correo y guardamos el nuevo
+    await this.dataSource.query('DELETE FROM email_verifications WHERE email = $1', [email]);
+    await this.dataSource.query(
+      `INSERT INTO email_verifications (email, token, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '15 minutes')`,
+      [email, codigo],
+    );
+
+    await this.emailService.enviarNotificacion(email, TipoNotificacion.VERIFICACION_EMAIL, {
+      nombre,
+      codigo,
+    });
+  }
+
+  // Verifica el código y marca el correo como verificado
+  async verifyEmail(email: string, codigo: string) {
+    const resultado = await this.dataSource.query(
+      `SELECT * FROM email_verifications WHERE email = $1 AND token = $2 AND expires_at > NOW()`,
+      [email, codigo],
+    );
+
+    if (!resultado || resultado.length === 0) {
+      throw new BadRequestException('Código inválido o expirado');
+    }
+
+    await this.dataSource.query(
+      'UPDATE clientes SET email_verificado = true WHERE email = $1',
+      [email],
+    );
+    await this.dataSource.query('DELETE FROM email_verifications WHERE email = $1', [email]);
+
+    return { message: 'Correo verificado correctamente. Ya puedes iniciar sesión.' };
+  }
+
+  // Reenvía un nuevo código de verificación
+  async resendVerification(email: string) {
+    const cliente = await this.usersService.findClienteByEmail(email);
+    if (!cliente) {
+      // No revelamos si el correo existe o no
+      return { message: 'Si el correo existe, recibirás un nuevo código.' };
+    }
+    if (cliente.emailVerificado) {
+      return { message: 'Este correo ya está verificado.' };
+    }
+    await this.enviarCodigoVerificacion(email, cliente.nombre);
+    return { message: 'Te enviamos un nuevo código a tu correo.' };
   }
 
   // Login unificado: primero busca en usuarios (staff), luego en clientes
@@ -100,6 +156,10 @@ export class AuthService {
 
     const match = await bcrypt.compare(password, cliente.password);
     if (!match) throw new UnauthorizedException('Credenciales inválidas');
+
+    if (!cliente.emailVerificado) {
+      throw new UnauthorizedException('EMAIL_NO_VERIFICADO');
+    }
 
     if (!cliente.activo) {
       throw new UnauthorizedException('Cuenta desactivada. Contacte a su corredor.');
@@ -196,35 +256,13 @@ export class AuthService {
         };
       }
 
-      // Usuario nuevo via Google: crear como staff CLIENTE (sin empresa aún)
-      usuario = await this.usersService.createUsuario({
-        nombre: payload.given_name ?? payload.name?.split(' ')[0] ?? '',
-        apellido: payload.family_name ?? '',
-        email: payload.email,
-        password: 'GOOGLE_AUTH_NO_PASSWORD',
-        googleId: payload.sub,
-      });
-
-      console.log('✅ Usuario staff creado via Google:', usuario.id);
-
-      const jwtToken = await this.jwtService.signAsync({
-        sub: usuario.id,
-        email: usuario.email,
-        role: usuario.rol,
-        tipo: 'staff',
-      });
-
-      return {
-        message: 'Login Google exitoso',
-        token: jwtToken,
-        user: {
-          id: usuario.id,
-          nombre: usuario.nombre,
-          email: usuario.email,
-          rol: usuario.rol,
-          tipo: 'staff',
-        },
-      };
+      // El correo de Google no pertenece a ningún usuario ni cliente registrado.
+      // Por seguridad NO creamos cuentas automáticamente: un corredor/admin
+      // debe existir previamente, y un cliente debe registrarse primero.
+      console.warn('⚠️ Cuenta Google no registrada:', payload.email);
+      throw new UnauthorizedException(
+        'Esta cuenta de Google no está registrada en el sistema. Contacta al administrador o regístrate primero.',
+      );
     } catch (error: any) {
       console.error('❌ ERROR EN GOOGLE LOGIN:', error.message);
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) throw error;

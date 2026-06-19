@@ -68,6 +68,28 @@ export class AuthController {
   }
 
   // ==========================
+  // Verificar correo con código
+  // POST /auth/verify-email
+  // ==========================
+  @Post('verify-email')
+  async verifyEmail(
+    @Body() body: { email: string; codigo: string },
+  ) {
+    return this.authService.verifyEmail(body.email, body.codigo);
+  }
+
+  // ==========================
+  // Reenviar código de verificación
+  // POST /auth/resend-verification
+  // ==========================
+  @Post('resend-verification')
+  async resendVerification(
+    @Body() body: { email: string },
+  ) {
+    return this.authService.resendVerification(body.email);
+  }
+
+  // ==========================
   // Recuperar contraseña
   // POST /auth/forgot-password
   // ==========================
