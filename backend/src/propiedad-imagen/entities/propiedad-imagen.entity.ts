@@ -16,13 +16,14 @@ export class PropiedadImagen {
   @Column()
   url!: string;
 
-  @Column()
-  public_id!: string;
+  @Column({ nullable: true })
+  public_id?: string;
 
   @Column({
     default: 1,
+    nullable: true,
   })
-  orden!: number;
+  orden?: number;
 
   @CreateDateColumn()
   created_at!: Date;

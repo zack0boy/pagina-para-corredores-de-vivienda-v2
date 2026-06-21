@@ -22,24 +22,21 @@ export class PropiedadImagenService {
     propiedad_id: string,
     file: Express.Multer.File,
   ) {
-    const resultado = await cloudinary.uploader.upload(
-      file.path,
-      {
-        folder: 'propiedades',
-      },
-    );
+    if (!file) {
+      throw new Error('No se recibió ningún archivo en el campo "imagen"');
+    }
 
+    // Validamos cupo antes de subir a Cloudinary
     const cantidad = await this.imagenRepository.count({
-      where: {
-        propiedad_id,
-      },
+      where: { propiedad_id },
     });
 
     if (cantidad >= 10) {
-      throw new Error(
-        'La propiedad ya tiene el máximo de 10 imágenes',
-      );
+      throw new Error('La propiedad ya tiene el máximo de 10 imágenes');
     }
+
+    // Subimos el archivo directamente desde el buffer en memoria
+    const resultado = await this.subirBufferACloudinary(file.buffer);
 
     const imagen = this.imagenRepository.create({
       propiedad_id,
@@ -51,11 +48,33 @@ export class PropiedadImagenService {
     return this.imagenRepository.save(imagen);
   }
 
+  // Sube un buffer (imagen en memoria) a Cloudinary usando upload_stream
+  private subirBufferACloudinary(buffer: Buffer): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'propiedades' },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+      stream.end(buffer);
+    });
+  }
+
   findAll() {
     return this.imagenRepository.find({
       order: {
         orden: 'ASC',
       },
+    });
+  }
+
+  // Devuelve todas las imágenes de una propiedad específica, ordenadas
+  findByPropiedad(propiedad_id: string) {
+    return this.imagenRepository.find({
+      where: { propiedad_id },
+      order: { orden: 'ASC' },
     });
   }
 
@@ -89,9 +108,10 @@ export class PropiedadImagenService {
       );
     }
 
-    await cloudinary.uploader.destroy(
-      imagen.public_id,
-    );
+    // Solo intentamos borrar de Cloudinary si hay public_id guardado
+    if (imagen.public_id) {
+      await cloudinary.uploader.destroy(imagen.public_id);
+    }
 
     await this.imagenRepository.delete(id);
 

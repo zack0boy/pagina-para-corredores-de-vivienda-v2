@@ -38,9 +38,7 @@ export class PropiedadesController {
 
   @Get()
   findAll(@Query() filters: FilterPropiedadesDto) {
-    if (Object.keys(filters).length === 0 || (Object.keys(filters).length === 2 && filters.page && filters.limit)) {
-      return this.propiedadesService.findAll();
-    }
+    // Siempre paginado (rápido) y con imágenes incluidas
     return this.propiedadesService.findWithFilters(filters);
   }
 

@@ -44,6 +44,15 @@ export class PropiedadImagenController {
     return this.propiedadImagenService.findAll();
   }
 
+  // Imágenes de una propiedad específica
+  @Get('propiedad/:propiedad_id')
+  findByPropiedad(
+    @Param('propiedad_id')
+    propiedad_id: string,
+  ) {
+    return this.propiedadImagenService.findByPropiedad(propiedad_id);
+  }
+
   @Get(':id')
   findOne(
     @Param('id')

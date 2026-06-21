@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 
 import { Propiedades } from './entities/propiedades.entity';
+import { PropiedadImagen } from '../propiedad-imagen/entities/propiedad-imagen.entity';
 
 import { CreatePropiedadesDto } from './dto/create-propiedades.dto';
 import { UpdatePropiedadesDto } from './dto/update-propiedades.dto';
@@ -13,6 +14,8 @@ export class PropiedadesService {
   constructor(
     @InjectRepository(Propiedades)
     private propiedadRepository: Repository<Propiedades>,
+    @InjectRepository(PropiedadImagen)
+    private imagenRepository: Repository<PropiedadImagen>,
   ) {}
 
   create(createPropiedadesDto: CreatePropiedadesDto) {
@@ -81,10 +84,17 @@ export class PropiedadesService {
     const skip = ((filters.page || 1) - 1) * (filters.limit || 10);
     query.skip(skip).take(filters.limit || 10);
 
-    const [data, total] = await query.getManyAndCount();
+    // 1ª consulta: las propiedades de la página
+    const data = await query.getMany();
+
+    // El conteo total y las imágenes no dependen entre sí → corren en paralelo
+    const [total, dataConImagenes] = await Promise.all([
+      query.getCount(),
+      this.adjuntarImagenes(data),
+    ]);
 
     return {
-      data,
+      data: dataConImagenes,
       total,
       page: filters.page || 1,
       limit: filters.limit || 10,
@@ -92,8 +102,45 @@ export class PropiedadesService {
     };
   }
 
-  findOne(id: string) {
-    return this.propiedadRepository.findOneBy({ id });
+  // Carga las imágenes de varias propiedades de una vez y las agrupa por propiedad
+  private async adjuntarImagenes(propiedades: Propiedades[]) {
+    if (propiedades.length === 0) return propiedades;
+
+    const ids = propiedades.map((p) => p.id);
+    const imagenes = await this.imagenRepository
+      .createQueryBuilder('img')
+      .select(['img.id', 'img.propiedad_id', 'img.url', 'img.orden'])
+      .where('img.propiedad_id IN (:...ids)', { ids })
+      .orderBy('img.orden', 'ASC')
+      .getMany();
+
+    // Agrupamos las imágenes por propiedad_id
+    const porPropiedad: Record<string, any[]> = {};
+    for (const img of imagenes) {
+      (porPropiedad[img.propiedad_id] ??= []).push(img);
+    }
+
+    return propiedades.map((p) => ({
+      ...p,
+      imagenes: porPropiedad[p.id] ?? [],
+    }));
+  }
+
+  async findOne(id: string) {
+    const propiedad = await this.propiedadRepository.findOneBy({ id });
+    if (!propiedad) return null;
+
+    // Cargar las imágenes de la propiedad ordenadas.
+    // Seleccionamos solo las columnas necesarias para no depender de
+    // columnas opcionales (public_id) que podrían no existir en la tabla.
+    const imagenes = await this.imagenRepository
+      .createQueryBuilder('img')
+      .select(['img.id', 'img.propiedad_id', 'img.url', 'img.orden'])
+      .where('img.propiedad_id = :id', { id })
+      .orderBy('img.orden', 'ASC')
+      .getMany();
+
+    return { ...propiedad, imagenes };
   }
 
   async update(
