@@ -5,9 +5,10 @@ import { PropiedadesController } from './propiedades.controller';
 import { PropiedadesService } from './propiedades.service';
 import { Propiedades } from './entities/propiedades.entity';
 import { PropiedadImagen } from '../propiedad-imagen/entities/propiedad-imagen.entity';
+import { Usuario } from '../users/entities/usuario.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Propiedades, PropiedadImagen])],
+  imports: [TypeOrmModule.forFeature([Propiedades, PropiedadImagen, Usuario])],
   controllers: [PropiedadesController],
   providers: [PropiedadesService],
 })

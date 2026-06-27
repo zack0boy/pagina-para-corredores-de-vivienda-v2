@@ -50,6 +50,11 @@ export class ComprobanteController {
     return this.comprobanteService.findAll();
   }
 
+  @Get('pago/:pagoId')
+  findByPago(@Param('pagoId') pagoId: string) {
+    return this.comprobanteService.findByPago(pagoId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.comprobanteService.findOne(id);

@@ -3,10 +3,31 @@ import { TipoPago } from '../../common/enum/estado.enum';
 
 export class CreatePagoDto {
   @IsUUID()
-  cuota_id!: string;
+  @IsOptional()
+  cuota_id?: string;
 
   @IsUUID()
-  cliente_id!: string;
+  @IsOptional()
+  cliente_id?: string;
+
+  // Nombre del cliente para registro manual
+  @IsString()
+  @IsOptional()
+  cliente_nombre?: string;
+
+  // Corredor que registra el pago
+  @IsUUID()
+  @IsOptional()
+  corredor_id?: string;
+
+  // Propiedad asociada (opcional)
+  @IsUUID()
+  @IsOptional()
+  propiedad_id?: string;
+
+  @IsString()
+  @IsOptional()
+  propiedad_titulo?: string;
 
   @IsNumber()
   @IsPositive()

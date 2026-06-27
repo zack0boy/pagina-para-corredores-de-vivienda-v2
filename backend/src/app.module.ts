@@ -27,6 +27,7 @@ import { DashboardsModule } from './dashboards/dashboards.module';
 import { PagosModule } from './pagos/pagos.module';
 import { SolicitudesClienteModule } from './solicitudes-cliente/solicitudes-cliente.module';
 import { EventosCalendarioModule } from './eventos-calendario/eventos-calendario.module';
+import { SolicitudesPropiedadModule } from './solicitudes-propiedad/solicitudes-propiedad.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { EventosCalendarioModule } from './eventos-calendario/eventos-calendario
     DashboardsModule,
     SolicitudesClienteModule,
     EventosCalendarioModule,
+    SolicitudesPropiedadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

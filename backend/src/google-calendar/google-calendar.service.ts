@@ -4,26 +4,36 @@ import { google } from 'googleapis';
 @Injectable()
 export class GoogleCalendarService {
   private validateCredentials() {
-    if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
-      throw new BadRequestException('Credenciales de Google no configuradas');
-    }
-    if (!process.env.GOOGLE_CALENDAR_ID) {
-      throw new BadRequestException('ID de Google Calendar no configurado');
+    if (
+      !process.env.GOOGLE_CLIENT_ID ||
+      !process.env.GOOGLE_CLIENT_SECRET ||
+      !process.env.GOOGLE_REFRESH_TOKEN
+    ) {
+      throw new BadRequestException(
+        'Credenciales OAuth de Google no configuradas (CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)',
+      );
     }
   }
 
   private getCalendar() {
     this.validateCredentials();
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL!,
-        private_key: process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/calendar'],
+    // Cliente OAuth2 con el refresh_token: actúa en nombre de la cuenta que autorizó
+    const oauth2 = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI,
+    );
+    oauth2.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
     });
 
-    return google.calendar({ version: 'v3', auth });
+    return google.calendar({ version: 'v3', auth: oauth2 });
+  }
+
+  // ID del calendario destino. 'primary' = el calendario principal de la cuenta autorizada.
+  private get calendarId(): string {
+    return process.env.GOOGLE_CALENDAR_ID || 'primary';
   }
 
   async createEvent(data: {
@@ -41,7 +51,7 @@ export class GoogleCalendarService {
         : [];
 
       const response = await calendar.events.insert({
-        calendarId: process.env.GOOGLE_CALENDAR_ID!,
+        calendarId: this.calendarId,
         requestBody: {
           summary: data.titulo,
           description: data.descripcion,
@@ -71,7 +81,7 @@ export class GoogleCalendarService {
       const calendar = this.getCalendar();
 
       await calendar.events.patch({
-        calendarId: process.env.GOOGLE_CALENDAR_ID!,
+        calendarId: this.calendarId,
         eventId: googleEventId,
         requestBody: {
           summary: data.titulo,
@@ -97,7 +107,7 @@ export class GoogleCalendarService {
       const calendar = this.getCalendar();
 
       await calendar.events.delete({
-        calendarId: process.env.GOOGLE_CALENDAR_ID!,
+        calendarId: this.calendarId,
         eventId: googleEventId,
       });
     } catch (error) {
@@ -113,7 +123,7 @@ export class GoogleCalendarService {
       const calendar = this.getCalendar();
 
       const response = await calendar.events.get({
-        calendarId: process.env.GOOGLE_CALENDAR_ID!,
+        calendarId: this.calendarId,
         eventId: googleEventId,
       });
 

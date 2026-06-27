@@ -256,13 +256,49 @@ export class AuthService {
         };
       }
 
-      // El correo de Google no pertenece a ningún usuario ni cliente registrado.
-      // Por seguridad NO creamos cuentas automáticamente: un corredor/admin
-      // debe existir previamente, y un cliente debe registrarse primero.
-      console.warn('⚠️ Cuenta Google no registrada:', payload.email);
-      throw new UnauthorizedException(
-        'Esta cuenta de Google no está registrada en el sistema. Contacta al administrador o regístrate primero.',
+      // El correo de Google no existe → lo creamos como CLIENTE.
+      // Google ya verificó el correo, así que lo marcamos como verificado.
+      const empresaDefault =
+        this.configService.get<string>('DEFAULT_EMPRESA_ID') ||
+        '00000000-0000-0000-0000-000000000001';
+
+      const nuevoCliente = await this.usersService.createCliente({
+        empresa_id: empresaDefault,
+        nombre: payload.given_name ?? payload.name?.split(' ')[0] ?? 'Cliente',
+        apellido: payload.family_name ?? '',
+        email: payload.email,
+        telefono: '',
+      } as any);
+
+      // Correo verificado por Google + guardar su google_id
+      await this.dataSource.query(
+        'UPDATE clientes SET email_verificado = true, google_id = $1 WHERE id = $2',
+        [payload.sub, nuevoCliente.id],
       );
+
+      console.log('✅ Cliente creado vía Google:', nuevoCliente.email);
+
+      const jwtToken = await this.jwtService.signAsync({
+        sub: nuevoCliente.id,
+        email: nuevoCliente.email,
+        role: 'CLIENTE',
+        tipo: 'cliente',
+        empresa_id: nuevoCliente.empresa_id,
+      });
+
+      return {
+        message: 'Cuenta creada con Google',
+        token: jwtToken,
+        user: {
+          id: nuevoCliente.id,
+          nombre: nuevoCliente.nombre,
+          email: nuevoCliente.email,
+          rol: 'CLIENTE',
+          tipo: 'cliente',
+          estado: nuevoCliente.estado,
+          empresa_id: nuevoCliente.empresa_id,
+        },
+      };
     } catch (error: any) {
       console.error('❌ ERROR EN GOOGLE LOGIN:', error.message);
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) throw error;

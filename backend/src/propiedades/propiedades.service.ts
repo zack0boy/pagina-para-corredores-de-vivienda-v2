@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 
 import { Propiedades } from './entities/propiedades.entity';
 import { PropiedadImagen } from '../propiedad-imagen/entities/propiedad-imagen.entity';
+import { Usuario } from '../users/entities/usuario.entity';
 
 import { CreatePropiedadesDto } from './dto/create-propiedades.dto';
 import { UpdatePropiedadesDto } from './dto/update-propiedades.dto';
@@ -16,6 +17,8 @@ export class PropiedadesService {
     private propiedadRepository: Repository<Propiedades>,
     @InjectRepository(PropiedadImagen)
     private imagenRepository: Repository<PropiedadImagen>,
+    @InjectRepository(Usuario)
+    private usuarioRepository: Repository<Usuario>,
   ) {}
 
   create(createPropiedadesDto: CreatePropiedadesDto) {
@@ -140,7 +143,24 @@ export class PropiedadesService {
       .orderBy('img.orden', 'ASC')
       .getMany();
 
-    return { ...propiedad, imagenes };
+    // Datos de contacto del corredor (sin exponer la contraseña)
+    let corredor: any = null;
+    if (propiedad.corredor_id) {
+      const u = await this.usuarioRepository.findOne({
+        where: { id: propiedad.corredor_id },
+      });
+      if (u) {
+        corredor = {
+          id: u.id,
+          nombre: u.nombre,
+          apellido: u.apellido,
+          email: u.email,
+          telefono: u.telefono,
+        };
+      }
+    }
+
+    return { ...propiedad, imagenes, corredor };
   }
 
   async update(

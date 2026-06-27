@@ -46,6 +46,10 @@ export class EventoCalendario {
   @Column({ default: false })
   completado!: boolean;
 
+  // ID del evento sincronizado en Google Calendar (si aplica)
+  @Column({ name: 'google_event_id', type: 'text', nullable: true })
+  google_event_id?: string;
+
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;
 }

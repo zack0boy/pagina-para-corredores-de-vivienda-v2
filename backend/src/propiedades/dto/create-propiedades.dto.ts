@@ -13,10 +13,11 @@ export enum TipoOperacion {
 }
 
 export class CreatePropiedadesDto {
-  @IsUUID()
+  // String (no @IsUUID) porque la empresa semilla usa un id no estándar (0000...0001)
+  @IsString()
   empresa_id!: string;
 
-  @IsUUID()
+  @IsString()
   categoria_id!: string;
 
   @IsString()

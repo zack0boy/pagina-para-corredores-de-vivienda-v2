@@ -1,18 +1,20 @@
-import { IsUUID, IsEnum, IsString, IsDateString, IsOptional, IsBoolean, MaxLength } from 'class-validator';
+import { IsEnum, IsString, IsDateString, IsOptional, MaxLength } from 'class-validator';
 import { TipoEvento } from '../../common/enum/estado.enum';
 
 export class CreateEventoCalendarioDto {
-  @IsUUID()
+  // Se valida como string (no @IsUUID) porque la empresa semilla
+  // usa un identificador no estándar (0000...0001).
+  @IsString()
   empresa_id!: string;
 
-  @IsUUID()
+  @IsString()
   corredor_id!: string;
 
-  @IsUUID()
+  @IsString()
   @IsOptional()
   cliente_id?: string;
 
-  @IsUUID()
+  @IsString()
   @IsOptional()
   visita_id?: string;
 

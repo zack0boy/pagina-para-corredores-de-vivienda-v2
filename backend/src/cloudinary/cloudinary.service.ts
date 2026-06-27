@@ -20,6 +20,20 @@ export class CloudinaryService {
     );
   }
 
+  // Sube un archivo desde el buffer en memoria (no requiere guardarlo en disco)
+  uploadBuffer(buffer: Buffer, folder = 'comprobantes'): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+      stream.end(buffer);
+    });
+  }
+
   async deleteImage(publicId: string) {
     return await cloudinary.uploader.destroy(
       publicId,

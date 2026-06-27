@@ -33,9 +33,12 @@ export class ComprobanteService {
     file: Express.Multer.File,
     observaciones?: string,
   ) {
-    const resultado = await this.cloudinaryService.uploadImage(
-      file.path,
-    );
+    if (!file) {
+      throw new NotFoundException('No se recibió ningún archivo en el campo "archivo"');
+    }
+
+    // Subimos desde el buffer en memoria (FileInterceptor no guarda en disco)
+    const resultado = await this.cloudinaryService.uploadBuffer(file.buffer, 'comprobantes');
 
     const comprobante = this.comprobanteRepository.create({
       pagoId,
@@ -46,6 +49,10 @@ export class ComprobanteService {
     });
 
     return await this.comprobanteRepository.save(comprobante);
+  }
+
+  async findByPago(pagoId: string) {
+    return this.comprobanteRepository.find({ where: { pagoId } });
   }
 
   async validarComprobante(

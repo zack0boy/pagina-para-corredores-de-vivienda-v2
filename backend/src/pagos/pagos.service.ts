@@ -33,6 +33,10 @@ export class PagosService {
     return this.pagoRepository.find({ where: { cliente_id }, order: { fecha_pago: 'DESC' } });
   }
 
+  async findByCorredor(corredor_id: string): Promise<Pago[]> {
+    return this.pagoRepository.find({ where: { corredor_id }, order: { created_at: 'DESC' } });
+  }
+
   async findOne(id: string): Promise<Pago> {
     const pago = await this.pagoRepository.findOne({ where: { id } });
     if (!pago) throw new NotFoundException(`Pago ${id} no encontrado`);

@@ -127,20 +127,29 @@ export class UsersService {
   }
 
   async getCorredor(idUsuario: string): Promise<Corredor> {
-    const corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
-    if (!corredor) throw new NotFoundException('Corredor no encontrado');
+    let corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
+    // Si no existe la ficha de corredor, devolvemos una vacía (no error)
+    if (!corredor) {
+      corredor = this.corredorRepository.create({ idUsuario });
+    }
     return corredor;
   }
 
   async updateCorredor(idUsuario: string, dto: UpdateCorredorDto): Promise<Corredor> {
-    const corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
-    if (!corredor) throw new NotFoundException('Corredor no encontrado');
-
+    // Actualizamos el nombre en usuarios si vino
     if (dto.nombre) {
       await this.usuarioRepository.update(idUsuario, { nombre: dto.nombre });
     }
 
-    Object.assign(corredor, dto);
+    // Buscamos la ficha; si no existe, la creamos (upsert)
+    let corredor = await this.corredorRepository.findOne({ where: { idUsuario } });
+    if (!corredor) {
+      corredor = this.corredorRepository.create({ idUsuario });
+    }
+
+    if (dto.licenciaProfesional !== undefined) corredor.licenciaProfesional = dto.licenciaProfesional;
+    if (dto.descripcion !== undefined) corredor.descripcion = dto.descripcion;
+
     return this.corredorRepository.save(corredor);
   }
 

@@ -32,6 +32,11 @@ export class PagosController {
     return this.pagosService.findByCliente(clienteId);
   }
 
+  @Get('corredor/:corredorId')
+  findByCorredor(@Param('corredorId', ParseUUIDPipe) corredorId: string) {
+    return this.pagosService.findByCorredor(corredorId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.pagosService.findOne(id);
