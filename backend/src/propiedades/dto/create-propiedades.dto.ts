@@ -20,9 +20,10 @@ export class CreatePropiedadesDto {
   @IsString()
   categoria_id!: string;
 
+  // Opcional: si no viene, el backend lo genera automáticamente
   @IsString()
-  @MinLength(5)
-  codigo!: string;
+  @IsOptional()
+  codigo?: string;
 
   @IsString()
   @MinLength(10)

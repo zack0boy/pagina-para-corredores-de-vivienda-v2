@@ -22,10 +22,25 @@ export class PropiedadesService {
   ) {}
 
   create(createPropiedadesDto: CreatePropiedadesDto) {
-    const propiedad =
-      this.propiedadRepository.create(createPropiedadesDto);
+    // Si no viene código, lo generamos automáticamente y único
+    const codigo =
+      createPropiedadesDto.codigo && createPropiedadesDto.codigo.trim() !== ''
+        ? createPropiedadesDto.codigo
+        : this.generarCodigo();
+
+    const propiedad = this.propiedadRepository.create({
+      ...createPropiedadesDto,
+      codigo,
+    });
 
     return this.propiedadRepository.save(propiedad);
+  }
+
+  // Genera un código tipo PROP-A1B2C3 (suficientemente único)
+  private generarCodigo(): string {
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const tiempo = Date.now().toString(36).slice(-3).toUpperCase();
+    return `PROP-${random}${tiempo}`;
   }
 
   findAll() {
