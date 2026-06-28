@@ -5,6 +5,7 @@ import { Repository, In } from 'typeorm';
 import { Propiedades } from './entities/propiedades.entity';
 import { PropiedadImagen } from '../propiedad-imagen/entities/propiedad-imagen.entity';
 import { Usuario } from '../users/entities/usuario.entity';
+import { HistorialPropiedad } from './entities/historial-propiedad.entity';
 
 import { CreatePropiedadesDto } from './dto/create-propiedades.dto';
 import { UpdatePropiedadesDto } from './dto/update-propiedades.dto';
@@ -19,9 +20,27 @@ export class PropiedadesService {
     private imagenRepository: Repository<PropiedadImagen>,
     @InjectRepository(Usuario)
     private usuarioRepository: Repository<Usuario>,
+    @InjectRepository(HistorialPropiedad)
+    private historialRepository: Repository<HistorialPropiedad>,
   ) {}
 
-  create(createPropiedadesDto: CreatePropiedadesDto) {
+  // Registra un cambio en el historial (no rompe si falla)
+  private async registrarHistorial(
+    propiedad_id: string | undefined,
+    corredor_id: string | undefined,
+    accion: string,
+    detalle: string,
+  ) {
+    try {
+      await this.historialRepository.save(
+        this.historialRepository.create({ propiedad_id, corredor_id, accion, detalle }),
+      );
+    } catch {
+      /* el historial no debe interrumpir la operación principal */
+    }
+  }
+
+  async create(createPropiedadesDto: CreatePropiedadesDto) {
     // Si no viene código, lo generamos automáticamente y único
     const codigo =
       createPropiedadesDto.codigo && createPropiedadesDto.codigo.trim() !== ''
@@ -33,7 +52,14 @@ export class PropiedadesService {
       codigo,
     });
 
-    return this.propiedadRepository.save(propiedad);
+    const guardada = await this.propiedadRepository.save(propiedad);
+    await this.registrarHistorial(
+      guardada.id,
+      guardada.corredor_id,
+      'CREADA',
+      `Propiedad "${guardada.titulo}" publicada.`,
+    );
+    return guardada;
   }
 
   // Genera un código tipo PROP-A1B2C3 (suficientemente único)
@@ -182,19 +208,46 @@ export class PropiedadesService {
     id: string,
     updatePropiedadesDto: UpdatePropiedadesDto,
   ) {
-    await this.propiedadRepository.update(
-      id,
-      updatePropiedadesDto,
-    );
+    const antes = await this.propiedadRepository.findOneBy({ id });
+
+    await this.propiedadRepository.update(id, updatePropiedadesDto);
+
+    // Registrar en historial
+    if (antes) {
+      if (updatePropiedadesDto.estado && updatePropiedadesDto.estado !== antes.estado) {
+        await this.registrarHistorial(
+          id, antes.corredor_id, 'ESTADO_CAMBIADO',
+          `Estado: ${antes.estado} → ${updatePropiedadesDto.estado}.`,
+        );
+      } else {
+        await this.registrarHistorial(
+          id, antes.corredor_id, 'ACTUALIZADA',
+          `Se editaron los datos de "${antes.titulo}".`,
+        );
+      }
+    }
 
     return this.findOne(id);
   }
 
   async remove(id: string) {
+    const antes = await this.propiedadRepository.findOneBy({ id });
     await this.propiedadRepository.delete(id);
+    if (antes) {
+      await this.registrarHistorial(
+        id, antes.corredor_id, 'ELIMINADA',
+        `Propiedad "${antes.titulo}" eliminada.`,
+      );
+    }
+    return { message: 'Propiedad eliminada' };
+  }
 
-    return {
-      message: 'Propiedad eliminada',
-    };
+  // Historial de cambios de las propiedades de un corredor
+  async historialPorCorredor(corredor_id: string) {
+    return this.historialRepository.find({
+      where: { corredor_id },
+      order: { created_at: 'DESC' },
+      take: 100,
+    });
   }
 }

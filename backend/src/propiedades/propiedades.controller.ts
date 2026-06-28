@@ -42,6 +42,11 @@ export class PropiedadesController {
     return this.propiedadesService.findWithFilters(filters);
   }
 
+  @Get('historial/:corredorId')
+  historial(@Param('corredorId') corredorId: string) {
+    return this.propiedadesService.historialPorCorredor(corredorId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.propiedadesService.findOne(id);
