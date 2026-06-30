@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -110,6 +111,28 @@ export class UsersController {
     );
   }
 
+  @Delete('clientes/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    RolUsuario.SUPER_ADMIN,
+    RolUsuario.ADMIN_EMPRESA,
+    RolUsuario.CLIENTE,
+  )
+  async removeCliente(
+    @Param('id') id: string,
+    @Request() request: any,
+  ) {
+    if (
+      request.user.role === RolUsuario.CLIENTE &&
+      request.user.id !== id
+    ) {
+      throw new ForbiddenException(
+        'No puede eliminar a otro cliente',
+      );
+    }
+    return this.userService.removeCliente(id);
+  }
+
   //========================
   // CORREDORES
   //========================
@@ -184,5 +207,27 @@ export class UsersController {
       id,
       dto,
     );
+  }
+
+  @Delete('corredores/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    RolUsuario.SUPER_ADMIN,
+    RolUsuario.ADMIN_EMPRESA,
+    RolUsuario.CORREDOR,
+  )
+  async removeCorredor(
+    @Param('id') id: string,
+    @Request() request: any,
+  ) {
+    if (
+      request.user.role === RolUsuario.CORREDOR &&
+      request.user.id !== id
+    ) {
+      throw new ForbiddenException(
+        'No puede eliminar a otro corredor',
+      );
+    }
+    return this.userService.removeCorredor(id);
   }
 }

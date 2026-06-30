@@ -63,6 +63,11 @@ export class UsersService {
     return this.clienteRepository.save(cliente);
   }
 
+  async removeCliente(id: string): Promise<void> {
+    await this.findClienteById(id);
+    await this.clienteRepository.delete(id);
+  }
+
   async getAllClientes(): Promise<Cliente[]> {
     return this.clienteRepository.find({ order: { createdAt: 'DESC' } });
   }
@@ -155,6 +160,16 @@ export class UsersService {
 
   async getAllCorredores(): Promise<Corredor[]> {
     return this.corredorRepository.find({ relations: { usuario: true } });
+  }
+
+  async removeCorredor(idUsuario: string): Promise<void> {
+    const usuario = await this.findById(idUsuario);
+    if (!usuario || usuario.rol !== RolUsuario.CORREDOR) {
+      throw new NotFoundException('Corredor no encontrado');
+    }
+
+    await this.corredorRepository.delete(idUsuario);
+    await this.usuarioRepository.delete(idUsuario);
   }
 
   // ─── USUARIOS (STAFF) ─────────────────────────────────────────────────────────
