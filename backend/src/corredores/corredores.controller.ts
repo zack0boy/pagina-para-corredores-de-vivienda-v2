@@ -11,11 +11,14 @@ import {
 import { CorredoresService } from './corredores.service';
 import { CreateCorredorDto } from './dto/create-corredor.dto';
 import { UpdateCorredorDto } from './dto/update-corredor.dto';
+import { AsignaCorredorService } from './asigna-corredor.service';
+import { ConvertirClienteACorredorDto } from './dto/convertir-cliente-corredor.dto';
 
 @Controller('corredores')
 export class CorredoresController {
   constructor(
     private readonly corredoresService: CorredoresService,
+    private readonly asignaCorredorService: AsignaCorredorService,
   ) {}
 
   @Post()
@@ -28,9 +31,21 @@ export class CorredoresController {
     return this.corredoresService.findAll();
   }
 
+  @Get('empresas')
+  obtenerEmpresas() {
+    return this.asignaCorredorService.obtenerEmpresas();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.corredoresService.findOne(id);
+  }
+
+  @Patch('convertir-cliente')
+  convertirCliente(
+    @Body() dto: ConvertirClienteACorredorDto,
+  ) {
+    return this.asignaCorredorService.convertirClienteACorredor(dto);
   }
 
   @Patch(':id')
