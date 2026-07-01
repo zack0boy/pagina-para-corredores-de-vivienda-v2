@@ -14,6 +14,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateClienteDto, UpdateClienteDto, } from './dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto, } from './dto/create-corredor.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
 import { RolesGuard, Roles } from '../common/guards/roles.guard';
 import { RolUsuario } from '../common/enum/roles.enum';
@@ -36,6 +37,16 @@ export class UsersController {
     @Request() request: any,
   ) {
     return this.userService.findById(request.user.id);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  async updateCurrentUser(
+    @Request() request: any,
+    @Body() dto: UpdateMeDto,
+  ) {
+    const userId = request.user.id;
+    return this.userService.updateCurrentUser(userId, dto as any);
   }
 
   //========================
