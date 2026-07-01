@@ -1,12 +1,17 @@
-import { IsString, IsEmail, Length, IsOptional, Matches } from 'class-validator';
+import { IsString, IsEmail, Length, IsOptional } from 'class-validator';
 
 export class CreateCorredorDto {
   @IsString()
   @Length(1, 100)
   nombre!: string;
 
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
 
   @IsString()
   @Length(8, 255)
@@ -27,6 +32,14 @@ export class UpdateCorredorDto {
   @IsString()
   @Length(1, 100)
   nombre?: string;
+
+  @IsOptional()
+  @IsEmail() 
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  telefono?: string;
 
   @IsOptional()
   @IsString()
