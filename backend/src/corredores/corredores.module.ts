@@ -7,6 +7,7 @@ import { CorredoresController } from './corredores.controller';
 import { AsignaCorredorService } from './asigna-corredor.service';
 import { Usuario } from '../users/entities/usuario.entity';
 import { Corredor as CorredorUsuario } from '../users/entities/corredor.entity';
+import { Cliente } from '../users/entities/cliente.entity';
 import { Empresa } from '../empresas/entities/empresa.entity';
 
 @Module({
@@ -16,6 +17,7 @@ import { Empresa } from '../empresas/entities/empresa.entity';
       Usuario,
       CorredorUsuario,
       Empresa,
+      Cliente,
     ]),
   ],
   controllers: [CorredoresController],
