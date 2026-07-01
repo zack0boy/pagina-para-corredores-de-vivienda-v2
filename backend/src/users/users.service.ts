@@ -195,6 +195,23 @@ export class UsersService {
     await this.usuarioRepository.update({ id }, { password });
   }
 
+
+  async updateCurrentUser(id: string, data: Partial<Usuario>): Promise<Usuario> {
+    const usuario = await this.findById(id);
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+    // Solo permitimos actualizar campos seguros en la entidad Usuario
+    const allowed: Array<keyof Usuario> = ['nombre', 'telefono', 'email'];
+    for (const key of allowed) {
+      if (data[key] !== undefined) {
+        // @ts-ignore
+        usuario[key] = data[key] as any;
+      }
+    }
+
+    return this.usuarioRepository.save(usuario);
+  }
+
   async findUsuariosWithFilters(filters: FilterUsuarioDto) {
     const query = this.usuarioRepository.createQueryBuilder('usuario');
 
