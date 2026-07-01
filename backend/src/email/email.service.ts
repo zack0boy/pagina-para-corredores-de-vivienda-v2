@@ -203,19 +203,10 @@ export class EmailService {
     contenido: string,
   ): Promise<any> {
     try {
-      const MODO_PRUEBAS = true; // Cambia a false cuando tu sistema esté en producción
-      const CORREO_PRUEBAS = 'npro0330@gmail.com';
-
-      let correoDestino = destinatario;
-
-      if (MODO_PRUEBAS) {
-        correoDestino = CORREO_PRUEBAS;
-        asunto = `[PRUEBA para ${destinatario}] ${asunto}`;
-      }
-      
+      // Envío real: el correo llega al destinatario indicado.
       const resultado = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: correoDestino,
+        to: destinatario,
         subject: asunto,
         html: contenido,
       });
