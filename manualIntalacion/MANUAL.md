@@ -130,6 +130,68 @@ GOOGLE_REFRESH_TOKEN=1//xxxxx      # necesario para sincronizar el calendario
 
 ---
 
+## 5.1 Cómo activar los servicios en la nube
+
+Si vas a usar tus **propias** cuentas (no las del proyecto), aquí está cómo
+obtener cada credencial del `.env`.
+
+### 🗄️ PostgreSQL (Aiven) — base de datos
+1. Crear cuenta en https://aiven.io (tiene plan gratuito).
+2. **Create service → PostgreSQL** → elegir región y plan (Free).
+3. Cuando el servicio esté "Running", entra a su vista y copia:
+   - **Host** → `DB_HOST`
+   - **Port** → `DB_PORT`
+   - **User** (`avnadmin`) → `DB_USERNAME`
+   - **Password** → `DB_PASSWORD`
+   - **Database name** (`defaultdb`) → `DB_NAME`
+4. Deja `DB_SSL=true` (Aiven exige SSL).
+5. Alternativa local: instalar PostgreSQL en tu PC y usar
+   `DB_HOST=localhost`, `DB_SSL=false`.
+
+### 🖼️ Cloudinary — imágenes
+1. Crear cuenta en https://cloudinary.com (plan gratuito).
+2. En el **Dashboard** aparecen tus credenciales:
+   - **Cloud name** → `CLOUDINARY_CLOUD_NAME`
+   - **API Key** → `CLOUDINARY_API_KEY`
+   - **API Secret** → `CLOUDINARY_API_SECRET`
+
+### ✉️ Gmail SMTP — envío de correos
+1. Usar una cuenta de Gmail.
+2. Activar la **verificación en 2 pasos** en https://myaccount.google.com/security
+3. Crear una **contraseña de aplicación**:
+   https://myaccount.google.com/apppasswords → generar una para "Correo".
+4. En el `.env`:
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER=tucorreo@gmail.com`
+   - `SMTP_PASS=` la contraseña de aplicación (16 letras, sin espacios).
+
+> ⚠️ No se usa la contraseña normal de Gmail, sino la "contraseña de aplicación".
+
+### 🔐 Google OAuth (login) + Calendar
+1. Ir a https://console.cloud.google.com y crear un proyecto.
+2. **APIs y servicios → Biblioteca** → habilitar **Google Calendar API**.
+3. **Pantalla de consentimiento OAuth**: tipo "Externo"; agregar tu correo en
+   **Usuarios de prueba**.
+4. **Credenciales → Crear credenciales → ID de cliente de OAuth 2.0**
+   (tipo *Aplicación web*):
+   - **Orígenes autorizados de JavaScript:** `http://localhost:4200`
+   - **URIs de redirección autorizados:** `https://developers.google.com/oauthplayground`
+   - Copia el **Client ID** → `GOOGLE_CLIENT_ID`
+   - Copia el **Client Secret** → `GOOGLE_CLIENT_SECRET`
+5. Obtener el **Refresh Token** (para el calendario):
+   - Ir a https://developers.google.com/oauthplayground
+   - ⚙️ (Settings) → marcar *"Use your own OAuth credentials"* → pegar Client ID y Secret.
+   - Seleccionar el scope `https://www.googleapis.com/auth/calendar` → **Authorize APIs**.
+   - Iniciar sesión con la cuenta del calendario y **Exchange authorization code for tokens**.
+   - Copiar el **Refresh token** → `GOOGLE_REFRESH_TOKEN`.
+6. Deja `GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/redirect`.
+
+> El login con Google funciona con el Client ID; el `GOOGLE_REFRESH_TOKEN` solo
+> es necesario para **sincronizar el calendario** con Google.
+
+---
+
 ## 6. Ejecutar el BACKEND
 
 Abrir una terminal en la carpeta `backend/`:
