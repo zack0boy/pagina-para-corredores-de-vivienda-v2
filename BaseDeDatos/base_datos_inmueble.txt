@@ -1,0 +1,112 @@
+-- ============================================================
+--  MIGRACIONES - Inmuebles Chile (SaaS Corredores)
+--  Ejecutar todo de una vez en PostgreSQL (DataGrip/psql).
+--  Es idempotente: se puede correr varias veces sin romper.
+-- ============================================================
+
+-- Extensión para generar UUIDs (por si no está)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+
+-- ============================================================
+--  1) IMÁGENES DE PROPIEDADES
+--  Columnas que usa la entidad PropiedadImagen
+-- ============================================================
+ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS public_id  VARCHAR(255);
+ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS orden      INTEGER DEFAULT 1;
+ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+
+-- ============================================================
+--  2) CLIENTES - verificación de correo
+-- ============================================================
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN NOT NULL DEFAULT false;
+
+-- Tabla de códigos de verificación de correo (registro)
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id         SERIAL PRIMARY KEY,
+  email      VARCHAR(255) NOT NULL,
+  token      VARCHAR(10)  NOT NULL,
+  expires_at TIMESTAMP    NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+
+-- ============================================================
+--  3) PAGOS - registro manual + evidencia
+-- ============================================================
+ALTER TABLE pagos ALTER COLUMN cuota_id   DROP NOT NULL;
+ALTER TABLE pagos ALTER COLUMN cliente_id DROP NOT NULL;
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS cliente_nombre   TEXT;
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS corredor_id      UUID;
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS propiedad_id     UUID;
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS propiedad_titulo TEXT;
+
+
+-- ============================================================
+--  4) CALENDARIO - sincronización con Google
+-- ============================================================
+ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS google_event_id TEXT;
+
+
+-- ============================================================
+--  5) SOLICITUDES DE PUBLICACIÓN (persona -> corredor aprueba)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS solicitudes_propiedad (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id           UUID,
+  solicitante_nombre   VARCHAR(255) NOT NULL,
+  solicitante_email    VARCHAR(255),
+  solicitante_telefono VARCHAR(255),
+  titulo               VARCHAR(255) NOT NULL,
+  descripcion          TEXT,
+  direccion            VARCHAR(255) NOT NULL,
+  precio               NUMERIC(15,2) NOT NULL,
+  tipo_operacion       VARCHAR(50) DEFAULT 'VENTA',
+  categoria_id         UUID,
+  estado               VARCHAR(50) DEFAULT 'PENDIENTE',
+  corredor_id          UUID,
+  motivo_rechazo       TEXT,
+  propiedad_id         UUID,
+  created_at           TIMESTAMP DEFAULT NOW()
+);
+
+
+-- ============================================================
+--  6) FICHA DE CORREDOR (licencia / descripción) - Mi Perfil
+-- ============================================================
+CREATE TABLE IF NOT EXISTS corredor (
+  id_usuario           UUID PRIMARY KEY,
+  licencia_profesional VARCHAR(50),
+  descripcion          TEXT,
+  created_at           TIMESTAMP DEFAULT NOW()
+);
+
+
+-- ============================================================
+--  7) HISTORIAL DE CAMBIOS DE PROPIEDADES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS historial_propiedad (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  propiedad_id UUID,
+  corredor_id  UUID,
+  accion       VARCHAR(50) NOT NULL,   -- CREADA | ACTUALIZADA | ESTADO_CAMBIADO | ELIMINADA
+  detalle      TEXT,
+  created_at   TIMESTAMP DEFAULT NOW()
+);
+
+
+-- ============================================================
+--  8) (OPCIONAL) IDs automáticos por defecto en la base de datos
+--  Red de seguridad: si insertas por SQL sin ID, la BD lo genera.
+--  Descomenta las tablas que apliquen a tu esquema.
+-- ============================================================
+-- ALTER TABLE propiedades        ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE clientes           ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE usuarios           ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE categorias         ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE propiedad_imagenes ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE pagos              ALTER COLUMN id SET DEFAULT gen_random_uuid();
+-- ALTER TABLE eventos_calendario ALTER COLUMN id SET DEFAULT gen_random_uuid();
+
+-- FIN
