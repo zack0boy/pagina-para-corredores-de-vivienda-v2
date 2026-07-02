@@ -1,0 +1,109 @@
+-- ============================================================
+--  DATOS DE PRUEBA - Inmuebles Chile
+--  Ejecutar DESPUÉS de crear las tablas y correr migraciones.
+--  Es seguro: usa ON CONFLICT DO NOTHING (no duplica).
+--
+--  Credenciales de prueba:
+--    Corredor: corredor.demo@inmuebles.cl   / test1234
+--    Cliente:  cliente.demo@inmuebles.cl    / test1234
+-- ============================================================
+
+-- ---------- EMPRESA ----------
+INSERT INTO empresas (id, nombre)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Inmuebles Chile SaaS')
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- CATEGORÍAS ----------
+INSERT INTO categorias (id, empresa_id, nombre, descripcion, activa) VALUES
+('c1111111-1111-4111-8111-111111111111', '00000000-0000-0000-0000-000000000001', 'Casa',         'Casas independientes',     true),
+('c2222222-2222-4222-8222-222222222222', '00000000-0000-0000-0000-000000000001', 'Departamento', 'Departamentos y lofts',    true),
+('c3333333-3333-4333-8333-333333333333', '00000000-0000-0000-0000-000000000001', 'Oficina',      'Oficinas y locales',       true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- CORREDOR (staff) ----------
+-- password_hash corresponde a: test1234
+INSERT INTO usuarios (id, empresa_id, nombre, apellido, email, telefono, password_hash, rol, activo) VALUES
+('11111111-1111-4111-8111-111111111111', '00000000-0000-0000-0000-000000000001',
+ 'Camila', 'Rojas', 'corredor.demo@inmuebles.cl', '+56 9 1111 1111',
+ '$2b$10$SbfHSmc36ImAlcoivVxfP.uZHWujLmIvMW3HLXDUZ1lAoktkzKegG', 'CORREDOR', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Ficha del corredor (perfil)
+INSERT INTO corredor (id_usuario, licencia_profesional, descripcion) VALUES
+('11111111-1111-4111-8111-111111111111', 'LIC-2024-001', 'Corredora con 10 años de experiencia en la RM.')
+ON CONFLICT (id_usuario) DO NOTHING;
+
+-- ---------- CLIENTES ----------
+-- password_hash corresponde a: test1234
+INSERT INTO clientes (id, empresa_id, nombre, apellido, email, telefono, password_hash, activo, estado, email_verificado) VALUES
+('22222222-2222-4222-8222-222222222222', '00000000-0000-0000-0000-000000000001',
+ 'Pedro', 'Soto', 'cliente.demo@inmuebles.cl', '+56 9 2222 2222',
+ '$2b$10$SbfHSmc36ImAlcoivVxfP.uZHWujLmIvMW3HLXDUZ1lAoktkzKegG', true, 'ACTIVO', true),
+('33333333-3333-4333-8333-333333333333', '00000000-0000-0000-0000-000000000001',
+ 'Ana', 'Muñoz', 'ana.demo@inmuebles.cl', '+56 9 3333 3333',
+ '$2b$10$SbfHSmc36ImAlcoivVxfP.uZHWujLmIvMW3HLXDUZ1lAoktkzKegG', true, 'PENDIENTE_VALIDACION', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- 10 PROPIEDADES ----------
+INSERT INTO propiedades
+(id, empresa_id, corredor_id, categoria_id, codigo, titulo, descripcion, direccion, precio, tipo_operacion, latitud, longitud, estado, habitaciones, banos, estacionamientos, metros_totales, metros_construidos)
+VALUES
+('d0000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c2222222-2222-4222-8222-222222222222','PROP-0001','Departamento moderno en Providencia','Amplio depto con vista, cercano al metro.','Av. Providencia 1234, Providencia', 145000000,'VENTA', -33.4269, -70.6200,'DISPONIBLE',3,2,1,95,85),
+('d0000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c1111111-1111-4111-8111-111111111111','PROP-0002','Casa familiar en La Florida','Casa de 2 pisos con patio y quincho.','Av. Vicuña Mackenna 9500, La Florida', 185000000,'VENTA', -33.5220, -70.5980,'DISPONIBLE',4,3,2,140,120),
+('d0000000-0000-4000-8000-000000000003','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c2222222-2222-4222-8222-222222222222','PROP-0003','Loft en Ñuñoa','Loft luminoso ideal para inversión.','Plaza Ñuñoa 45, Ñuñoa', 95000000,'ARRIENDO', -33.4560, -70.5980,'DISPONIBLE',1,1,1,45,42),
+('d0000000-0000-4000-8000-000000000004','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c1111111-1111-4111-8111-111111111111','PROP-0004','Casa con jardín en Maipú','Tranquila, en barrio residencial.','Av. Pajaritos 2800, Maipú', 132000000,'VENTA', -33.5110, -70.7580,'RESERVADA',3,2,2,110,95),
+('d0000000-0000-4000-8000-000000000005','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c3333333-3333-4333-8333-333333333333','PROP-0005','Oficina en Las Condes','Oficina equipada en El Golf.','Av. Apoquindo 4500, Las Condes', 220000000,'VENTA', -33.4090, -70.5700,'DISPONIBLE',0,2,3,120,120),
+('d0000000-0000-4000-8000-000000000006','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c2222222-2222-4222-8222-222222222222','PROP-0006','Departamento en Santiago Centro','A pasos de la Alameda.','Av. Libertador B. O''Higgins 1200, Santiago', 78000000,'ARRIENDO', -33.4470, -70.6540,'DISPONIBLE',2,1,0,55,52),
+('d0000000-0000-4000-8000-000000000007','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c1111111-1111-4111-8111-111111111111','PROP-0007','Casa amplia en Puente Alto','Ideal para familia grande.','Av. Concha y Toro 3400, Puente Alto', 119000000,'VENTA', -33.6110, -70.5760,'DISPONIBLE',5,3,2,160,140),
+('d0000000-0000-4000-8000-000000000008','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c2222222-2222-4222-8222-222222222222','PROP-0008','Departamento en Vitacura','Exclusivo sector, terminaciones premium.','Av. Vitacura 6500, Vitacura', 310000000,'VENTA', -33.3830, -70.5720,'VENDIDA',3,3,2,130,120),
+('d0000000-0000-4000-8000-000000000009','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c2222222-2222-4222-8222-222222222222','PROP-0009','Studio en San Miguel','Compacto y funcional.','Gran Avenida 5200, San Miguel', 62000000,'ARRIENDO', -33.4980, -70.6510,'ARRENDADA',1,1,0,38,36),
+('d0000000-0000-4000-8000-000000000010','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','c1111111-1111-4111-8111-111111111111','PROP-0010','Casa en Peñalolén','Con vista a la cordillera.','Av. Tobalaba 12000, Peñalolén', 168000000,'VENTA', -33.4880, -70.5390,'DISPONIBLE',4,2,2,135,115)
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- IMÁGENES (una por propiedad, con imagen de ejemplo) ----------
+INSERT INTO propiedad_imagenes (id, propiedad_id, url, orden) VALUES
+('e0000000-0000-4000-8000-000000000001','d0000000-0000-4000-8000-000000000001','https://picsum.photos/seed/prop1/800/600',1),
+('e0000000-0000-4000-8000-000000000002','d0000000-0000-4000-8000-000000000002','https://picsum.photos/seed/prop2/800/600',1),
+('e0000000-0000-4000-8000-000000000003','d0000000-0000-4000-8000-000000000003','https://picsum.photos/seed/prop3/800/600',1),
+('e0000000-0000-4000-8000-000000000004','d0000000-0000-4000-8000-000000000004','https://picsum.photos/seed/prop4/800/600',1),
+('e0000000-0000-4000-8000-000000000005','d0000000-0000-4000-8000-000000000005','https://picsum.photos/seed/prop5/800/600',1),
+('e0000000-0000-4000-8000-000000000006','d0000000-0000-4000-8000-000000000006','https://picsum.photos/seed/prop6/800/600',1),
+('e0000000-0000-4000-8000-000000000007','d0000000-0000-4000-8000-000000000007','https://picsum.photos/seed/prop7/800/600',1),
+('e0000000-0000-4000-8000-000000000008','d0000000-0000-4000-8000-000000000008','https://picsum.photos/seed/prop8/800/600',1),
+('e0000000-0000-4000-8000-000000000009','d0000000-0000-4000-8000-000000000009','https://picsum.photos/seed/prop9/800/600',1),
+('e0000000-0000-4000-8000-000000000010','d0000000-0000-4000-8000-000000000010','https://picsum.photos/seed/prop10/800/600',1)
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- PAGOS (registro manual del corredor) ----------
+INSERT INTO pagos (id, corredor_id, cliente_nombre, propiedad_id, propiedad_titulo, monto, fecha_pago, estado, tipo_pago, comentario) VALUES
+('f0000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','Pedro Soto','d0000000-0000-4000-8000-000000000001','Departamento moderno en Providencia', 1450000, NOW() - INTERVAL '3 days','VALIDADO','TRANSFERENCIA','Pago de reserva'),
+('f0000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','Ana Muñoz','d0000000-0000-4000-8000-000000000004','Casa con jardín en Maipú', 900000, NOW() - INTERVAL '1 days','PENDIENTE_VALIDACION','PRESENCIAL','Abono inicial'),
+('f0000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','Pedro Soto','d0000000-0000-4000-8000-000000000009','Studio en San Miguel', 620000, NOW(),'PENDIENTE_VALIDACION','TRANSFERENCIA','Primer mes de arriendo')
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- EVENTOS DE CALENDARIO ----------
+INSERT INTO eventos_calendario (id, empresa_id, corredor_id, tipo, titulo, descripcion, fecha_inicio, fecha_fin, completado) VALUES
+('a0000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','VISITA','Visita Depto Providencia','Mostrar a cliente interesado', NOW() + INTERVAL '1 day' + INTERVAL '9 hours', NOW() + INTERVAL '1 day' + INTERVAL '10 hours', false),
+('a0000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','CONTACTO_CLIENTE','Llamar a Ana Muñoz','Coordinar segunda visita', NOW() + INTERVAL '2 days' + INTERVAL '15 hours', NOW() + INTERVAL '2 days' + INTERVAL '15 hours 30 minutes', false),
+('a0000000-0000-4000-8000-000000000003','00000000-0000-0000-0000-000000000001','11111111-1111-4111-8111-111111111111','GESTION_PAGO','Revisar comprobante','Validar transferencia recibida', NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day' + INTERVAL '1 hour', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- SOLICITUDES DE CLIENTE (acceso, 24h) ----------
+INSERT INTO solicitudes_cliente (id, empresa_id, cliente_id, estado, mensaje, fecha_expiracion) VALUES
+('b0000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000001','33333333-3333-4333-8333-333333333333','PENDIENTE','Quiero acceder para ver propiedades', NOW() + INTERVAL '24 hours')
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- SOLICITUDES DE PUBLICACIÓN (persona quiere publicar) ----------
+INSERT INTO solicitudes_propiedad (id, empresa_id, solicitante_nombre, solicitante_email, solicitante_telefono, titulo, descripcion, direccion, precio, tipo_operacion, categoria_id, estado) VALUES
+('90000000-0000-4000-8000-000000000001','00000000-0000-0000-0000-000000000001','Jorge Fuentes','jorge@example.com','+56 9 8888 8888','Casa en Quilicura','Casa nueva, 3 dormitorios','Av. Matta 100, Quilicura', 128000000,'VENTA','c1111111-1111-4111-8111-111111111111','PENDIENTE'),
+('90000000-0000-4000-8000-000000000002','00000000-0000-0000-0000-000000000001','María Torres','maria@example.com','+56 9 7777 7777','Depto para arriendo en Macul','Depto 2D 1B cerca de metro','Av. Quilín 3000, Macul', 480000,'ARRIENDO','c2222222-2222-4222-8222-222222222222','PENDIENTE')
+ON CONFLICT (id) DO NOTHING;
+
+-- ---------- HISTORIAL DE CAMBIOS ----------
+INSERT INTO historial_propiedad (id, propiedad_id, corredor_id, accion, detalle) VALUES
+('80000000-0000-4000-8000-000000000001','d0000000-0000-4000-8000-000000000004','11111111-1111-4111-8111-111111111111','ESTADO_CAMBIADO','Estado: DISPONIBLE → RESERVADA.'),
+('80000000-0000-4000-8000-000000000002','d0000000-0000-4000-8000-000000000008','11111111-1111-4111-8111-111111111111','ESTADO_CAMBIADO','Estado: DISPONIBLE → VENDIDA.'),
+('80000000-0000-4000-8000-000000000003','d0000000-0000-4000-8000-000000000001','11111111-1111-4111-8111-111111111111','CREADA','Propiedad "Departamento moderno en Providencia" publicada.')
+ON CONFLICT (id) DO NOTHING;
+
+-- FIN
