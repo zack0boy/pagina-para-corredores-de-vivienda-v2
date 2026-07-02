@@ -15,7 +15,7 @@ El sistema tiene **dos partes separadas** (dos carpetas / dos repos):
 | Parte | Tecnología | Puerto | Carpeta |
 |-------|-----------|--------|---------|
 | **Backend** (API) | NestJS + TypeORM | `3000` | `.../pagina-para-corredores-de-vivienda-v2/backend` |
-| **Frontend** (web) | Angular 19 | `4200` | `.../programas/frontend/frontend` |
+| **Frontend** (web) | Angular 19 | `4200` | `.../pagina-para-corredores-de-vivienda-v2/frontend-sistema-inmueble` |
 
 Servicios externos que usa:
 - **PostgreSQL** (base de datos, alojada en Aiven).
@@ -55,18 +55,19 @@ npm -v
 
 ```
 pagina-para-corredores-de-vivienda-v2/
-├── backend/                 # API NestJS
-│   ├── src/                 # código fuente
-│   ├── .env                 # ⚠️ configuración y secretos (NO se sube a Git)
+├── backend/                       # API NestJS
+│   ├── src/                       # código fuente
+│   ├── .env                       # ⚠️ configuración y secretos (NO se sube a Git)
+│   └── package.json
+├── frontend-sistema-inmueble/     # App Angular
+│   ├── src/
+│   │   └── environments/          # environment.ts (dev) y environment.prod.ts (prod)
 │   └── package.json
 ├── BaseDeDatos/
-│   └── migraciones_base_datos.txt   # SQL de las tablas/columnas del proyecto
-└── MANUAL.md                # este archivo
-
-programas/frontend/frontend/  # App Angular
-├── src/
-│   └── environments/         # environment.ts (dev) y environment.prod.ts (prod)
-└── package.json
+│   ├── base_datos_inmueble.txt    # SQL de las tablas/columnas del proyecto
+│   └── datos_de_prueba.txt        # datos de ejemplo para poblar la base
+└── manualInstalacion/
+    └── MANUAL.md                  # este archivo
 ```
 
 ---
@@ -76,7 +77,7 @@ programas/frontend/frontend/  # App Angular
 1. Abrir **DataGrip** y conectar a la base PostgreSQL.
 2. Ejecutar el script:
    ```
-   BaseDeDatos/migraciones_base_datos.txt
+   BaseDeDatos/base_datos_inmueble.txt
    ```
    Esto crea/actualiza las tablas del proyecto (imágenes, pagos, calendario,
    solicitudes de publicación, ficha de corredor, historial, etc.).
@@ -218,7 +219,7 @@ Dejar esta terminal abierta.
 ## 7. Ejecutar el FRONTEND
 
 Abrir **otra** terminal en la carpeta del frontend
-(`programas/frontend/frontend`):
+(`frontend-sistema-inmueble`):
 
 ```bash
 npm install          # instala dependencias (solo la 1ª vez)
@@ -291,7 +292,7 @@ El sistema maneja estos actores:
 | Síntoma | Causa / Solución |
 |---------|------------------|
 | Frontend dice "no conecta con el servidor" | El backend no está corriendo, o `environment` apunta a otra URL |
-| Error 500 `column ... does not exist` | Faltan migraciones → ejecutar `migraciones_base_datos.txt` |
+| Error 500 `column ... does not exist` | Faltan migraciones → ejecutar `base_datos_inmueble.txt` |
 | Error 400 al guardar formularios | Reiniciar el backend tras cambios; revisar campos obligatorios |
 | El calendario no aparece en Google | Falta `GOOGLE_REFRESH_TOKEN` en el `.env` |
 | Las imágenes no suben | Revisar credenciales `CLOUDINARY_*` en el `.env` |
