@@ -53,6 +53,11 @@ export class UsersService {
     return this.http.delete(`${this.apiUrl}/clientes/${id}`);
   }
 
+  // Bloquear (activo=false) o desbloquear (activo=true) un cliente
+  bloquearCliente(id: string, activo: boolean): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/clientes/${id}/bloqueo`, { activo });
+  }
+
   //=========================
   // CORREDORES
   //=========================
@@ -79,5 +84,31 @@ export class UsersService {
 
   deleteCorredor(id: string): Observable<any> {
     return this.http.delete(`${this.apiUrl}/corredores/${id}`);
+  }
+
+  // Nominar un corredor como administrador de una empresa (solo SUPER_ADMIN)
+  promoverAdmin(id: string, empresaId: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/corredores/${id}/promover-admin`, { empresa_id: empresaId });
+  }
+
+  //=========================
+  // ADMINS / SUPER ADMINS
+  //=========================
+
+  getAdmins(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/admins`);
+  }
+
+  getSuperAdmins(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/super-admins`);
+  }
+
+  updateAdmin(id: string, dto: any): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/admins/${id}`, dto);
+  }
+
+  // Subir un admin de empresa a super admin (solo SUPER_ADMIN)
+  promoverSuperAdmin(id: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/admins/${id}/promover-super`, {});
   }
 }

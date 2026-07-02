@@ -38,6 +38,15 @@ export class PagosService {
     return this.http.post(this.apiUrl, dto);
   }
 
+  findPendientes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/pendientes`);
+  }
+
+  // Validar o rechazar un pago (admin / super admin)
+  validar(pagoId: string, dto: { estado: string; validado_por: string; comentario?: string }): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${pagoId}/validar`, dto);
+  }
+
   // Sube la evidencia (recibo) de un pago
   subirComprobante(pagoId: string, archivo: File, observaciones?: string): Observable<any> {
     const form = new FormData();

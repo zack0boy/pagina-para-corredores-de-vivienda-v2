@@ -27,7 +27,6 @@ export class UsersService {
       email: raw.email || '',
       telefono: raw.telefono || raw.phone || '',
       rol: raw.rol || raw.role || raw.rolUsuario || 'CLIENTE',
-      direccion: raw.direccion || raw.address || raw.ciudad || '',
     };
   }
 
@@ -59,7 +58,6 @@ export class UsersService {
     nombre?: string;
     email?: string;
     telefono?: string;
-    direccion?: string;
   }): Observable<any> {
     return this.http.patch<any>(
       `${this.apiUrl}/clientes/${id}`,
@@ -72,7 +70,6 @@ export class UsersService {
     nombre?: string;
     email?: string;
     telefono?: string;
-    direccion?: string;
   }): Observable<any> {
     return this.http.patch<any>(
       `${this.apiUrl}/me`,

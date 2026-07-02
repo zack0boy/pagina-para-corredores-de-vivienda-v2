@@ -1,0 +1,164 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <h2>Portal Super Admin</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboards/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">dashboard</span>
+        Resumen
+      </a>
+      <a routerLink="/dashboards/listar" routerLinkActive="active">
+        <span class="material-symbols-outlined">group</span>
+        Usuarios
+      </a>
+      <a routerLink="/dashboards/empresas" routerLinkActive="active">
+        <span class="material-symbols-outlined">domain</span>
+        Empresas
+      </a>
+      <a routerLink="/propiedades" routerLinkActive="active">
+        <span class="material-symbols-outlined">home_work</span>
+        Propiedades
+      </a>
+      <a routerLink="/dashboards/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span>
+        Pagos
+      </a>
+      <a routerLink="/dashboards/reportes" routerLinkActive="active">
+        <span class="material-symbols-outlined">analytics</span>
+        Reportes
+      </a>
+      <a routerLink="/perfil-usuario" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span>
+        Mi Perfil
+      </a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <ng-container *ngIf="!user() || !esSuperAdmin(); else empresasPanel">
+      <div class="noaccess">
+        <span class="material-symbols-outlined">lock</span>
+        <h2>Acceso restringido</h2>
+        <p>Solo el super administrador puede gestionar empresas.</p>
+      </div>
+    </ng-container>
+
+    <ng-template #empresasPanel>
+      <section class="header">
+        <div>
+          <h1>Empresas</h1>
+          <p>Crea y administra las sucursales del sistema. Cada empresa agrupa a sus corredores, propiedades y administradores.</p>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-primary btn-nueva" (click)="abrirCrear()">
+            <span class="material-symbols-outlined">add</span>
+            Nueva empresa
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="card-title">
+          <h2>Sucursales registradas</h2>
+          <span>{{ empresas().length }} en total</span>
+        </div>
+
+        <div class="tabla-wrap">
+          <table class="tabla-empresas">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>RUT</th>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of empresas()">
+                <td><strong>{{ e.nombre }}</strong></td>
+                <td>{{ e.rut || '—' }}</td>
+                <td>{{ e.email || '—' }}</td>
+                <td>{{ e.plan || 'BASICO' }}</td>
+                <td>
+                  <span class="badge" [class.badge-ok]="e.estado === 'ACTIVA'" [class.badge-bad]="e.estado !== 'ACTIVA'">
+                    {{ e.estado }}
+                  </span>
+                </td>
+                <td class="acciones">
+                  <button class="btn-accion" (click)="abrirEditar(e)" title="Editar">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="btn-accion" (click)="cambiarEstado(e)" [title]="e.estado === 'ACTIVA' ? 'Suspender' : 'Activar'">
+                    <span class="material-symbols-outlined">{{ e.estado === 'ACTIVA' ? 'pause_circle' : 'play_circle' }}</span>
+                  </button>
+                  <button class="btn-accion btn-peligro" (click)="eliminar(e)" title="Eliminar">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="!cargando() && empresas().length === 0">
+                <td colspan="6" class="sin-datos">No hay empresas registradas. Crea la primera con "Nueva empresa".</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-template>
+  </main>
+</div>
+
+<!-- MODAL CREAR / EDITAR EMPRESA -->
+<div *ngIf="mostrarModal" class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-head">
+      <h2>{{ editando ? 'Editar empresa' : 'Nueva empresa' }}</h2>
+      <button class="btn-cerrar" (click)="cerrarModal()">✕</button>
+    </div>
+
+    <div class="modal-cuerpo">
+      <div class="campo">
+        <label for="e-nombre">Nombre *</label>
+        <input id="e-nombre" type="text" [(ngModel)]="form.nombre" placeholder="Sucursal Santiago Centro" />
+      </div>
+      <div class="campo">
+        <label for="e-rut">RUT</label>
+        <input id="e-rut" type="text" [(ngModel)]="form.rut" placeholder="76.123.456-7" />
+      </div>
+      <div class="campo">
+        <label for="e-email">Email</label>
+        <input id="e-email" type="email" [(ngModel)]="form.email" placeholder="contacto@empresa.cl" />
+      </div>
+      <div class="campo">
+        <label for="e-telefono">Teléfono</label>
+        <input id="e-telefono" type="text" [(ngModel)]="form.telefono" placeholder="+56 9 1234 5678" />
+      </div>
+      <div class="campo">
+        <label for="e-direccion">Dirección</label>
+        <input id="e-direccion" type="text" [(ngModel)]="form.direccion" placeholder="Av. Ejemplo 123, Santiago" />
+      </div>
+      <div class="campo">
+        <label for="e-plan">Plan</label>
+        <select id="e-plan" [(ngModel)]="form.plan">
+          <option value="BASICO">BÁSICO</option>
+          <option value="PRO">PRO</option>
+          <option value="PREMIUM">PREMIUM</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-pie">
+      <button class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+      <button class="btn-primary btn-guardar" (click)="guardar()" [disabled]="guardando()">
+        {{ guardando() ? 'Guardando...' : (editando ? 'Guardar cambios' : 'Crear empresa') }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,74 @@
+.info-page {
+  min-height: calc(100vh - 64px);
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
+    #f5f7fb;
+  padding: 110px 24px 60px;
+}
+
+.info-header {
+  max-width: 820px;
+  margin: 0 auto 36px;
+  text-align: center;
+}
+
+.info-header h1 {
+  font-size: 38px;
+  font-weight: 800;
+  color: #00236f;
+  margin-bottom: 10px;
+}
+
+.info-header p {
+  color: #64748b;
+  font-size: 16px;
+}
+
+.info-contenido {
+  max-width: 820px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.info-bloque {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #e8eef7;
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .05);
+}
+
+.info-bloque h2 {
+  font-size: 19px;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.info-bloque p {
+  color: #475569;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.info-volver {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.info-volver a {
+  color: #00236f;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.info-volver a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .info-header h1 {
+    font-size: 30px;
+  }
+}

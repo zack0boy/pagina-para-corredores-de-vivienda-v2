@@ -12,7 +12,7 @@ export interface AsignarCorredorDto {
 
 export interface ConvertirClienteACorredorDto {
   usuario_id: string;           // UUID del cliente a convertir
-  empresa_id: string;           // UUID de la empresa
+  empresa_id?: string;          // UUID de la empresa (opcional: el backend usa la empresa del admin si no viene)
   licenciaProfesional?: string; // Opcional
   descripcion?: string;         // Opcional
 }

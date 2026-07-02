@@ -1,0 +1,251 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <h2>{{ esSuperAdmin() ? 'Portal Super Admin' : 'Portal Admin' }}</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboards/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">dashboard</span>
+        Resumen
+      </a>
+      <a routerLink="/dashboards/listar" routerLinkActive="active">
+        <span class="material-symbols-outlined">group</span>
+        Usuarios
+      </a>
+      <a routerLink="/dashboards/empresas" routerLinkActive="active" *ngIf="esSuperAdmin()">
+        <span class="material-symbols-outlined">domain</span>
+        Empresas
+      </a>
+      <a routerLink="/propiedades" routerLinkActive="active">
+        <span class="material-symbols-outlined">home_work</span>
+        Propiedades
+      </a>
+      <a routerLink="/dashboards/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span>
+        Pagos
+      </a>
+      <a routerLink="/dashboards/reportes" routerLinkActive="active">
+        <span class="material-symbols-outlined">analytics</span>
+        Reportes
+      </a>
+      <a routerLink="/perfil-usuario" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span>
+        Mi Perfil
+      </a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <ng-container *ngIf="!user() || !esAdmin(); else reportesPanel">
+      <div class="noaccess">
+        <span class="material-symbols-outlined">lock</span>
+        <h2>Acceso restringido</h2>
+        <p>Inicia sesión con una cuenta de administrador para ver los reportes.</p>
+      </div>
+    </ng-container>
+
+    <ng-template #reportesPanel>
+      <section class="header">
+        <div>
+          <h1>Reportes</h1>
+          <p>Resumen del sistema y detalle de pagos del período seleccionado.</p>
+        </div>
+      </section>
+
+      <section class="panel filtros">
+        <div class="filtro-campo">
+          <label for="desde">Desde</label>
+          <input id="desde" type="date" [(ngModel)]="desde" />
+        </div>
+        <div class="filtro-campo">
+          <label for="hasta">Hasta</label>
+          <input id="hasta" type="date" [(ngModel)]="hasta" />
+        </div>
+        <button class="btn-secondary" (click)="cargar()">Actualizar</button>
+        <button class="btn-primary btn-descargar" (click)="descargarCsv()" [disabled]="descargando()">
+          <span class="material-symbols-outlined">download</span>
+          {{ descargando() ? 'Descargando...' : 'Descargar reporte (CSV)' }}
+        </button>
+      </section>
+
+      <section class="stats" *ngIf="resumen() as r">
+        <a class="stat stat-blue" *ngIf="esSuperAdmin()">
+          <div class="stat-icon"><span class="material-symbols-outlined">domain</span></div>
+          <div class="stat-num">{{ r.totales.empresas }}</div>
+          <div class="stat-label">Empresas</div>
+        </a>
+
+        <a class="stat stat-blue" *ngIf="!esSuperAdmin()">
+          <div class="stat-icon"><span class="material-symbols-outlined">group</span></div>
+          <div class="stat-num">{{ r.totales.corredores }}</div>
+          <div class="stat-label">Corredores</div>
+        </a>
+
+        <a class="stat stat-orange">
+          <div class="stat-icon"><span class="material-symbols-outlined">manage_accounts</span></div>
+          <div class="stat-num">{{ r.totales.usuarios }}</div>
+          <div class="stat-label">Usuarios</div>
+        </a>
+
+        <a class="stat stat-green">
+          <div class="stat-icon"><span class="material-symbols-outlined">home_work</span></div>
+          <div class="stat-num">{{ r.totales.propiedades }}</div>
+          <div class="stat-label">Propiedades</div>
+        </a>
+
+        <a class="stat stat-purple">
+          <div class="stat-icon"><span class="material-symbols-outlined">payments</span></div>
+          <div class="stat-num">{{ r.financiero.pagos }}</div>
+          <div class="stat-label">Pagos en el período</div>
+        </a>
+      </section>
+
+      <section class="content-grid" *ngIf="resumen() as r">
+        <div class="panel">
+          <div class="card-title">
+            <h2>Resumen Financiero</h2>
+            <span>{{ desde }} a {{ hasta }}</span>
+          </div>
+
+          <div class="payment-total">
+            {{ '$' + (r.financiero.montoTotal | number:'1.0-0') }}
+          </div>
+
+          <div class="finance-foot">
+            <div>
+              <small>Cobrado ({{ r.financiero.cantidadValidados }} pagos)</small>
+              <strong>{{ '$' + (r.financiero.cobrado | number:'1.0-0') }}</strong>
+            </div>
+            <div>
+              <small>Pendiente ({{ r.financiero.cantidadPendientes }} pagos)</small>
+              <strong>{{ '$' + (r.financiero.pendiente | number:'1.0-0') }}</strong>
+            </div>
+            <div>
+              <small>Rechazado ({{ r.financiero.cantidadRechazados }} pagos)</small>
+              <strong>{{ '$' + (r.financiero.rechazado | number:'1.0-0') }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="card-title">
+            <h2>Detalle de pagos</h2>
+            <span>{{ pagos().length }} registros</span>
+          </div>
+
+          <div class="tabla-wrap">
+            <table class="tabla-pagos">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Cliente</th>
+                  <th>Propiedad</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of pagos()">
+                  <td>{{ p.fecha_pago | date:'dd-MM-yyyy' }}</td>
+                  <td>{{ p.cliente_nombre || '—' }}</td>
+                  <td>{{ p.propiedad_titulo || '—' }}</td>
+                  <td>{{ '$' + (p.monto | number:'1.0-0') }}</td>
+                  <td>
+                    <span class="badge" [class.badge-ok]="p.estado === 'VALIDADO'"
+                          [class.badge-warn]="p.estado === 'PENDIENTE_VALIDACION'"
+                          [class.badge-bad]="p.estado === 'RECHAZADO'">
+                      {{ p.estado === 'PENDIENTE_VALIDACION' ? 'PENDIENTE' : p.estado }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="!cargando() && pagos().length === 0">
+                  <td colspan="5" class="sin-datos">No hay pagos en el período seleccionado.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel" *ngIf="propiedadesReporte() as pr">
+          <div class="card-title">
+            <h2>Propiedades por estado</h2>
+            <span>{{ pr.total }} en total</span>
+          </div>
+
+          <ul class="lista-reporte">
+            <li *ngFor="let fila of pr.porEstado">
+              <span class="lista-etiqueta">{{ fila.estado | titlecase }}</span>
+              <div class="lista-barra">
+                <div class="lista-fill" [style.width.%]="pr.total ? (fila.cantidad / pr.total) * 100 : 0"></div>
+              </div>
+              <strong>{{ fila.cantidad }}</strong>
+            </li>
+            <li *ngIf="pr.porEstado.length === 0" class="sin-datos">Sin propiedades registradas.</li>
+          </ul>
+        </div>
+
+        <div class="panel" *ngIf="usuariosReporte() as ur">
+          <div class="card-title">
+            <h2>Usuarios por rol</h2>
+            <span>clientes: {{ ur.clientes.activos }} activos / {{ ur.clientes.bloqueados }} bloqueados</span>
+          </div>
+
+          <ul class="lista-reporte">
+            <li *ngFor="let fila of ur.porRol">
+              <span class="lista-etiqueta">{{ fila.rol.replaceAll('_', ' ') | titlecase }}</span>
+              <strong>{{ fila.cantidad }}</strong>
+            </li>
+            <li>
+              <span class="lista-etiqueta">Clientes</span>
+              <strong>{{ ur.clientes.total }}</strong>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="content-grid grid-uno" *ngIf="esSuperAdmin() && empresasReporte().length > 0">
+        <div class="panel">
+          <div class="card-title">
+            <h2>Empresas</h2>
+            <span>{{ empresasReporte().length }} sucursales</span>
+          </div>
+
+          <div class="tabla-wrap">
+            <table class="tabla-pagos">
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Estado</th>
+                  <th>Plan</th>
+                  <th>Admins</th>
+                  <th>Corredores</th>
+                  <th>Propiedades</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let e of empresasReporte()">
+                  <td><strong>{{ e.nombre }}</strong></td>
+                  <td>
+                    <span class="badge" [class.badge-ok]="e.estado === 'ACTIVA'" [class.badge-bad]="e.estado !== 'ACTIVA'">
+                      {{ e.estado }}
+                    </span>
+                  </td>
+                  <td>{{ e.plan || 'BASICO' }}</td>
+                  <td>{{ e.admins }}</td>
+                  <td>{{ e.corredores }}</td>
+                  <td>{{ e.propiedades }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </ng-template>
+  </main>
+</div>

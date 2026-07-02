@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Navbar } from "../components/navbar/navbar";
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { DashboardService } from '../services/dashboard';
 import { PropiedadService } from '../services/propiedad';
@@ -9,11 +9,12 @@ import { PagosService } from '../services/pagos';
 import { SolicitudesClienteService } from '../services/solicitudes-cliente';
 import { EventosCalendarioService } from '../services/eventos-calendario';
 import { SolicitudesPropiedadService } from '../services/solicitudes-propiedad';
+import { ReportesService } from '../services/reportes';
 
 @Component({
   selector: 'app-dashboard-admin',
   standalone: true,
-  imports: [Navbar, CommonModule, RouterLink],
+  imports: [Navbar, CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './dashboard-admin.html',
   styleUrls: ['./dashboard-admin.css'],
 })
@@ -25,6 +26,7 @@ export class DashboardAdmin implements OnInit {
   private solicitudesService = inject(SolicitudesClienteService);
   private eventosService = inject(EventosCalendarioService);
   private solicitudesPropiedadService = inject(SolicitudesPropiedadService);
+  private reportesService = inject(ReportesService);
 
   dashboard = signal<any>(null);
   cargando = signal<boolean>(true);
@@ -44,6 +46,25 @@ export class DashboardAdmin implements OnInit {
   totalSolicitudes = signal<number>(0);
   totalEventos = signal<number>(0);
   totalPagos = signal<number>(0);
+
+  esAdmin(): boolean {
+    const rol = (this.user()?.rol || this.user()?.rolUsuario || this.user()?.role || '').toString().toUpperCase();
+    return ['SUPER_ADMIN', 'ADMIN_EMPRESA'].includes(rol);
+  }
+
+  esSuperAdmin(): boolean {
+    return (this.user()?.rol || this.user()?.rolUsuario || this.user()?.role || '').toString().toUpperCase() === 'SUPER_ADMIN';
+  }
+
+  tituloPanel(): string {
+    return this.esSuperAdmin() ? 'Panel Super Admin' : 'Panel Administrativo';
+  }
+
+  subtituloPanel(): string {
+    return this.esSuperAdmin()
+      ? 'Monitorea empresas, usuarios, propiedades y leads desde una vista central.'
+      : 'Gestiona corredores, propiedades, leads y contratos de tu empresa desde un solo panel.';
+  }
 
   ngOnInit(): void {
     this.cargando.set(true);
@@ -148,54 +169,37 @@ export class DashboardAdmin implements OnInit {
           this.cargando.set(false); 
         } 
       });
-      return;
+    } else {
+      const empresaId = user.empresa_id || user.empresaId || (user.empresa && user.empresa.id);
+      this.dashboardService.adminEmpresa(empresaId).subscribe({ 
+        next: (d) => { 
+          this.dashboard.set(d); 
+          this.cargando.set(false); 
+        }, 
+        error: (e: unknown) => { 
+          console.error('❌ Error admin empresa:', e); 
+          this.cargando.set(false); 
+        } 
+      });
     }
 
-    // ADMIN_EMPRESA
-    const empresaId = user.empresa_id || user.empresaId || (user.empresa && user.empresa.id);
-    this.dashboardService.adminEmpresa(empresaId).subscribe({ 
-      next: (d) => { 
-        this.dashboard.set(d); 
-        this.cargando.set(false); 
-      }, 
-      error: (e: unknown) => { 
-        console.error('❌ Error admin empresa:', e); 
-        this.cargando.set(false); 
-      } 
-    });
+    // Resumen financiero de los últimos 30 días (calculado en el backend)
+    this.reportesService.resumen().subscribe({
+      next: (r) => {
+        const fin = r?.financiero;
+        if (!fin) return;
 
-    // Cargar pagos y calcular total del mes
-    this.pagosService.findAll().subscribe({ 
-      next: (list: any[]) => {
-        this.pagos.set(list || []);
-        const now = new Date();
-        const month = now.getMonth();
-        const year = now.getFullYear();
+        this.pagosTotal.set(fin.montoTotal || 0);
+        this.pagosCobrado.set(fin.cobrado || 0);
+        this.pagosPendiente.set(fin.pendiente || 0);
 
-        const pagosMes = (list || []).filter((p: any) => {
-          if (!p || !p.fecha_pago) return false;
-          const d = new Date(p.fecha_pago);
-          return d.getMonth() === month && d.getFullYear() === year;
-        });
-
-        const suma = pagosMes.reduce((s: number, p: any) => s + (Number(p.monto) || 0), 0);
-        this.pagosTotal.set(suma);
-
-        const cobrado = (pagosMes || []).filter((p: any) => p.estado === 'VALIDADO').reduce((s: number, p: any) => s + (Number(p.monto) || 0), 0);
-        const pendiente = (pagosMes || []).filter((p: any) => p.estado === 'PENDIENTE_VALIDACION').reduce((s: number, p: any) => s + (Number(p.monto) || 0), 0);
-
-        this.pagosCobrado.set(cobrado);
-        this.pagosPendiente.set(pendiente);
-
-        const totalForPct = (cobrado + pendiente) || suma || 1;
-        const pctCobrado = totalForPct ? (cobrado / totalForPct) * 100 : 0;
-        const pctPendiente = totalForPct ? (pendiente / totalForPct) * 100 : 0;
-        this.pagosCobradoPct.set(Number(pctCobrado.toFixed(1)));
-        this.pagosPendientePct.set(Number(pctPendiente.toFixed(1)));
-      }, 
-      error: (e) => { 
-        console.error('Error cargando pagos', e); 
-      } 
+        const totalForPct = (fin.cobrado + fin.pendiente) || fin.montoTotal || 1;
+        this.pagosCobradoPct.set(Number(((fin.cobrado / totalForPct) * 100).toFixed(1)));
+        this.pagosPendientePct.set(Number(((fin.pendiente / totalForPct) * 100).toFixed(1)));
+      },
+      error: (e) => {
+        console.error('Error cargando resumen financiero', e);
+      }
     });
   }
 }

@@ -1,5 +1,45 @@
 <app-navbar></app-navbar>
 
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <h2>{{ esSuperAdmin ? 'Portal Super Admin' : 'Portal Admin' }}</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboards/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">dashboard</span>
+        Resumen
+      </a>
+      <a routerLink="/dashboards/listar" routerLinkActive="active">
+        <span class="material-symbols-outlined">group</span>
+        Usuarios
+      </a>
+      <a routerLink="/dashboards/empresas" routerLinkActive="active" *ngIf="esSuperAdmin">
+        <span class="material-symbols-outlined">domain</span>
+        Empresas
+      </a>
+      <a routerLink="/propiedades" routerLinkActive="active">
+        <span class="material-symbols-outlined">home_work</span>
+        Propiedades
+      </a>
+      <a routerLink="/dashboards/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span>
+        Pagos
+      </a>
+      <a routerLink="/dashboards/reportes" routerLinkActive="active">
+        <span class="material-symbols-outlined">analytics</span>
+        Reportes
+      </a>
+      <a routerLink="/perfil-usuario" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span>
+        Mi Perfil
+      </a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
 <div class="listar-container">
 
   <!-- HEADER -->
@@ -11,10 +51,21 @@
         (click)="cambiarTipoUsuario('clientes')">
         👤 Clientes
       </button>
-      <button 
+      <button
         [class.active]="tipoUsuario === 'corredores'"
         (click)="cambiarTipoUsuario('corredores')">
         🏢 Corredores
+      </button>
+      <button
+        [class.active]="tipoUsuario === 'admins'"
+        (click)="cambiarTipoUsuario('admins')">
+        ⭐ Admins
+      </button>
+      <button
+        *ngIf="esSuperAdmin"
+        [class.active]="tipoUsuario === 'superadmins'"
+        (click)="cambiarTipoUsuario('superadmins')">
+        👑 Super Admins
       </button>
     </div>
   </div>
@@ -33,35 +84,92 @@
           <th>Nombre</th>
           <th>Email</th>
           <th>Teléfono</th>
+          <th *ngIf="tipoUsuario === 'clientes'">Estado</th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let usuario of usuarios" class="usuario-row">
+        <tr *ngFor="let usuario of usuariosPaginados()" class="usuario-row">
           <td>{{ usuario.id }}</td>
           <td>{{ usuario.nombre || 'N/A' }}</td>
           <td>{{ usuario.email || 'N/A' }}</td>
           <td>{{ usuario.telefono || 'N/A' }}</td>
+          <td *ngIf="tipoUsuario === 'clientes'">
+            <span [class]="usuario.activo === false ? 'estado-bloqueado' : 'estado-activo'">
+              {{ usuario.activo === false ? '⛔Bloqueado' : '✅Activo' }}
+            </span>
+          </td>
           <td class="acciones">
             <button class="btn btn-info" (click)="verDetalles(usuario)" title="Ver detalles">
               👁️ Ver
             </button>
-            <button class="btn btn-warning" (click)="abrirEditar(usuario)" title="Editar">
+            <button class="btn btn-warning" *ngIf="puedeEditar()" (click)="abrirEditar(usuario)" title="Editar">
               ✏️ Editar
             </button>
-            <button class="btn btn-primary" 
+            <button class="btn btn-secondary"
               *ngIf="tipoUsuario === 'clientes'"
-              (click)="abrirModalConvertirCorredor(usuario)" 
+              (click)="toggleBloqueoCliente(usuario)"
+              [title]="usuario.activo === false ? 'Desbloquear' : 'Bloquear'">
+              {{ usuario.activo === false ? '🔓 Desbloquear' : '⛔ Bloquear' }}
+            </button>
+            <button class="btn btn-primary"
+              *ngIf="tipoUsuario === 'clientes'"
+              (click)="abrirModalConvertirCorredor(usuario)"
               title="Convertir a corredor">
               🔄 Convertir a Corredor
             </button>
-            <button class="btn btn-danger" (click)="confirmarEliminar(usuario)" title="Eliminar">
+            <button class="btn btn-primary"
+              *ngIf="tipoUsuario === 'corredores' && puedeNominarAdmin() && usuario.rol !== 'ADMIN_EMPRESA'"
+              (click)="abrirModalNominarAdmin(usuario)"
+              title="Nominar como administrador de empresa">
+              ⭐ Nominar Admin
+            </button>
+            <span class="estado-activo"
+              *ngIf="tipoUsuario === 'corredores' && usuario.rol === 'ADMIN_EMPRESA'"
+              title="Este usuario ya es administrador de empresa">
+              ⭐ Ya es Admin
+            </span>
+            <button
+              class="btn btn-danger"
+              *ngIf="tipoUsuario === 'corredores' && usuario.rol !== 'ADMIN_EMPRESA'"
+              (click)="confirmarEliminar(usuario)"
+              title="Eliminar">
               🗑️ Eliminar
+            </button>
+            <button class="btn btn-primary"
+              *ngIf="tipoUsuario === 'admins' && esSuperAdmin"
+              (click)="subirASuperAdmin(usuario)"
+              title="Subir a super admin">
+              👑 Subir a Super Admin
             </button>
           </td>
         </tr>
       </tbody>
     </table>
+
+    <div class="paginador" *ngIf="usuarios.length > tamanoPagina">
+      <button
+        class="btn btn-secondary"
+        (click)="cambiarPagina(paginaActual - 1)"
+        [disabled]="paginaActual === 1">
+        ◀ Anterior
+      </button>
+
+      <button
+        class="btn btn-secondary"
+        *ngFor="let pagina of paginasVisibles()"
+        (click)="cambiarPagina(pagina)"
+        [class.active]="pagina === paginaActual">
+        {{ pagina }}
+      </button>
+
+      <button
+        class="btn btn-secondary"
+        (click)="cambiarPagina(paginaActual + 1)"
+        [disabled]="paginaActual === totalPaginas()">
+        Siguiente ▶
+      </button>
+    </div>
 
     <!-- SIN USUARIOS -->
     <div *ngIf="usuarios.length === 0" class="sin-datos">
@@ -168,7 +276,7 @@
           {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
         <button 
-          *ngIf="!modoEdicion"
+          *ngIf="!modoEdicion && puedeEditarUsuarios()"
           class="btn btn-warning" 
           (click)="abrirEditar(usuarioSeleccionado)">
           Editar
@@ -208,6 +316,29 @@
 
 
   <!-- MODAL CONVERTIR A CORREDOR -->
+  <div *ngIf="mostrarConfirmConvertirCorredor" class="modal-overlay" (click)="cerrarConfirmConvertirCorredor()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🔄 Confirmar conversión</h2>
+      </div>
+
+      <div class="modal-body">
+        <p>¿Estás seguro de convertir a <strong>{{ usuarioParaConfirmarConversion?.nombre }}</strong> en corredor?</p>
+        <p class="texto-advertencia">Su cuenta de cliente será eliminada.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarConfirmConvertirCorredor()">
+          No
+        </button>
+        <button class="btn btn-primary" (click)="confirmarConvertirCorredor()">
+          Sí, convertir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONVERTIR A CORREDOR -->
   <div *ngIf="mostrarModalConvertirCorredor" class="modal-overlay" (click)="cerrarModalConvertirCorredor()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       
@@ -222,10 +353,11 @@
         <p style="margin-bottom: 20px; font-size: 16px;">
           Convertir a <strong>{{ usuarioParaConvertir.nombre }}</strong> ({{ usuarioParaConvertir.email }}) a corredor
         </p>
+        <p class="texto-advertencia">Al convertirlo, su cuenta de cliente será eliminada.</p>
 
         <form class="formulario">
-          <!-- Selector de Empresa -->
-          <div class="form-group">
+          <!-- Selector de Empresa (solo super admin: el admin queda fijado a su empresa) -->
+          <div class="form-group" *ngIf="esSuperAdmin">
             <label for="empresa-select">Selecciona la empresa: *</label>
             <select 
               id="empresa-select"
@@ -260,8 +392,8 @@
         <button class="btn btn-secondary" (click)="cerrarModalConvertirCorredor()">
           Cancelar
         </button>
-        <button 
-          class="btn btn-primary" 
+        <button
+          class="btn btn-primary"
           (click)="convertirAcorredor()"
           [disabled]="loading">
           {{ loading ? 'Convirtiendo...' : 'Convertir a Corredor' }}
@@ -271,4 +403,47 @@
     </div>
   </div>
 
+  <!-- MODAL NOMINAR ADMIN (SOLO SUPER ADMIN) -->
+  <div *ngIf="mostrarModalNominarAdmin" class="modal-overlay" (click)="cerrarModalNominarAdmin()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h2>⭐ Nominar Administrador</h2>
+        <button class="btn-close" (click)="cerrarModalNominarAdmin()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="usuarioParaNominar">
+        <p style="margin-bottom: 20px; font-size: 16px;">
+          Nominar a <strong>{{ usuarioParaNominar.nombre }}</strong> ({{ usuarioParaNominar.email }}) como administrador de una empresa.
+        </p>
+
+        <form class="formulario">
+          <div class="form-group">
+            <label for="na-empresa">Empresa a administrar: *</label>
+            <select id="na-empresa" [(ngModel)]="empresaNominacion" name="empresa_id" class="form-input" required>
+              <option value="">-- Selecciona una empresa --</option>
+              <option *ngFor="let empresa of empresas" [value]="empresa.id">
+                {{ empresa.nombre }}
+              </option>
+            </select>
+          </div>
+        </form>
+
+        <p class="texto-advertencia">El corredor pasará a tener rol de administrador de empresa.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalNominarAdmin()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" (click)="nominarAdmin()" [disabled]="loading">
+          {{ loading ? 'Nominando...' : 'Nominar Admin' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+  </main>
 </div>

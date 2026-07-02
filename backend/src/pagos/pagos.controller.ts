@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Param, Patch, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, ParseUUIDPipe, UseGuards } from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { ValidarPagoDto } from './dto/validar-pago.dto';
+import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
+import { RolesGuard, Roles } from '../common/guards/roles.guard';
+import { RolUsuario } from '../common/enum/roles.enum';
 
 @Controller('pagos')
 export class PagosController {
@@ -43,6 +46,8 @@ export class PagosController {
   }
 
   @Patch(':id/validar')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN, RolUsuario.ADMIN_EMPRESA)
   validar(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ValidarPagoDto) {
     return this.pagosService.validar(id, dto);
   }

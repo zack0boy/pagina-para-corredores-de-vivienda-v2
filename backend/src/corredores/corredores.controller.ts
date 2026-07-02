@@ -6,6 +6,8 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 
 import { CorredoresService } from './corredores.service';
@@ -13,6 +15,9 @@ import { CreateCorredorDto } from './dto/create-corredor.dto';
 import { UpdateCorredorDto } from './dto/update-corredor.dto';
 import { AsignaCorredorService } from './asigna-corredor.service';
 import { ConvertirClienteACorredorDto } from './dto/convertir-cliente-corredor.dto';
+import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
+import { RolesGuard, Roles } from '../common/guards/roles.guard';
+import { RolUsuario } from '../common/enum/roles.enum';
 
 @Controller('corredores')
 export class CorredoresController {
@@ -42,10 +47,13 @@ export class CorredoresController {
   }
 
   @Patch('convertir-cliente')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN, RolUsuario.ADMIN_EMPRESA)
   convertirCliente(
     @Body() dto: ConvertirClienteACorredorDto,
+    @Request() request: any,
   ) {
-    return this.asignaCorredorService.convertirClienteACorredor(dto);
+    return this.asignaCorredorService.convertirClienteACorredor(dto, request.user?.id);
   }
 
   @Patch(':id')

@@ -1,0 +1,131 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <h2>{{ esSuperAdmin() ? 'Portal Super Admin' : 'Portal Admin' }}</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboards/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">dashboard</span>
+        Resumen
+      </a>
+      <a routerLink="/dashboards/listar" routerLinkActive="active">
+        <span class="material-symbols-outlined">group</span>
+        Usuarios
+      </a>
+      <a routerLink="/dashboards/empresas" routerLinkActive="active" *ngIf="esSuperAdmin()">
+        <span class="material-symbols-outlined">domain</span>
+        Empresas
+      </a>
+      <a routerLink="/propiedades" routerLinkActive="active">
+        <span class="material-symbols-outlined">home_work</span>
+        Propiedades
+      </a>
+      <a routerLink="/dashboards/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span>
+        Pagos
+      </a>
+      <a routerLink="/dashboards/reportes" routerLinkActive="active">
+        <span class="material-symbols-outlined">analytics</span>
+        Reportes
+      </a>
+      <a routerLink="/perfil-usuario" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span>
+        Mi Perfil
+      </a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <ng-container *ngIf="!user() || !esAdmin(); else pagosPanel">
+      <div class="noaccess">
+        <span class="material-symbols-outlined">lock</span>
+        <h2>Acceso restringido</h2>
+        <p>Inicia sesión con una cuenta de administrador para gestionar pagos.</p>
+      </div>
+    </ng-container>
+
+    <ng-template #pagosPanel>
+      <section class="header">
+        <div>
+          <h1>Gestión de Pagos</h1>
+          <p>Revisa, valida o rechaza los pagos registrados en el sistema.</p>
+        </div>
+      </section>
+
+      <section class="panel filtros">
+        <button class="chip" [class.chip-activo]="filtro() === 'TODOS'" (click)="filtro.set('TODOS')">
+          Todos ({{ pagos().length }})
+        </button>
+        <button class="chip" [class.chip-activo]="filtro() === 'PENDIENTE_VALIDACION'" (click)="filtro.set('PENDIENTE_VALIDACION')">
+          Pendientes ({{ pendientesCount() }})
+        </button>
+        <button class="chip" [class.chip-activo]="filtro() === 'VALIDADO'" (click)="filtro.set('VALIDADO')">
+          Validados
+        </button>
+        <button class="chip" [class.chip-activo]="filtro() === 'RECHAZADO'" (click)="filtro.set('RECHAZADO')">
+          Rechazados
+        </button>
+      </section>
+
+      <section class="panel">
+        <div class="card-title">
+          <h2>Pagos</h2>
+          <span>{{ pagosFiltrados().length }} registros</span>
+        </div>
+
+        <div class="tabla-wrap">
+          <table class="tabla-pagos">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Propiedad</th>
+                <th>Monto</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of pagosFiltrados()">
+                <td>{{ p.fecha_pago | date:'dd-MM-yyyy' }}</td>
+                <td>{{ p.cliente_nombre || '—' }}</td>
+                <td>{{ p.propiedad_titulo || '—' }}</td>
+                <td><strong>{{ '$' + (p.monto | number:'1.0-0') }}</strong></td>
+                <td>{{ p.tipo_pago }}</td>
+                <td>
+                  <span class="badge"
+                        [class.badge-ok]="p.estado === 'VALIDADO'"
+                        [class.badge-warn]="p.estado === 'PENDIENTE_VALIDACION'"
+                        [class.badge-bad]="p.estado === 'RECHAZADO'">
+                    {{ p.estado === 'PENDIENTE_VALIDACION' ? 'PENDIENTE' : p.estado }}
+                  </span>
+                </td>
+                <td class="celda-acciones">
+                  <ng-container *ngIf="p.estado === 'PENDIENTE_VALIDACION'; else sinAcciones">
+                    <button class="btn-mini btn-ok" (click)="validarPago(p)" [disabled]="procesando() === p.id">
+                      ✔ Validar
+                    </button>
+                    <button class="btn-mini btn-bad" (click)="rechazarPago(p)" [disabled]="procesando() === p.id">
+                      ✕ Rechazar
+                    </button>
+                  </ng-container>
+                  <ng-template #sinAcciones>
+                    <span class="sin-acciones" *ngIf="p.comentario" [title]="p.comentario">💬</span>
+                  </ng-template>
+                </td>
+              </tr>
+              <tr *ngIf="!cargando() && pagosFiltrados().length === 0">
+                <td colspan="7" class="sin-datos">No hay pagos con este filtro.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-template>
+  </main>
+</div>

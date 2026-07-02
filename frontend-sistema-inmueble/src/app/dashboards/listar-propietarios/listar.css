@@ -377,6 +377,24 @@
   background: #c82333;
 }
 
+/* PAGINADOR */
+.paginador {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 18px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+}
+
+.paginador .btn-secondary.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .header-section {
@@ -409,6 +427,11 @@
   .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .paginador .btn {
+    width: auto;
+    flex: 1 1 120px;
   }
 
   .modal-content {
@@ -712,4 +735,102 @@
     flex-direction:column;
   }
 
+}
+/* Estado del cliente (activo / bloqueado) */
+.estado-activo {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.estado-bloqueado {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ─── SIDEBAR DEL PORTAL ─── */
+.sidebar {
+  width: 260px;
+  background: rgba(248, 250, 252, 0.94);
+  border-right: 1px solid #e2e8f0;
+  padding: 25px 20px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.sidebar-title h2 {
+  font-size: 22px;
+  color: #00236f;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.sidebar-title small {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 30px;
+}
+
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  text-decoration: none;
+  color: #475569;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all .2s ease;
+}
+
+.sidebar nav a:hover {
+  background: #eef2ff;
+  color: #00236f;
+}
+
+.sidebar nav a.active {
+  background: #dbeafe;
+  color: #00236f;
+  font-weight: 700;
+}
+
+.sidebar .material-symbols-outlined {
+  font-size: 22px;
+}
+
+.layout .contenido {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    display: none;
+  }
+
+  .layout .contenido {
+    margin-left: 0;
+    width: 100%;
+  }
 }

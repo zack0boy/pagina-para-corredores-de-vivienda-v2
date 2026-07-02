@@ -34,6 +34,7 @@ export class AsignaCorredorService {
    */
   async convertirClienteACorredor(
     dto: ConvertirClienteACorredorDto,
+    solicitanteId?: string,
   ) {
     const cliente = await this.clienteRepository.findOne({
       where: {
@@ -45,9 +46,28 @@ export class AsignaCorredorService {
       throw new NotFoundException('Cliente no encontrado');
     }
 
+    // Solo el SUPER_ADMIN puede elegir empresa; el ADMIN_EMPRESA queda
+    // bloqueado a la suya aunque envíe otra en la petición
+    let empresaId = dto.empresa_id;
+    if (solicitanteId) {
+      const solicitante = await this.usuarioRepository.findOne({
+        where: { id: solicitanteId },
+      });
+
+      if (solicitante && solicitante.rol !== RolUsuario.SUPER_ADMIN) {
+        empresaId = solicitante.empresaId;
+      }
+    }
+
+    if (!empresaId) {
+      throw new BadRequestException(
+        'No se pudo determinar la empresa: selecciona una o verifica que tu cuenta tenga empresa asignada',
+      );
+    }
+
     const empresa = await this.empresaRepository.findOne({
       where: {
-        id: dto.empresa_id,
+        id: empresaId,
       },
     });
 
@@ -66,7 +86,7 @@ export class AsignaCorredorService {
     if (!usuario) {
       usuario = this.usuarioRepository.create({
         id: cliente.id,
-        empresaId: cliente.empresa_id,
+        empresaId: empresa.id,
         nombre: cliente.nombre,
         apellido: cliente.apellido,
         email: cliente.email ?? '',
@@ -76,7 +96,7 @@ export class AsignaCorredorService {
         activo: true,
       });
     } else {
-      usuario.empresaId = cliente.empresa_id;
+      usuario.empresaId = empresa.id;
       usuario.nombre = cliente.nombre;
       usuario.apellido = cliente.apellido;
       usuario.email = cliente.email ?? usuario.email;
@@ -108,6 +128,9 @@ export class AsignaCorredorService {
     }
 
     const corredorGuardado = await this.corredorRepository.save(corredor);
+
+    // El usuario ya es corredor: se elimina su registro de cliente
+    await this.clienteRepository.delete(cliente.id);
 
     return {
       message: 'Cliente convertido en corredor',

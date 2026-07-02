@@ -12,8 +12,9 @@ import {
   Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateClienteDto, UpdateClienteDto, } from './dto/create-cliente.dto';
+import { CreateClienteDto, UpdateClienteDto, BloquearClienteDto, } from './dto/create-cliente.dto';
 import { CreateCorredorDto, UpdateCorredorDto, } from './dto/create-corredor.dto';
+import { PromoverAdminDto } from './dto/promover-admin.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
 import { RolesGuard, Roles } from '../common/guards/roles.guard';
@@ -47,6 +48,43 @@ export class UsersController {
   ) {
     const userId = request.user.id;
     return this.userService.updateCurrentUser(userId, dto as any);
+  }
+
+  //========================
+  // ADMINS / SUPER ADMINS
+  //========================
+
+  // Ambos roles pueden ver la lista de admins (admin de empresa: solo lectura)
+  @Get('admins')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN, RolUsuario.ADMIN_EMPRESA)
+  async getAdmins() {
+    return this.userService.getUsuariosPorRol(RolUsuario.ADMIN_EMPRESA);
+  }
+
+  // Solo el super admin puede ver la lista de super admins
+  @Get('super-admins')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN)
+  async getSuperAdmins() {
+    return this.userService.getUsuariosPorRol(RolUsuario.SUPER_ADMIN);
+  }
+
+  @Patch('admins/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN)
+  async updateAdmin(
+    @Param('id') id: string,
+    @Body() dto: UpdateMeDto,
+  ) {
+    return this.userService.updateAdmin(id, dto as any);
+  }
+
+  @Patch('admins/:id/promover-super')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN)
+  async promoverSuperAdmin(@Param('id') id: string) {
+    return this.userService.promoverASuperAdmin(id);
   }
 
   //========================
@@ -120,6 +158,19 @@ export class UsersController {
       id,
       dto,
     );
+  }
+
+  @Patch('clientes/:id/bloqueo')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(
+    RolUsuario.SUPER_ADMIN,
+    RolUsuario.ADMIN_EMPRESA,
+  )
+  async bloquearCliente(
+    @Param('id') id: string,
+    @Body() dto: BloquearClienteDto,
+  ) {
+    return this.userService.setClienteBloqueo(id, dto.activo);
   }
 
   @Delete('clientes/:id')
@@ -218,6 +269,16 @@ export class UsersController {
       id,
       dto,
     );
+  }
+
+  @Patch('corredores/:id/promover-admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RolUsuario.SUPER_ADMIN)
+  async promoverAdmin(
+    @Param('id') id: string,
+    @Body() dto: PromoverAdminDto,
+  ) {
+    return this.userService.promoverCorredorAAdmin(id, dto.empresa_id);
   }
 
   @Delete('corredores/:id')

@@ -1,153 +1,155 @@
 <app-navbar></app-navbar>
 
-<div class="dashboard-layout">
-
-  <!-- SIDEBAR -->
+<div class="layout">
   <aside class="sidebar">
-
-    <div class="sidebar-header">
-      <h2>Inmuebles Chile</h2>
-      <span>Panel Administrativo</span>
+    <div class="sidebar-title">
+      <h2>{{ esSuperAdmin() ? 'Portal Super Admin' : 'Portal Admin' }}</h2>
+      <small>Inmuebles Chile</small>
     </div>
 
-    <nav class="sidebar-menu">
-
-      <a class="active">
-        <span>📊</span>
-        resumen general
+    <nav>
+      <a routerLink="/dashboards/admin" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        <span class="material-symbols-outlined">dashboard</span>
+        Resumen
       </a>
-      <a href="dashboards/listar"><span>👥</span>
-        propietarios </a>
-
-
+      <a routerLink="/dashboards/listar" routerLinkActive="active">
+        <span class="material-symbols-outlined">group</span>
+        Usuarios
+      </a>
+      <a routerLink="/dashboards/empresas" routerLinkActive="active" *ngIf="esSuperAdmin()">
+        <span class="material-symbols-outlined">domain</span>
+        Empresas
+      </a>
+      <a routerLink="/propiedades" routerLinkActive="active">
+        <span class="material-symbols-outlined">home_work</span>
+        Propiedades
+      </a>
+      <a routerLink="/dashboards/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span>
+        Pagos
+      </a>
+      <a routerLink="/dashboards/reportes" routerLinkActive="active">
+        <span class="material-symbols-outlined">analytics</span>
+        Reportes
+      </a>
+      <a routerLink="/perfil-usuario" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span>
+        Mi Perfil
+      </a>
     </nav>
-
-
   </aside>
 
-  <!-- CONTENIDO -->
-  <main class="main-content">
-
-
-    <!-- HEADER -->
-    <section class="page-header">
-
-      <div>
-        <h1>Dashboard General</h1>
-
-        <p>
-          Monitorea el rendimiento de propiedades,
-          clientes y pagos desde un único panel.
-        </p>
+  <main class="contenido">
+    <ng-container *ngIf="!user() || !esAdmin(); else adminPanel">
+      <div class="noaccess">
+        <span class="material-symbols-outlined">lock</span>
+        <h2>Acceso restringido</h2>
+        <p>Inicia sesión con una cuenta de administrador para ver este panel.</p>
       </div>
+    </ng-container>
 
+    <ng-template #adminPanel>
+      <section class="header">
+        <div>
+          <h1>{{ tituloPanel() }}</h1>
+          <p>{{ subtituloPanel() }}</p>
+        </div>
 
+      </section>
 
-    </section>
-
-    <!-- KPIs -->
-    <section class="stats-grid">
-        <section class="stats">
+      <section class="stats">
         <a class="stat stat-blue">
+          <div class="stat-icon">
+            <span class="material-symbols-outlined">{{ esSuperAdmin() ? 'domain' : 'group' }}</span>
+          </div>
+          <div class="stat-num">{{ (esSuperAdmin() ? dashboard()?.empresas : dashboard()?.corredores) ?? 0 }}</div>
+          <div class="stat-label">{{ esSuperAdmin() ? 'Empresas activas' : 'Corredores activos' }}</div>
+        </a>
+
+        <a class="stat stat-orange">
+          <div class="stat-icon">
+            <span class="material-symbols-outlined">{{ esSuperAdmin() ? 'manage_accounts' : 'home_work' }}</span>
+          </div>
+          <div class="stat-num">{{ (esSuperAdmin() ? dashboard()?.usuarios : dashboard()?.propiedades) ?? 0 }}</div>
+          <div class="stat-label">{{ esSuperAdmin() ? 'Usuarios registrados' : 'Propiedades activas' }}</div>
+        </a>
+
+        <a class="stat stat-green">
           <div class="stat-icon"><span class="material-symbols-outlined">home_work</span></div>
           <div class="stat-num">{{ totalPropiedades() }}</div>
-          <div class="stat-label">Propiedades publicadas</div>
+          <div class="stat-label">Propiedades cargadas</div>
         </a>
 
-        <a class="stat stat-orange" [routerLink]="['/solicitudes-propiedad', 'pendientes']" [queryParams]="{ estado: 'pendiente' }">
-          <div class="stat-icon"><span class="material-symbols-outlined">pending_actions</span></div>
-          <div class="stat-num">{{ totalSolicitudes() }}</div>
-          <div class="stat-label">Solicitudes pendientes</div>
-        </a>
-
-        <a class="stat stat-purple" >
+        <a class="stat stat-purple">
           <div class="stat-icon"><span class="material-symbols-outlined">payments</span></div>
           <div class="stat-num">{{ totalPagos() }}</div>
           <div class="stat-label">Pagos registrados</div>
         </a>
       </section>
-    </section>
 
-    <!-- CONTENIDO CENTRAL -->
-    <section class="dashboard-body">
-
-      <!-- RESUMEN FINANCIERO -->
-      <div class="payment-card">
-
-        <div class="card-title">
-          <h2>Resumen Financiero</h2>
-          <span>Últimos 30 días</span>
-        </div>
-
-        <div class="payment-total">
-          {{ '$' + (pagosTotal() | number:'1.0-0') }}
-        </div>
-
-        <div class="progress-section">
-
-          <div class="label-row">
-            <span>Cobrado</span>
-            <span>{{ pagosCobradoPct() }}%</span>
+      <section class="content-grid">
+        <div class="panel panel-financiero">
+          <div class="card-title">
+            <h2>Resumen Financiero</h2>
+            <span>Últimos 30 días</span>
           </div>
 
-          <div class="progress">
-            <div
-              class="fill success"
-              [style.width.%]="pagosCobradoPct()">
+          <div class="payment-total">
+            {{ '$' + (pagosTotal() | number:'1.0-0') }}
+          </div>
+
+          <div class="progress-section">
+            <div class="label-row">
+              <span>Cobrado</span>
+              <span>{{ pagosCobradoPct() }}%</span>
+            </div>
+
+            <div class="progress">
+              <div class="fill success" [style.width.%]="pagosCobradoPct()"></div>
+            </div>
+
+            <div class="label-row">
+              <span>Pendiente</span>
+              <span>{{ pagosPendientePct() }}%</span>
+            </div>
+
+            <div class="progress">
+              <div class="fill warning" [style.width.%]="pagosPendientePct()"></div>
             </div>
           </div>
 
-          <div class="label-row">
-            <span>Pendiente</span>
-            <span>{{ pagosPendientePct() }}%</span>
-          </div>
-
-          <div class="progress">
-            <div
-              class="fill warning"
-              [style.width.%]="pagosPendientePct()">
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- ACTIVIDAD -->
-      <div class="activity-card">
-
-        <div class="card-title">
-          <h2>Actividad Reciente</h2>
-        </div>
-
-        <ul>
-
-          <li *ngFor="let p of propiedades().slice(0,5)">
-            <div class="activity-icon">
-              🏠
-            </div>
-
+          <div class="finance-foot">
             <div>
-              <strong>
-                {{ p.nombre || p.title || 'Propiedad' }}
-              </strong>
-
-              <small>
-                {{ p.direccion }}
-              </small>
+              <small>Total cobrado</small>
+              <strong>{{ '$' + (pagosCobrado() | number:'1.0-0') }}</strong>
             </div>
-          </li>
+            <div>
+              <small>Total pendiente</small>
+              <strong>{{ '$' + (pagosPendiente() | number:'1.0-0') }}</strong>
+            </div>
+          </div>
+        </div>
 
-        </ul>
+        <div class="panel panel-activity">
+          <div class="card-title">
+            <h2>Actividad Reciente</h2>
+            <span>Últimos registros</span>
+          </div>
 
-        <button class="btn-history">
-          Ver Historial Completo
-        </button>
+          <ul class="activity-list">
+            <li *ngFor="let p of propiedades().slice(0, 5)">
+              <div class="activity-icon">🏠</div>
+              <div>
+                <strong>{{ p.nombre || p.title || 'Propiedad' }}</strong>
+                <small>{{ p.direccion || p.ciudad || 'Sin dirección' }}</small>
+              </div>
+            </li>
+          </ul>
 
-      </div>
+          <a class="btn-history" routerLink="/propiedades">Ver catálogo completo</a>
+        </div>
+      </section>
 
-    </section>
-
+    </ng-template>
   </main>
-
 </div>

@@ -1,0 +1,21 @@
+<app-navbar></app-navbar>
+
+<div class="info-page" *ngIf="seccion() as s">
+  <header class="info-header">
+    <h1>{{ s.titulo }}</h1>
+    <p>{{ s.subtitulo }}</p>
+  </header>
+
+  <main class="info-contenido">
+    <section class="info-bloque" *ngFor="let b of s.bloques">
+      <h2>{{ b.titulo }}</h2>
+      <p>{{ b.texto }}</p>
+    </section>
+
+    <div class="info-volver">
+      <a routerLink="/home">← Volver al inicio</a>
+    </div>
+  </main>
+</div>
+
+<app-footer></app-footer>

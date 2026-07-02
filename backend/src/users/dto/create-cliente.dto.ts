@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsUUID, Length, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsUUID, IsBoolean, Length, MinLength } from 'class-validator';
 
 export class CreateClienteDto {
   @IsUUID()
@@ -57,4 +57,9 @@ export class ClienteResponseDto {
   estado!: string;
   activo!: boolean;
   createdAt!: Date;
+}
+
+export class BloquearClienteDto {
+  @IsBoolean()
+  activo!: boolean;
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { UsersService } from '../../services/listar-ususarios';
 import { AuthService } from '../../services/auth';
 import { AsignaCorredorService } from '../../services/asigna-corredor';
@@ -9,7 +10,7 @@ import { Navbar } from "../../components/navbar/navbar";
 @Component({
   selector: 'app-listar-propietarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, Navbar],
+  imports: [CommonModule, FormsModule, Navbar, RouterLink, RouterLinkActive],
   templateUrl: './listar.html',
   styleUrls: ['./listar.css']
 })
@@ -17,7 +18,9 @@ export class ListarPropietariosComponent implements OnInit {
 
   usuarios: any[] = [];
   loading: boolean = false;
-  tipoUsuario: 'clientes' | 'corredores' = 'clientes';
+  tipoUsuario: 'clientes' | 'corredores' | 'admins' | 'superadmins' = 'clientes';
+  paginaActual: number = 1;
+  tamanoPagina: number = 10;
   
   // Modal
   mostrarModal: boolean = false;
@@ -37,12 +40,22 @@ export class ListarPropietariosComponent implements OnInit {
   // Modal convertir a corredor
   mostrarModalConvertirCorredor: boolean = false;
   usuarioParaConvertir: any = null;
+  mostrarConfirmConvertirCorredor: boolean = false;
+  usuarioParaConfirmarConversion: any = null;
   empresaSeleccionada: string = '';
   licenciaProfesionalConversion: string = '';
   descripcionConversion: string = '';
   empresas: any[] = [];
   usuarioActual: any = null;
   esSuperAdmin: boolean = false;
+
+  puedeEditarUsuarios(): boolean {
+    return !this.esSuperAdmin;
+  }
+
+  puedeNominarAdmin(): boolean {
+    return this.esSuperAdmin;
+  }
 
   constructor(
     private usersService: UsersService, 
@@ -51,20 +64,24 @@ export class ListarPropietariosComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  // Modal nominar admin (solo SUPER_ADMIN)
+  mostrarModalNominarAdmin: boolean = false;
+  usuarioParaNominar: any = null;
+  empresaNominacion: string = '';
+
   ngOnInit(): void {
     this.usuarioActual = this.authService.obtenerUsuarioActual();
-    this.esSuperAdmin = this.usuarioActual?.rol === 'SUPER_ADMIN';
-    
-    // Si es SUPER_ADMIN, cargar empresas
-    if (this.esSuperAdmin) {
-      this.asignaCorredorService.obtenerEmpresas().subscribe({
-        next: (data: any) => {
-          this.empresas = Array.isArray(data) ? data : data?.data ?? [];
-        },
-        error: (e) => console.error('Error cargando empresas:', e)
-      });
-    }
-    
+    const rol = (this.usuarioActual?.rol || this.usuarioActual?.rolUsuario || this.usuarioActual?.role || '').toString().toUpperCase();
+    this.esSuperAdmin = rol === 'SUPER_ADMIN';
+
+    // Cargar empresas (se usan para convertir a corredor y nominar admins)
+    this.asignaCorredorService.obtenerEmpresas().subscribe({
+      next: (data: any) => {
+        this.empresas = Array.isArray(data) ? data : data?.data ?? [];
+      },
+      error: (e) => console.error('Error cargando empresas:', e)
+    });
+
     this.cargarUsuarios();
   }
 
@@ -77,9 +94,11 @@ export class ListarPropietariosComponent implements OnInit {
     this.cdr.markForCheck();
     console.log('Iniciando carga de', this.tipoUsuario);
     
-    const servicio = this.tipoUsuario === 'clientes' 
-      ? this.usersService.getAllClientes()
-      : this.usersService.getAllCorredores();
+    const servicio =
+      this.tipoUsuario === 'clientes' ? this.usersService.getAllClientes()
+      : this.tipoUsuario === 'corredores' ? this.usersService.getAllCorredores()
+      : this.tipoUsuario === 'admins' ? this.usersService.getAdmins()
+      : this.usersService.getSuperAdmins();
 
     servicio.subscribe({
       next: (response: any) => {
@@ -110,12 +129,18 @@ export class ListarPropietariosComponent implements OnInit {
               telefono: item.usuario.telefono || item.telefono || 'N/A',
               descripcion: item.descripcion || item.usuario.descripcion || 'N/A',
               createdAt: item.createdAt || item.usuario.createdAt,
+              rol: item.usuario.rol,
               ...item // Mantener otros campos originales
             };
           }
           // Si no tiene usuario anidado, retornar como está
           return item;
         });
+
+        const totalPaginas = this.totalPaginas();
+        if (this.paginaActual > totalPaginas) {
+          this.paginaActual = totalPaginas || 1;
+        }
         
         this.loading = false;
         this.cdr.markForCheck();
@@ -138,11 +163,53 @@ export class ListarPropietariosComponent implements OnInit {
     });
   }
 
-  cambiarTipoUsuario(tipo: 'clientes' | 'corredores'): void {
+  puedeEditar(): boolean {
+    if (this.tipoUsuario === 'superadmins') return false;
+    if (this.tipoUsuario === 'admins') return this.esSuperAdmin;
+    return true;
+  }
+
+  cambiarTipoUsuario(tipo: 'clientes' | 'corredores' | 'admins' | 'superadmins'): void {
     this.tipoUsuario = tipo;
+    this.paginaActual = 1;
     this.cdr.markForCheck();
     this.cargarUsuarios();
     this.cerrarModal();
+  }
+
+  usuariosPaginados(): any[] {
+    const inicio = (this.paginaActual - 1) * this.tamanoPagina;
+    return this.usuarios.slice(inicio, inicio + this.tamanoPagina);
+  }
+
+  totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.usuarios.length / this.tamanoPagina));
+  }
+
+  cambiarPagina(pagina: number): void {
+    const total = this.totalPaginas();
+    if (pagina < 1 || pagina > total) return;
+    this.paginaActual = pagina;
+    this.cdr.markForCheck();
+  }
+
+  paginasVisibles(): number[] {
+    const total = this.totalPaginas();
+    const maxVisibles = 5;
+    const mitad = Math.floor(maxVisibles / 2);
+
+    let inicio = Math.max(1, this.paginaActual - mitad);
+    let fin = Math.min(total, inicio + maxVisibles - 1);
+
+    if (fin - inicio + 1 < maxVisibles) {
+      inicio = Math.max(1, fin - maxVisibles + 1);
+    }
+
+    const paginas: number[] = [];
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
   }
 
   //=========================
@@ -180,7 +247,8 @@ export class ListarPropietariosComponent implements OnInit {
     this.loading = true;
     
     // Cada tipo de usuario acepta campos distintos (el backend rechaza los que sobran)
-    const datosActualizados = this.tipoUsuario === 'clientes'
+    const datosActualizados =
+      this.tipoUsuario === 'clientes' || this.tipoUsuario === 'admins'
       ? {
           nombre: this.formUsuario.nombre,
           email: this.formUsuario.email,
@@ -192,8 +260,9 @@ export class ListarPropietariosComponent implements OnInit {
           descripcion: this.formUsuario.descripcion,
         };
 
-    const servicio = this.tipoUsuario === 'clientes'
-      ? this.usersService.updateCliente(this.usuarioSeleccionado.id, datosActualizados)
+    const servicio =
+      this.tipoUsuario === 'clientes' ? this.usersService.updateCliente(this.usuarioSeleccionado.id, datosActualizados)
+      : this.tipoUsuario === 'admins' ? this.usersService.updateAdmin(this.usuarioSeleccionado.id, datosActualizados)
       : this.usersService.updateCorredor(this.usuarioSeleccionado.id, datosActualizados);
 
     servicio.subscribe({
@@ -291,10 +360,116 @@ export class ListarPropietariosComponent implements OnInit {
   }
 
   //=========================
+  // BLOQUEAR / DESBLOQUEAR CLIENTE
+  //=========================
+
+  toggleBloqueoCliente(usuario: any): void {
+    const bloquear = usuario.activo !== false;
+    const accion = bloquear ? 'bloquear' : 'desbloquear';
+
+    if (!confirm(`¿Seguro que deseas ${accion} a ${usuario.nombre}?`)) return;
+
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    this.usersService.bloquearCliente(usuario.id, !bloquear).subscribe({
+      next: () => {
+        alert(`✅ ${usuario.nombre} ha sido ${bloquear ? 'bloqueado' : 'desbloqueado'}`);
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.cargarUsuarios();
+      },
+      error: (err: any) => {
+        this.loading = false;
+        this.cdr.markForCheck();
+        alert('❌ Error al ' + accion + ': ' + (err.error?.message || err.statusText));
+      }
+    });
+  }
+
+  //=========================
+  // SUBIR ADMIN A SUPER ADMIN (SUPER_ADMIN)
+  //=========================
+
+  subirASuperAdmin(usuario: any): void {
+    if (!confirm(`¿Estás seguro de subir a ${usuario.nombre} a SUPER ADMIN?\n\nTendrá acceso total al sistema, incluyendo todas las empresas.`)) {
+      return;
+    }
+
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    this.usersService.promoverSuperAdmin(usuario.id).subscribe({
+      next: () => {
+        alert('✅ ' + usuario.nombre + ' ahora es SUPER ADMIN');
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.cargarUsuarios();
+      },
+      error: (err: any) => {
+        this.loading = false;
+        this.cdr.markForCheck();
+        alert('❌ Error al subir a super admin: ' + (err.error?.message || err.statusText));
+      }
+    });
+  }
+
+  //=========================
+  // NOMINAR CORREDOR COMO ADMIN (SUPER_ADMIN)
+  //=========================
+
+  abrirModalNominarAdmin(usuario: any): void {
+    this.usuarioParaNominar = usuario;
+    this.empresaNominacion = '';
+    this.mostrarModalNominarAdmin = true;
+  }
+
+  cerrarModalNominarAdmin(): void {
+    this.mostrarModalNominarAdmin = false;
+    this.usuarioParaNominar = null;
+    this.empresaNominacion = '';
+  }
+
+  nominarAdmin(): void {
+    if (!this.usuarioParaNominar?.id) {
+      alert('❌ Error: Usuario no identificado');
+      return;
+    }
+    if (!this.empresaNominacion) {
+      alert('❌ Por favor selecciona una empresa');
+      return;
+    }
+
+    this.loading = true;
+    this.cdr.markForCheck();
+
+    this.usersService.promoverAdmin(this.usuarioParaNominar.id, this.empresaNominacion).subscribe({
+      next: () => {
+        alert('✅ ' + this.usuarioParaNominar.nombre + ' ahora es administrador de la empresa');
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.cerrarModalNominarAdmin();
+        this.cargarUsuarios();
+      },
+      error: (err: any) => {
+        this.loading = false;
+        this.cdr.markForCheck();
+        alert('❌ Error al nominar admin: ' + (err.error?.message || err.statusText));
+      }
+    });
+  }
+
+  //=========================
   // CONVERTIR CLIENTE A CORREDOR
   //=========================
 
   abrirModalConvertirCorredor(usuario: any): void {
+    if (!this.esSuperAdmin) {
+      this.usuarioParaConfirmarConversion = usuario;
+      this.mostrarConfirmConvertirCorredor = true;
+      return;
+    }
+
     this.usuarioParaConvertir = usuario;
     this.empresaSeleccionada = '';
     this.licenciaProfesionalConversion = '';
@@ -310,22 +485,43 @@ export class ListarPropietariosComponent implements OnInit {
     this.descripcionConversion = '';
   }
 
+  cerrarConfirmConvertirCorredor(): void {
+    this.mostrarConfirmConvertirCorredor = false;
+    this.usuarioParaConfirmarConversion = null;
+  }
+
+  confirmarConvertirCorredor(): void {
+    if (!this.usuarioParaConfirmarConversion) {
+      return;
+    }
+
+    this.usuarioParaConvertir = this.usuarioParaConfirmarConversion;
+    this.usuarioParaConfirmarConversion = null;
+    this.mostrarConfirmConvertirCorredor = false;
+    this.empresaSeleccionada = '';
+    this.licenciaProfesionalConversion = '';
+    this.descripcionConversion = '';
+    this.convertirAcorredor();
+  }
+
   convertirAcorredor(): void {
     if (!this.usuarioParaConvertir || !this.usuarioParaConvertir.id) {
       alert('❌ Error: Usuario no identificado');
       return;
     }
 
-    if (!this.empresaSeleccionada) {
-      alert('❌ Por favor selecciona una empresa');
-      return;
-    }
+    // Solo el super admin elige empresa; el admin usa la suya (la resuelve el backend)
+    if (this.esSuperAdmin) {
+      if (!this.empresaSeleccionada) {
+        alert('❌ Por favor selecciona una empresa');
+        return;
+      }
 
-    // Validar que empresa_id sea un UUID válido
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(this.empresaSeleccionada)) {
-      alert('❌ El ID de empresa no es válido');
-      return;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(this.empresaSeleccionada)) {
+        alert('❌ El ID de empresa no es válido');
+        return;
+      }
     }
 
     this.loading = true;
@@ -334,7 +530,7 @@ export class ListarPropietariosComponent implements OnInit {
     // Preparar datos para convertir cliente a corredor
     const datosConversion: any = {
       usuario_id: this.usuarioParaConvertir.id,
-      empresa_id: this.empresaSeleccionada,
+      empresa_id: this.esSuperAdmin ? this.empresaSeleccionada : undefined,
       licenciaProfesional: this.licenciaProfesionalConversion?.trim() || undefined,
       descripcion: this.descripcionConversion?.trim() || undefined
     };

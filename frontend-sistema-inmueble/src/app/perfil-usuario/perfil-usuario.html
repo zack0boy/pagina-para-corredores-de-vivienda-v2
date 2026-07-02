@@ -44,14 +44,6 @@
                 </div>
               </div>
 
-              <div class="dato full">
-                <span class="material-symbols-outlined">location_on</span>
-                <div>
-                  <small>Dirección</small>
-                  <strong>{{ user()?.direccion || user()?.ciudad || 'Sin dirección' }}</strong>
-                </div>
-              </div>
-
               <ng-container *ngIf="corredor()">
                 <div class="dato full">
                   <span class="material-symbols-outlined">badge</span>
@@ -87,11 +79,6 @@
               <div class="campo">
                 <label>Teléfono</label>
                 <input formControlName="telefono" placeholder="Tu teléfono" />
-              </div>
-
-              <div class="campo full">
-                <label>Dirección</label>
-                <input formControlName="direccion" placeholder="Tu dirección" />
               </div>
 
               <ng-container *ngIf="corredor()">

@@ -32,7 +32,6 @@ export class PerfilUsuario implements OnInit {
     nombre: [''],
     email: [''],
     telefono: [''],
-    direccion: [''],
     licenciaProfesional: [''],
     descripcion: [''],
   });
@@ -128,7 +127,6 @@ export class PerfilUsuario implements OnInit {
       nombre: this.form.value.nombre || undefined,
       email: this.form.value.email || undefined,
       telefono: this.form.value.telefono || undefined,
-      direccion: this.form.value.direccion || undefined,
     };
 
     this.perfilService.updateCliente(usuario.id, dto).subscribe({
@@ -180,7 +178,6 @@ export class PerfilUsuario implements OnInit {
       nombre: this.form.value.nombre || undefined,
       email: this.form.value.email || undefined,
       telefono: this.form.value.telefono || undefined,
-      direccion: this.form.value.direccion || undefined,
     };
 
     this.perfilService.updateMe(dto).subscribe({
@@ -207,7 +204,6 @@ export class PerfilUsuario implements OnInit {
       nombre: usuario?.nombre || usuario?.name || '',
       email: usuario?.email || '',
       telefono: usuario?.telefono || usuario?.phone || '',
-      direccion: usuario?.direccion || usuario?.ciudad || '',
       licenciaProfesional: '',
       descripcion: '',
     });
@@ -219,7 +215,6 @@ export class PerfilUsuario implements OnInit {
       nombre: usuario?.nombre || usuario?.name || '',
       email: usuario?.email || '',
       telefono: usuario?.telefono || usuario?.phone || '',
-      direccion: usuario?.direccion || usuario?.ciudad || '',
       licenciaProfesional: corredor?.licenciaProfesional || '',
       descripcion: corredor?.descripcion || '',
     });

@@ -105,6 +105,13 @@ export class UsersService {
     };
   }
 
+  // Bloquear o desbloquear un cliente (activo = false impide su acceso)
+  async setClienteBloqueo(id: string, activo: boolean): Promise<Cliente> {
+    const cliente = await this.findClienteById(id);
+    cliente.activo = activo;
+    return this.clienteRepository.save(cliente);
+  }
+
   // ─── CORREDORES ──────────────────────────────────────────────────────────────
 
   async createCorredor(dto: CreateCorredorDto): Promise<Corredor> {
@@ -164,12 +171,81 @@ export class UsersService {
 
   async removeCorredor(idUsuario: string): Promise<void> {
     const usuario = await this.findById(idUsuario);
-    if (!usuario || usuario.rol !== RolUsuario.CORREDOR) {
+    if (!usuario) {
+      throw new NotFoundException('Corredor no encontrado');
+    }
+    if (usuario.rol === RolUsuario.ADMIN_EMPRESA || usuario.rol === RolUsuario.SUPER_ADMIN) {
+      throw new BadRequestException(
+        'No se puede eliminar: el usuario es administrador. Revoca su rol antes de eliminarlo.',
+      );
+    }
+    if (usuario.rol !== RolUsuario.CORREDOR) {
       throw new NotFoundException('Corredor no encontrado');
     }
 
     await this.corredorRepository.delete(idUsuario);
     await this.usuarioRepository.delete(idUsuario);
+  }
+
+  // Nominar un corredor como administrador de una empresa (solo SUPER_ADMIN).
+  // Si ya es admin, solo se reasigna la empresa que administra.
+  async promoverCorredorAAdmin(idUsuario: string, empresaId: string): Promise<Usuario> {
+    const usuario = await this.findById(idUsuario);
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.rol !== RolUsuario.CORREDOR && usuario.rol !== RolUsuario.ADMIN_EMPRESA) {
+      throw new BadRequestException(
+        `Solo un corredor puede ser nominado como administrador (rol actual: ${usuario.rol})`,
+      );
+    }
+
+    usuario.rol = RolUsuario.ADMIN_EMPRESA;
+    usuario.empresaId = empresaId;
+    return this.usuarioRepository.save(usuario);
+  }
+
+  // Listar usuarios por rol (sin exponer el hash de contraseña)
+  async getUsuariosPorRol(rol: RolUsuario): Promise<Partial<Usuario>[]> {
+    const usuarios = await this.usuarioRepository.find({
+      where: { rol },
+      order: { createdAt: 'DESC' },
+    });
+    return usuarios.map(({ password, ...resto }) => resto);
+  }
+
+  // Editar datos básicos de un admin de empresa (solo SUPER_ADMIN)
+  async updateAdmin(id: string, dto: { nombre?: string; email?: string; telefono?: string }): Promise<Partial<Usuario>> {
+    const usuario = await this.findById(id);
+    if (!usuario || usuario.rol !== RolUsuario.ADMIN_EMPRESA) {
+      throw new NotFoundException('Administrador no encontrado');
+    }
+
+    if (dto.nombre !== undefined) usuario.nombre = dto.nombre;
+    if (dto.email !== undefined) usuario.email = dto.email;
+    if (dto.telefono !== undefined) usuario.telefono = dto.telefono;
+
+    const { password, ...resto } = await this.usuarioRepository.save(usuario);
+    return resto;
+  }
+
+  // Subir un admin de empresa a super admin (solo SUPER_ADMIN)
+  async promoverASuperAdmin(id: string): Promise<Partial<Usuario>> {
+    const usuario = await this.findById(id);
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    if (usuario.rol === RolUsuario.SUPER_ADMIN) {
+      throw new BadRequestException('El usuario ya es super admin');
+    }
+    if (usuario.rol !== RolUsuario.ADMIN_EMPRESA) {
+      throw new BadRequestException('Solo un admin de empresa puede subir a super admin');
+    }
+
+    usuario.rol = RolUsuario.SUPER_ADMIN;
+    const { password, ...resto } = await this.usuarioRepository.save(usuario);
+    return resto;
   }
 
   // ─── USUARIOS (STAFF) ─────────────────────────────────────────────────────────
