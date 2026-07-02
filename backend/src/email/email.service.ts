@@ -207,7 +207,6 @@ export class EmailService {
       const resultado = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
         to: destinatario,
-        to: destinatario,
         subject: asunto,
         html: contenido,
       });
