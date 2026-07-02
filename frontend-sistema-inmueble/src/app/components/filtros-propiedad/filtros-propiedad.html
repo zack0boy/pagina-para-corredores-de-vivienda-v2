@@ -1,0 +1,82 @@
+<div class="filter-sidebar">
+  <div class="sidebar-header">
+    <h3>Filtros Avanzados</h3>
+    <p>Refina tu búsqueda</p>
+  </div>
+
+  <form [formGroup]="filtrosForm" (ngSubmit)="aplicarFiltros()">
+
+    <!-- Buscador por nombre/título -->
+    <div class="filter-section">
+      <label class="section-title">🔎 Buscar</label>
+      <input
+        type="text"
+        formControlName="nombre"
+        placeholder="Ej: departamento centro..."
+        class="search-input">
+    </div>
+
+    <div class="filter-section">
+      <label class="section-title">🏷️ Operación</label>
+      <div class="btn-toggle-group">
+        <button
+          type="button"
+          [class.active]="filtrosForm.get('tipoOperacion')?.value === 'VENTA'"
+          (click)="setTipoOperacion('VENTA')">
+          Venta
+        </button>
+        <button
+          type="button"
+          [class.active]="filtrosForm.get('tipoOperacion')?.value === 'ARRIENDO'"
+          (click)="setTipoOperacion('ARRIENDO')">
+          Arriendo
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-section select-box-wrapper">
+      <label class="section-title">🏠 Tipo de Propiedad</label>
+      <select formControlName="categoriaId" class="custom-select">
+        <option value="">Cualquier propiedad</option>
+
+        @for (cat of listaCategorias; track cat.id) {
+          <option [value]="cat.id">{{ cat.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-section">
+      <label class="section-title">💵 Precio máximo</label>
+      <input
+        type="range"
+        [min]="limiteMin()"
+        [max]="limiteMax()"
+        step="10000"
+        formControlName="precioMax"
+        class="price-slider">
+      <div class="slider-labels">
+        <span>{{ formatearPrecio(limiteMin()) }}</span>
+        <span class="current-price">Hasta {{ formatearPrecio(filtrosForm.get('precioMax')?.value) }}</span>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <label class="section-title">🛏️ Habitaciones (mínimo)</label>
+      <div class="btn-grid-group">
+        @for (num of [1, 2, 3, 4]; track num) {
+          <button
+            type="button"
+            [class.active]="filtrosForm.get('habitaciones')?.value === num"
+            (click)="setHabitaciones(num)">
+            {{ num }}+
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn-submit-filter">Aplicar filtros</button>
+      <button type="button" class="btn-reset-filter" (click)="limpiarFiltros()">Limpiar todo</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,125 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Editar Propiedad</h1>
+      <p>Modifica los datos y gestiona las imágenes (incluido su orden).</p>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando...</p>
+    } @else {
+
+      <!-- DATOS -->
+      <form [formGroup]="form" (ngSubmit)="guardar()" class="card-form">
+        <h3>Datos de la propiedad</h3>
+        <div class="grid">
+          <div class="campo full">
+            <label>Título <span>*</span></label>
+            <input formControlName="titulo" maxlength="100">
+            @if (campoInvalido('titulo')) { <small class="err">Entre 10 y 100 caracteres.</small> }
+          </div>
+          <div class="campo">
+            <label>Categoría <span>*</span></label>
+            <select formControlName="categoria_id">
+              <option value="">Seleccionar...</option>
+              @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+            </select>
+          </div>
+          <div class="campo">
+            <label>Operación</label>
+            <div class="tipo-group">
+              <button type="button" [class.active]="form.get('tipo_operacion')?.value === 'VENTA'" (click)="setTipo('VENTA')">Venta</button>
+              <button type="button" [class.active]="form.get('tipo_operacion')?.value === 'ARRIENDO'" (click)="setTipo('ARRIENDO')">Arriendo</button>
+            </div>
+          </div>
+          <div class="campo">
+            <label>Precio (CLP) <span>*</span></label>
+            <input type="text" inputmode="numeric" [value]="precioDisplay()" (input)="onPrecioInput($event)" placeholder="150.000.000">
+          </div>
+          <div class="campo">
+            <label>Estado</label>
+            <select formControlName="estado">
+              <option value="DISPONIBLE">Disponible</option>
+              <option value="RESERVADA">Reservada</option>
+              <option value="VENDIDA">Vendida</option>
+              <option value="ARRENDADA">Arrendada</option>
+              <option value="INACTIVA">Inactiva</option>
+            </select>
+          </div>
+          <div class="campo full">
+            <label>Dirección <span>*</span></label>
+            <input formControlName="direccion">
+          </div>
+          <div class="campo"><label>Habitaciones</label><input type="number" formControlName="habitaciones" min="0"></div>
+          <div class="campo"><label>Baños</label><input type="number" formControlName="banos" min="0"></div>
+          <div class="campo"><label>Estacionamientos</label><input type="number" formControlName="estacionamientos" min="0"></div>
+          <div class="campo"><label>Metros totales</label><input type="number" formControlName="metros_totales" min="0"></div>
+          <div class="campo"><label>Metros construidos</label><input type="number" formControlName="metros_construidos" min="0"></div>
+          <div class="campo full">
+            <label>Descripción</label>
+            <textarea formControlName="descripcion" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="acciones">
+          <button type="submit" class="approve" [disabled]="guardando()">{{ guardando() ? 'Guardando...' : 'Guardar cambios' }}</button>
+          <button type="button" class="reject" routerLink="/corredor/gestion">Volver</button>
+        </div>
+      </form>
+
+      <!-- IMÁGENES -->
+      <div class="card-form">
+        <h3>Imágenes ({{ imagenes().length }}/10)</h3>
+        <p class="hint">La primera imagen es la principal. Usa las flechas para cambiar el orden.</p>
+
+        <div class="img-grid">
+          @for (img of imagenes(); track img.id; let i = $index) {
+            <div class="img-item">
+              @if (i === 0) { <span class="principal">Principal</span> }
+              <img [src]="img.url" alt="imagen">
+              <div class="img-controls">
+                <button type="button" (click)="mover(i, -1)" [disabled]="i === 0" title="Subir">
+                  <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <button type="button" (click)="mover(i, 1)" [disabled]="i === imagenes().length - 1" title="Bajar">
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+                <button type="button" class="del" (click)="eliminarImagen(img.id)" title="Eliminar">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (imagenes().length < 10) {
+            <label class="dropzone-img">
+              <span class="material-symbols-outlined">add_photo_alternate</span>
+              <span>{{ subiendo() ? 'Subiendo...' : 'Agregar' }}</span>
+              <input type="file" accept="image/*" multiple hidden [disabled]="subiendo()" (change)="agregarImagenes($event)">
+            </label>
+          }
+        </div>
+      </div>
+
+    }
+  </main>
+</div>

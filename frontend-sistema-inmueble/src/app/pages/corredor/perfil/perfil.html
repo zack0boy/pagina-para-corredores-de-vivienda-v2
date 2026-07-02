@@ -1,0 +1,81 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Mi Perfil</h1>
+      <p>Tus datos como corredor en Inmuebles Chile.</p>
+    </section>
+
+    <div *ngIf="toast()" class="toast-ok">✓ {{ toast() }}</div>
+    <div *ngIf="error()" class="toast-err">{{ error() }}</div>
+
+    <ng-container *ngIf="cargando(); else loaded">
+      <p style="color:#64748b">Cargando perfil...</p>
+    </ng-container>
+
+    <ng-template #loaded>
+      <div class="perfil-card">
+        <div class="perfil-top">
+          <div class="avatar">{{ iniciales() }}</div>
+          <div class="perfil-id">
+            <h2>{{ user()?.nombre || 'Corredor' }}</h2>
+            <span class="rol-badge">{{ user()?.rol }}</span>
+          </div>
+          <button *ngIf="!editando()" class="btn-edit" (click)="editar()">
+            <span class="material-symbols-outlined">edit</span> Editar
+          </button>
+        </div>
+
+        <ng-container *ngIf="!editando(); else editMode">
+          <!-- VISTA -->
+          <div class="datos">
+            <div class="dato"><span class="material-symbols-outlined">mail</span>
+              <div><small>Correo</small><strong>{{ user()?.email || '—' }}</strong></div></div>
+            <div class="dato"><span class="material-symbols-outlined">badge</span>
+              <div><small>Licencia profesional</small><strong>{{ corredor()?.licenciaProfesional || 'No registrada' }}</strong></div></div>
+            <div class="dato full"><span class="material-symbols-outlined">description</span>
+              <div><small>Descripción</small><strong>{{ corredor()?.descripcion || 'Sin descripción' }}</strong></div></div>
+          </div>
+        </ng-container>
+
+        <ng-template #editMode>
+          <!-- EDICIÓN -->
+          <form [formGroup]="form" (ngSubmit)="guardar()" class="form-edit">
+            <div class="campo">
+              <label>Nombre</label>
+              <input formControlName="nombre" placeholder="Tu nombre">
+            </div>
+            <div class="campo">
+              <label>Licencia profesional</label>
+              <input formControlName="licenciaProfesional" placeholder="Ej: 12345-AB">
+            </div>
+            <div class="campo">
+              <label>Descripción</label>
+              <textarea formControlName="descripcion" rows="3" placeholder="Cuéntales a los clientes sobre ti..."></textarea>
+            </div>
+            <div class="acciones">
+              <button type="submit" class="approve" [disabled]="guardando()">{{ guardando() ? 'Guardando...' : 'Guardar cambios' }}</button>
+              <button type="button" class="reject" (click)="cancelar()">Cancelar</button>
+            </div>
+          </form>
+        </ng-template>
+      </div>
+    </ng-template>
+  </main>
+</div>

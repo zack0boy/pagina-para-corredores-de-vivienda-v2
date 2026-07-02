@@ -1,0 +1,70 @@
+<app-navbar></app-navbar>
+
+<div class="page-wrapper">
+  <div class="catalog-container">
+    
+    <header class="catalog-header">
+      <h1>Catálogo de Propiedades</h1>
+      <p>Encuentra tu próximo hogar en Chile</p>
+    </header>
+
+    <div class="catalog-layout">
+      <aside class="sidebar-area">
+        <app-filtros-propiedad 
+          [limiteMin]="precioMinimoReal()" 
+          [limiteMax]="precioMaximoReal()"
+          [ubicaciones]="ubicacionesDisponibles()"
+          (onFiltrosCambian)="cargarPropiedades($event)">
+        </app-filtros-propiedad>
+      </aside>
+
+      <main class="results-area">
+        <ng-container *ngIf="cargando(); else loadedResults">
+          <div class="loading-state">Cargando propiedades disponibles...</div>
+        </ng-container>
+
+        <ng-template #loadedResults>
+          <div class="grid-propiedades">
+            <ng-container *ngIf="(propiedades() || []).length > 0; else emptyState">
+              <app-card-propiedad *ngFor="let item of propiedades()" [propiedad]="item"></app-card-propiedad>
+            </ng-container>
+            <ng-template #emptyState>
+              <div class="empty-state">
+                <h3>No encontramos propiedades</h3>
+                <p>Prueba cambiando los parámetros de los filtros.</p>
+              </div>
+            </ng-template>
+          </div>
+
+          <!-- Paginador centralizado en el padre -->
+          <div *ngIf="totalPages() > 0" class="paginador-container">
+            <button 
+              class="btn-pagina-prev"
+              [disabled]="currentPage() === 1"
+              (click)="cambiarPagina(currentPage() - 1)">
+              « Anterior
+            </button>
+
+            <div class="paginas-numeros">
+              <button 
+                *ngFor="let _ of pageArray(); let i = index"
+                class="btn-pagina-numero"
+                [class.active]="(i + 1) === currentPage()"
+                (click)="cambiarPagina(i + 1)">
+                {{ i + 1 }}
+              </button>
+            </div>
+
+            <button 
+              class="btn-pagina-next"
+              [disabled]="currentPage() === totalPages()"
+              (click)="cambiarPagina(currentPage() + 1)">
+              Siguiente »
+            </button>
+          </div>
+        </ng-template>
+      </main>
+
+    </div>
+  </div>
+</div>

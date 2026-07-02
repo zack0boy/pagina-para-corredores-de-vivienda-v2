@@ -1,0 +1,65 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-primary" (click)="cargar()">Actualizar</button>
+    </div>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Solicitudes de Clientes</h1>
+      <p>Aprueba o rechaza el acceso de nuevos clientes. Las solicitudes expiran a las 24 horas.</p>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    <div class="pending-bar">
+      <span class="material-symbols-outlined">pending_actions</span>
+      {{ pendientes().length }} solicitud(es) pendiente(s)
+    </div>
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando solicitudes...</p>
+    } @else if (pendientes().length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">inbox</span>
+        <p>No hay solicitudes pendientes.</p>
+      </div>
+    } @else {
+      <div class="sol-list">
+        @for (s of pendientes(); track s.id) {
+          <div class="sol-card">
+            <div class="sol-avatar">{{ iniciales(s) }}</div>
+            <div class="sol-info">
+              <strong>{{ s.nombre || ('Cliente ' + (s.cliente_id || '').slice(0,8)) }}</strong>
+              <span class="sol-msg">{{ s.mensaje || 'Sin mensaje adicional.' }}</span>
+              <span class="sol-time">
+                <span class="material-symbols-outlined">schedule</span>
+                {{ tiempoRestante(s.fecha_expiracion) }}
+              </span>
+            </div>
+            <div class="sol-actions">
+              <button class="approve" (click)="aprobar(s.id)">Aprobar</button>
+              <button class="reject" (click)="rechazar(s.id)">Rechazar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

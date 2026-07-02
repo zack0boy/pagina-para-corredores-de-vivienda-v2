@@ -1,0 +1,89 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-primary" routerLink="/corredor/nueva-propiedad">Nueva Publicación</button>
+    </div>
+  </aside>
+
+  <main class="contenido">
+
+    @if (!user() || user().rol !== 'CORREDOR') {
+      <div class="noaccess">
+        <span class="material-symbols-outlined">lock</span>
+        <h2>Acceso restringido</h2>
+        <p>Inicia sesión con una cuenta de corredor para ver tu panel.</p>
+      </div>
+    } @else {
+
+      <section class="header">
+        <h1>Hola, {{ user().nombre || 'Corredor' }}</h1>
+        <p>Este es tu panel. Aquí tienes un resumen de tu actividad.</p>
+      </section>
+
+      <!-- Dashboard de métricas -->
+      <section class="stats">
+        <a routerLink="/corredor/gestion" class="stat stat-blue">
+          <div class="stat-icon"><span class="material-symbols-outlined">home_work</span></div>
+          <div class="stat-num">{{ totalPropiedades() }}</div>
+          <div class="stat-label">Propiedades publicadas</div>
+        </a>
+
+        <a routerLink="/corredor/solicitudes" class="stat stat-orange">
+          <div class="stat-icon"><span class="material-symbols-outlined">pending_actions</span></div>
+          <div class="stat-num">{{ totalSolicitudes() }}</div>
+          <div class="stat-label">Solicitudes pendientes</div>
+        </a>
+
+        <a routerLink="/corredor/calendario" class="stat stat-green">
+          <div class="stat-icon"><span class="material-symbols-outlined">event</span></div>
+          <div class="stat-num">{{ totalEventos() }}</div>
+          <div class="stat-label">Eventos próximos</div>
+        </a>
+
+        <a routerLink="/corredor/pagos" class="stat stat-purple">
+          <div class="stat-icon"><span class="material-symbols-outlined">payments</span></div>
+          <div class="stat-num">{{ totalPagos() }}</div>
+          <div class="stat-label">Pagos registrados</div>
+        </a>
+      </section>
+
+      <!-- Accesos rápidos -->
+      <section class="quick">
+        <h3>Acciones rápidas</h3>
+        <div class="quick-grid">
+          <a routerLink="/corredor/nueva-propiedad" class="quick-card">
+            <span class="material-symbols-outlined">add_home</span>
+            <div><strong>Publicar propiedad</strong><small>Agrega un nuevo inmueble al catálogo</small></div>
+          </a>
+          <a routerLink="/corredor/solicitudes" class="quick-card">
+            <span class="material-symbols-outlined">how_to_reg</span>
+            <div><strong>Revisar solicitudes</strong><small>Aprueba o rechaza clientes nuevos</small></div>
+          </a>
+          <a routerLink="/corredor/calendario" class="quick-card">
+            <span class="material-symbols-outlined">calendar_add_on</span>
+            <div><strong>Agendar visita</strong><small>Programa una visita o gestión</small></div>
+          </a>
+          <a routerLink="/corredor/pagos" class="quick-card">
+            <span class="material-symbols-outlined">receipt_long</span>
+            <div><strong>Registrar pago</strong><small>Registra un pago y sube la evidencia</small></div>
+          </a>
+        </div>
+      </section>
+
+    }
+  </main>
+</div>

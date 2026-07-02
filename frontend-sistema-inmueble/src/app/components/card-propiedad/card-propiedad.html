@@ -1,0 +1,71 @@
+<div class="property-card">
+
+  <div class="image-container">
+    <img
+      [src]="propiedad.imagenes?.[0]?.url || 'placeholder-propiedad.svg'"
+      [alt]="propiedad.titulo"
+      loading="lazy">
+
+    <span
+      class="tag-operacion"
+      [class.tag-arriendo]="propiedad.tipo_operacion === 'ARRIENDO'">
+
+      {{ propiedad.tipo_operacion | uppercase }}
+
+    </span>
+
+    <!-- Estado de la propiedad -->
+    @if (propiedad.estado && propiedad.estado !== 'DISPONIBLE') {
+      <span class="tag-estado estado-{{ propiedad.estado }}">{{ propiedad.estado }}</span>
+    }
+  </div>
+
+  <div class="card-content">
+
+    <h3 class="price">
+      {{ propiedad.precio | currency:'CLP':'symbol':'1.0-0' }}
+    </h3>
+
+    <h4 class="title">
+      {{ propiedad.titulo }}
+    </h4>
+
+    <p class="location">
+      📍 {{ propiedad.direccion || 'Dirección no especificada' }}
+    </p>
+
+    <div class="features">
+      <span>🛏️ {{ propiedad.habitaciones }} Dorms.</span>
+      <span>🚿 {{ propiedad.banos }} Baños</span>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Usuario normal -->
+    <button
+      *ngIf="!esCorredor()"
+      class="btn-details"
+      [routerLink]="['/propiedad', propiedad.id]">
+
+      Ver Detalles
+
+    </button>
+
+    <!-- Corredor -->
+    <div *ngIf="esCorredor()" class="card-actions">
+
+ 
+
+      <button
+        class="btn-details"
+        [routerLink]="['/propiedad', propiedad.id]">
+
+        Detalles
+
+      </button>
+
+    </div>
+
+  </div>
+
+</div>

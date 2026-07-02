@@ -1,0 +1,145 @@
+/* Contenedor global de la página para empujar el contenido debajo de la Navbar */
+.page-wrapper {
+  margin-top: 80px;
+  min-height: calc(100vh - 80px);
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-container {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.catalog-header {
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+}
+
+.catalog-header h1 {
+  color: #0f172a;
+  margin: 0 0 0.4rem 0;
+  font-size: 2.4rem;
+  font-weight: 700;
+}
+
+.catalog-header p {
+  color: #64748b;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Distribución del catálogo */
+.catalog-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+/* Área de resultados */
+.results-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* Grilla de tarjetas */
+.grid-propiedades {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  align-content: start;
+}
+
+/* Estados */
+.loading-state,
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #64748b;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+}
+
+.empty-state h3 {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+}
+
+/* PAGINADOR */
+.paginador-container {
+  margin-top: auto;
+  padding: 30px 0;
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  border-top: 1px solid #e2e8f0;
+}
+
+.paginas-numeros {
+  display: flex;
+  gap: 8px;
+}
+
+/* Botones */
+.btn-pagina-numero,
+.btn-pagina-prev,
+.btn-pagina-next {
+  padding: 8px 16px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.btn-pagina-numero:hover,
+.btn-pagina-prev:hover,
+.btn-pagina-next:hover {
+  background: #f1f5f9;
+}
+
+.btn-pagina-numero.active {
+  background-color: #002244;
+  color: white;
+  border-color: #002244;
+}
+
+.btn-pagina-prev:disabled,
+.btn-pagina-next:disabled,
+.btn-pagina-numero:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .catalog-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .page-wrapper {
+    margin-top: 70px;
+    min-height: calc(100vh - 70px);
+  }
+}

@@ -1,0 +1,65 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Solicitudes de Publicación</h1>
+      <p>Personas que quieren publicar una propiedad. Al aprobar, se publica y tú quedas como representante.</p>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando...</p>
+    } @else if (solicitudes().length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">inbox</span>
+        <p>No hay solicitudes de publicación pendientes.</p>
+      </div>
+    } @else {
+      <div class="lista">
+        @for (s of solicitudes(); track s.id) {
+          <div class="card-sol">
+            <div class="sol-head">
+              <div>
+                <h3>{{ s.titulo }}</h3>
+                <p class="dir"><span class="material-symbols-outlined">location_on</span> {{ s.direccion }}</p>
+              </div>
+              <div class="precio">{{ formatPrecio(s.precio) }}<span class="op">{{ s.tipo_operacion }}</span></div>
+            </div>
+
+            @if (s.descripcion) { <p class="desc">{{ s.descripcion }}</p> }
+
+            <div class="solicitante">
+              <span class="material-symbols-outlined">person</span>
+              <strong>{{ s.solicitante_nombre }}</strong>
+              @if (s.solicitante_telefono) { <span>· {{ s.solicitante_telefono }}</span> }
+              @if (s.solicitante_email) { <span>· {{ s.solicitante_email }}</span> }
+            </div>
+
+            <div class="acciones">
+              <button class="approve" (click)="aprobar(s.id)">Aprobar y publicar</button>
+              <button class="reject" (click)="rechazar(s.id)">Rechazar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

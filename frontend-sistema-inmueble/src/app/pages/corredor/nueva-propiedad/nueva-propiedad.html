@@ -1,0 +1,128 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Nueva Propiedad</h1>
+      <p>Completa los datos para publicar una propiedad en el catálogo.</p>
+    </section>
+
+    @if (exito()) { <div class="toast-ok">{{ exito() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <!-- Datos principales -->
+      <div class="card-form">
+        <h3>Información básica</h3>
+        <div class="grid">
+          <div class="campo full">
+            <label>Título <span>*</span></label>
+            <input formControlName="titulo" placeholder="Ej: Departamento con vista al mar (mín. 10 caracteres)" maxlength="100">
+            @if (campoInvalido('titulo')) { <small class="err">Entre 10 y 100 caracteres.</small> }
+          </div>
+          <div class="campo">
+            <label>Categoría <span>*</span></label>
+            <select formControlName="categoria_id">
+              <option value="">Seleccionar...</option>
+              @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+            </select>
+            @if (campoInvalido('categoria_id')) { <small class="err">Selecciona una categoría.</small> }
+          </div>
+          <div class="campo">
+            <label>Operación <span>*</span></label>
+            <div class="tipo-group">
+              <button type="button" [class.active]="form.get('tipo_operacion')?.value === 'VENTA'" (click)="setTipo('VENTA')">Venta</button>
+              <button type="button" [class.active]="form.get('tipo_operacion')?.value === 'ARRIENDO'" (click)="setTipo('ARRIENDO')">Arriendo</button>
+            </div>
+          </div>
+          <div class="campo">
+            <label>Precio (CLP) <span>*</span></label>
+            <input type="text" inputmode="numeric" [value]="precioDisplay()"
+                   (input)="onPrecioInput($event)" placeholder="150.000.000">
+            @if (campoInvalido('precio')) { <small class="err">Ingresa un precio válido.</small> }
+          </div>
+          <div class="campo full">
+            <label>Dirección <span>*</span></label>
+            <input formControlName="direccion" placeholder="Av. Siempre Viva 123, Santiago">
+            @if (campoInvalido('direccion')) { <small class="err">Campo obligatorio.</small> }
+          </div>
+          <div class="campo full">
+            <label>Descripción</label>
+            <textarea formControlName="descripcion" rows="3" placeholder="Describe la propiedad..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Características -->
+      <div class="card-form">
+        <h3>Características</h3>
+        <div class="grid">
+          <div class="campo"><label>Habitaciones</label><input type="number" formControlName="habitaciones" min="0"></div>
+          <div class="campo"><label>Baños</label><input type="number" formControlName="banos" min="0"></div>
+          <div class="campo"><label>Estacionamientos</label><input type="number" formControlName="estacionamientos" min="0"></div>
+          <div class="campo"><label>Metros totales (m²)</label><input type="number" formControlName="metros_totales" min="0"></div>
+          <div class="campo"><label>Metros construidos (m²)</label><input type="number" formControlName="metros_construidos" min="0"></div>
+        </div>
+      </div>
+
+      <!-- Imágenes -->
+      <div class="card-form">
+        <h3>Imágenes (máx. 10)</h3>
+        <label class="dropzone">
+          <span class="material-symbols-outlined">add_photo_alternate</span>
+          <span>Haz clic para seleccionar imágenes</span>
+          <input type="file" accept="image/*" multiple hidden (change)="onArchivos($event)">
+        </label>
+        @if (previews().length) {
+          <div class="previews">
+            @for (img of previews(); track $index) {
+              <div class="preview">
+                <img [src]="img" alt="preview">
+                <button type="button" (click)="quitarImagen($index)">✕</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Ubicación -->
+      <div class="card-form">
+        <h3>Ubicación en mapa</h3>
+        <div class="map-search">
+          <span class="material-symbols-outlined">search</span>
+          <input #buscarInput type="text"
+                 placeholder="Buscar dirección o lugar (ej: Av. Providencia 1234, Santiago)"
+                 (keydown.enter)="$event.preventDefault(); buscarUbicacion(buscarInput.value)">
+          <button type="button" (click)="buscarUbicacion(buscarInput.value)" [disabled]="buscando()">
+            {{ buscando() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+        <p class="map-hint"><span class="material-symbols-outlined">ads_click</span> {{ coordInfo() }}</p>
+        <div #mapContainer class="mapa"></div>
+      </div>
+
+      <div class="acciones">
+        <button type="submit" class="approve" [disabled]="cargando()">
+          {{ cargando() ? 'Publicando...' : 'Publicar Propiedad' }}
+        </button>
+        <button type="button" class="reject" routerLink="/corredor/gestion">Cancelar</button>
+      </div>
+    </form>
+  </main>
+</div>

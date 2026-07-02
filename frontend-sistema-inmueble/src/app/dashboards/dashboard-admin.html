@@ -1,0 +1,153 @@
+<app-navbar></app-navbar>
+
+<div class="dashboard-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <h2>Inmuebles Chile</h2>
+      <span>Panel Administrativo</span>
+    </div>
+
+    <nav class="sidebar-menu">
+
+      <a class="active">
+        <span>📊</span>
+        resumen general
+      </a>
+      <a href="dashboards/listar"><span>👥</span>
+        propietarios </a>
+
+
+    </nav>
+
+
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="main-content">
+
+
+    <!-- HEADER -->
+    <section class="page-header">
+
+      <div>
+        <h1>Dashboard General</h1>
+
+        <p>
+          Monitorea el rendimiento de propiedades,
+          clientes y pagos desde un único panel.
+        </p>
+      </div>
+
+
+
+    </section>
+
+    <!-- KPIs -->
+    <section class="stats-grid">
+        <section class="stats">
+        <a class="stat stat-blue">
+          <div class="stat-icon"><span class="material-symbols-outlined">home_work</span></div>
+          <div class="stat-num">{{ totalPropiedades() }}</div>
+          <div class="stat-label">Propiedades publicadas</div>
+        </a>
+
+        <a class="stat stat-orange" [routerLink]="['/solicitudes-propiedad', 'pendientes']" [queryParams]="{ estado: 'pendiente' }">
+          <div class="stat-icon"><span class="material-symbols-outlined">pending_actions</span></div>
+          <div class="stat-num">{{ totalSolicitudes() }}</div>
+          <div class="stat-label">Solicitudes pendientes</div>
+        </a>
+
+        <a class="stat stat-purple" >
+          <div class="stat-icon"><span class="material-symbols-outlined">payments</span></div>
+          <div class="stat-num">{{ totalPagos() }}</div>
+          <div class="stat-label">Pagos registrados</div>
+        </a>
+      </section>
+    </section>
+
+    <!-- CONTENIDO CENTRAL -->
+    <section class="dashboard-body">
+
+      <!-- RESUMEN FINANCIERO -->
+      <div class="payment-card">
+
+        <div class="card-title">
+          <h2>Resumen Financiero</h2>
+          <span>Últimos 30 días</span>
+        </div>
+
+        <div class="payment-total">
+          {{ '$' + (pagosTotal() | number:'1.0-0') }}
+        </div>
+
+        <div class="progress-section">
+
+          <div class="label-row">
+            <span>Cobrado</span>
+            <span>{{ pagosCobradoPct() }}%</span>
+          </div>
+
+          <div class="progress">
+            <div
+              class="fill success"
+              [style.width.%]="pagosCobradoPct()">
+            </div>
+          </div>
+
+          <div class="label-row">
+            <span>Pendiente</span>
+            <span>{{ pagosPendientePct() }}%</span>
+          </div>
+
+          <div class="progress">
+            <div
+              class="fill warning"
+              [style.width.%]="pagosPendientePct()">
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ACTIVIDAD -->
+      <div class="activity-card">
+
+        <div class="card-title">
+          <h2>Actividad Reciente</h2>
+        </div>
+
+        <ul>
+
+          <li *ngFor="let p of propiedades().slice(0,5)">
+            <div class="activity-icon">
+              🏠
+            </div>
+
+            <div>
+              <strong>
+                {{ p.nombre || p.title || 'Propiedad' }}
+              </strong>
+
+              <small>
+                {{ p.direccion }}
+              </small>
+            </div>
+          </li>
+
+        </ul>
+
+        <button class="btn-history">
+          Ver Historial Completo
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</div>

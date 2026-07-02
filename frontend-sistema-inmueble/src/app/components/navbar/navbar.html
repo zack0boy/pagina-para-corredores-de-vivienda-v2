@@ -1,0 +1,37 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    
+    <div class="navbar-logo">
+      Inmuebles Chile
+    </div>
+    
+    <ul class="navbar-menu">
+      <li>
+        <a routerLink="/home" routerLinkActive="active" class="menu-link">Inicio</a>
+      </li>
+      <li>
+        <a routerLink="/propiedades" routerLinkActive="active" class="menu-link">Propiedades</a>
+      </li>
+      <li>
+      <li *ngIf="esCorredor()">
+        <a routerLink="/corredor" routerLinkActive="active" class="menu-link">Mi Panel</a>
+      </li>
+      <li *ngIf="isAdmin()">
+      <a routerLink="/dashboards" class="menu-link">Panel Admin</a>
+      </li>
+    </ul>
+
+
+    <div class="navbar-actions">
+      <ng-container *ngIf="!authService.estaLogueado(); else logged">
+        <button class="btn-login" routerLink="/login">Iniciar Sesión</button>
+        <button class="btn-register" routerLink="/registro">Registrarse</button>
+      </ng-container>
+      <ng-template #logged>
+        <button class="btn-perfil" routerLink="/perfil-usuario">Hola, {{ authService.obtenerUsuarioActual()?.nombre }}</button>
+        <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
+      </ng-template>
+    </div>
+
+  </div>
+</nav>

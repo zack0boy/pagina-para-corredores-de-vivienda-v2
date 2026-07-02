@@ -1,0 +1,51 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Historial de Cambios</h1>
+      <p>Registro de las acciones sobre tus propiedades.</p>
+    </section>
+
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando historial...</p>
+    } @else if (items().length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">history</span>
+        <p>Aún no hay cambios registrados.</p>
+      </div>
+    } @else {
+      <div class="timeline">
+        @for (h of items(); track h.id) {
+          <div class="item">
+            <div class="ic accion-{{ h.accion }}"><span class="material-symbols-outlined">{{ icono(h.accion) }}</span></div>
+            <div class="cuerpo">
+              <div class="linea1">
+                <span class="badge accion-{{ h.accion }}">{{ etiqueta(h.accion) }}</span>
+                <span class="fecha">{{ h.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+              <p class="detalle">{{ h.detalle }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

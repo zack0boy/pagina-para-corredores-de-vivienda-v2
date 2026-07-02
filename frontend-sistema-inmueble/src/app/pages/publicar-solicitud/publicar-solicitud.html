@@ -1,0 +1,82 @@
+<app-navbar></app-navbar>
+
+<div class="page">
+  <div class="card">
+
+    @if (enviado()) {
+      <div class="ok-state">
+        <span class="material-symbols-outlined">task_alt</span>
+        <h2>¡Solicitud enviada!</h2>
+        <p>Un corredor revisará tu propuesta de publicación. Si la aprueba, tu propiedad se publicará y él quedará como representante.</p>
+        <a routerLink="/propiedades" class="btn">Ver propiedades</a>
+      </div>
+    } @else {
+      <h1>Publica tu propiedad</h1>
+      <p class="sub">Completa el formulario y un corredor revisará tu solicitud para publicarla.</p>
+
+      @if (error()) { <div class="err-box">{{ error() }}</div> }
+
+      <form [formGroup]="form" (ngSubmit)="enviar()">
+        <h3>Tus datos</h3>
+        <div class="grid">
+          <div class="campo">
+            <label>Nombre <span>*</span></label>
+            <input formControlName="solicitante_nombre" placeholder="Tu nombre">
+            @if (campoInvalido('solicitante_nombre')) { <small>Campo obligatorio.</small> }
+          </div>
+          <div class="campo">
+            <label>Teléfono</label>
+            <input formControlName="solicitante_telefono" placeholder="+56 9 ...">
+          </div>
+          <div class="campo full">
+            <label>Correo</label>
+            <input formControlName="solicitante_email" placeholder="tucorreo@gmail.com">
+          </div>
+        </div>
+
+        <h3>Datos de la propiedad</h3>
+        <div class="grid">
+          <div class="campo full">
+            <label>Título <span>*</span></label>
+            <input formControlName="titulo" placeholder="Ej: Casa 3 dormitorios en Maipú">
+            @if (campoInvalido('titulo')) { <small>Mínimo 5 caracteres.</small> }
+          </div>
+          <div class="campo">
+            <label>Categoría <span>*</span></label>
+            <select formControlName="categoria_id">
+              <option value="">Seleccionar...</option>
+              @for (c of categorias(); track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+            </select>
+            @if (campoInvalido('categoria_id')) { <small>Selecciona una categoría.</small> }
+          </div>
+          <div class="campo">
+            <label>Operación <span>*</span></label>
+            <select formControlName="tipo_operacion">
+              <option value="VENTA">Venta</option>
+              <option value="ARRIENDO">Arriendo</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Precio (CLP) <span>*</span></label>
+            <input type="number" formControlName="precio" placeholder="120000000">
+            @if (campoInvalido('precio')) { <small>Ingresa un precio válido.</small> }
+          </div>
+          <div class="campo">
+            <label>Dirección <span>*</span></label>
+            <input formControlName="direccion" placeholder="Calle, comuna">
+            @if (campoInvalido('direccion')) { <small>Campo obligatorio.</small> }
+          </div>
+          <div class="campo full">
+            <label>Descripción</label>
+            <textarea formControlName="descripcion" rows="3" placeholder="Cuéntanos sobre la propiedad..."></textarea>
+          </div>
+        </div>
+
+        <button type="submit" class="btn" [disabled]="cargando()">
+          {{ cargando() ? 'Enviando...' : 'Enviar solicitud' }}
+        </button>
+      </form>
+    }
+
+  </div>
+</div>

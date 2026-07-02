@@ -28,6 +28,7 @@ export class PagosService {
           dto.corredor_id = propiedad.corredor_id;
         }
       }
+      
 
       if (!dto.corredor_id && dto.propiedad_titulo) {
         const propiedad = await this.propiedadesRepository.findOne({

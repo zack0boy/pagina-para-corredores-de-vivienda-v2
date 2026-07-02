@@ -1,0 +1,341 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+
+  <!-- ========================= -->
+  <!-- SIDEBAR -->
+  <!-- ========================= -->
+  <aside class="sidebar">
+
+    <div class="sidebar-title">
+      <h2>Portal Administrador</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a class="active" href="#">
+        <span class="material-symbols-outlined">dashboard</span>
+      </a>
+
+      <a href="#">
+        <span class="material-symbols-outlined">apartment</span>
+      </a>
+
+      <a href="#">
+        <span class="material-symbols-outlined">assignment</span>
+
+      </a>
+
+      <a href="#">
+        <span class="material-symbols-outlined">payments</span>
+      </a>
+
+      <a href="#">
+        <span class="material-symbols-outlined">group</span>
+      </a>
+
+      <a href="#">
+        <span class="material-symbols-outlined">analytics</span>
+      </a>
+
+
+    </nav>
+
+  </aside>
+
+  <!-- ========================= -->
+  <!-- CONTENIDO PRINCIPAL -->
+  <!-- ========================= -->
+  <main class="contenido">
+
+    <!-- HEADER -->
+    <section class="header-dashboard">
+
+      <div>
+        <h1>Panel de Gestión</h1>
+        <p>Bienvenido al centro operativo de Inmuebles Chile.</p>
+      </div>
+
+      <div class="header-buttons">
+
+        <button class="btn-secondary">
+          <span class="material-symbols-outlined">download</span>
+          Descargar Reporte
+        </button>
+
+        <button class="btn-primary">
+          <span class="material-symbols-outlined">add</span>
+          Nueva Propiedad
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- KPI CARDS -->
+    <!-- ========================= -->
+    <section class="cards">
+
+      <!-- Loading -->
+      <ng-container *ngIf="cargando(); else dataLoaded">
+
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <small>Cargando</small>
+              <h2>...</h2>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <!-- Datos cargados -->
+      <ng-template #dataLoaded>
+
+        <!-- SUPER ADMIN -->
+        <ng-container *ngIf="dashboard()?.empresas !== undefined">
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Total Empresas</small>
+                <h2>{{ dashboard().empresas }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">apartment</span>
+            </div>
+            <div class="card-footer">
+              Empresas registradas
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Total Usuarios</small>
+                <h2>{{ dashboard().usuarios }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">group</span>
+            </div>
+            <div class="card-footer">
+              Incluye clientes y corredores
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Total Propiedades</small>
+                <h2>{{ dashboard().propiedades }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">home_work</span>
+            </div>
+            <div class="card-footer">
+              Propiedades registradas
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- ADMIN EMPRESA -->
+        <ng-container *ngIf="dashboard()?.corredores !== undefined">
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Corredores</small>
+                <h2>{{ dashboard().corredores }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">person</span>
+            </div>
+            <div class="card-footer">
+              Corredores en la empresa
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Propiedades</small>
+                <h2>{{ dashboard().propiedades }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">apartment</span>
+            </div>
+            <div class="card-footer">
+              Propiedades de la empresa
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Leads</small>
+                <h2>{{ dashboard().leads }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">mail</span>
+            </div>
+            <div class="card-footer">
+              Contactos recientes
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- CORREDOR -->
+        <ng-container *ngIf="dashboard()?.leads !== undefined && dashboard()?.visitas !== undefined">
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Leads</small>
+                <h2>{{ dashboard().leads }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">mail</span>
+            </div>
+            <div class="card-footer">
+              Leads asignados
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Visitas</small>
+                <h2>{{ dashboard().visitas }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">
+                calendar_month
+              </span>
+            </div>
+            <div class="card-footer">
+              Visitas realizadas
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Contratos</small>
+                <h2>{{ dashboard().contratos }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">
+                assignment_turned_in
+              </span>
+            </div>
+            <div class="card-footer">
+              Contratos cerrados
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- CLIENTE -->
+        <ng-container *ngIf="dashboard()?.usuario">
+
+          <div class="card">
+            <div class="card-top">
+              <div>
+                <small>Usuario</small>
+                <h2>{{ dashboard().usuario.nombre }}</h2>
+              </div>
+              <span class="material-symbols-outlined icon">person</span>
+            </div>
+            <div class="card-footer">
+              {{ dashboard().usuario.email }}
+            </div>
+          </div>
+
+        </ng-container>
+
+      </ng-template>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- DASHBOARD GRID -->
+    <!-- ========================= -->
+    <section class="dashboard-grid">
+
+      <!-- Pago del mes -->
+      <div class="panel">
+
+        <h2>Pago del Mes</h2>
+
+        <h1>$45.820.000</h1>
+
+        <p>Meta: $50.000.000</p>
+
+        <div class="barra">
+          <div class="progreso"></div>
+        </div>
+
+        <div class="estadisticas">
+
+          <div>
+            <strong>Ñuñoa</strong>
+            <p>$12.4M</p>
+          </div>
+
+          <div>
+            <strong>Maipú</strong>
+            <p>$8.1M</p>
+          </div>
+
+          <div>
+            <strong>Santiago</strong>
+            <p>$25.3M</p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="panel">
+
+        <h2>Actividad Reciente</h2>
+
+        <ul class="actividad">
+          <li *ngFor="let p of propiedades().slice(0, 5)">
+            📌 {{ p.nombre || p.title || 'Propiedad' }}
+            — {{ p.direccion || '' }}
+          </li>
+        </ul>
+
+        <button class="btn-secondary">
+          Ver Historial
+        </button>
+
+      </div>
+
+    </section>
+
+    <!-- ========================= -->
+    <!-- ACCESOS RÁPIDOS -->
+    <!-- ========================= -->
+    <section class="quick-actions">
+
+      <div class="quick-card">
+        <span class="material-symbols-outlined">home_work</span>
+        <h3>Gestión de Propiedades</h3>
+        <p>Crear, editar y eliminar propiedades.</p>
+      </div>
+
+      <div class="quick-card">
+        <span class="material-symbols-outlined">mail</span>
+        <h3>Solicitudes</h3>
+        <p>Revisar contactos y leads.</p>
+      </div>
+
+      <div class="quick-card">
+        <span class="material-symbols-outlined">book_online</span>
+        <h3>Reservas</h3>
+        <p>Administrar reservas y contratos.</p>
+      </div>
+
+    </section>
+
+  </main>
+
+</div>

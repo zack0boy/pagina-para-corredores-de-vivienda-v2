@@ -1,0 +1,174 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <main class="contenido">
+
+    <section class="header">
+      <div>
+        <h1>Registrar Pago</h1>
+        <p>Ingresa la información del pago y adjunta el comprobante si corresponde.</p>
+      </div>
+
+      <button class="btn-add" (click)="abrirForm()">
+        <span class="material-symbols-outlined">add</span>
+        Nuevo Pago
+      </button>
+    </section>
+
+    @if (toast()) {
+      <div class="toast-ok">
+        {{ toast() }}
+      </div>
+    }
+
+    @if (error()) {
+      <div class="toast-err">
+        {{ error() }}
+      </div>
+    }
+
+    @if (mostrarForm()) {
+
+      <div class="modal-overlay" (click)="mostrarForm.set(false)">
+
+        <div class="modal" (click)="$event.stopPropagation()">
+
+          <h3>Nuevo Pago</h3>
+
+          <form [formGroup]="form" (ngSubmit)="registrar()">
+
+            <div class="campo">
+              <label>Propiedad</label>
+
+              <input
+                list="lista-props"
+                formControlName="propiedad_titulo"
+                placeholder="Buscar propiedad..."
+                (change)="onPropiedadSeleccionada($any($event.target).value)">
+
+              <datalist id="lista-props">
+                @for (prop of propiedades(); track prop.id) {
+                  <option [value]="prop.titulo"></option>
+                }
+              </datalist>
+            </div>
+
+            <div class="campo">
+              <label>Nombre del cliente <span>*</span></label>
+
+              <input
+                formControlName="cliente_nombre"
+                placeholder="Nombre del cliente">
+            </div>
+
+            <div class="campo-row">
+
+              <div class="campo">
+                <label>Monto <span>*</span></label>
+
+                <input
+                  type="number"
+                  formControlName="monto"
+                  placeholder="150000">
+              </div>
+
+              <div class="campo">
+                <label>Tipo de pago</label>
+
+                <select formControlName="tipo_pago">
+                  <option value="TRANSFERENCIA">Transferencia</option>
+                  <option value="PRESENCIAL">Presencial</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div class="campo">
+              <label>Fecha del pago <span>*</span></label>
+
+              <input
+                type="datetime-local"
+                formControlName="fecha_pago">
+            </div>
+
+            <div class="campo">
+              <label>Comentario</label>
+
+              <textarea
+                rows="3"
+                formControlName="comentario"
+                placeholder="Comentario opcional">
+              </textarea>
+            </div>
+
+            <div class="campo">
+              <label>Comprobante (opcional)</label>
+
+              @if (imagenPreview()) {
+
+                <div class="img-preview">
+
+                  <img [src]="imagenPreview()" alt="Comprobante">
+
+                  <button
+                    type="button"
+                    (click)="quitarImagen()">
+                    ✕
+                  </button>
+
+                </div>
+
+              } @else {
+
+                <label class="dropzone-img">
+
+                  <span class="material-symbols-outlined">
+                    add_photo_alternate
+                  </span>
+
+                  <span>Seleccionar imagen</span>
+
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/*"
+                    (change)="onImagen($event)">
+
+                </label>
+
+              }
+
+            </div>
+
+            <div class="modal-acciones">
+
+              <button
+                class="approve"
+                type="submit"
+                [disabled]="guardando()">
+
+                {{ guardando() ? 'Guardando...' : 'Registrar Pago' }}
+
+              </button>
+
+              <button
+                class="reject"
+                type="button"
+                (click)="mostrarForm.set(false)">
+
+                Cancelar
+
+              </button>
+
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    }
+
+  </main>
+</div>

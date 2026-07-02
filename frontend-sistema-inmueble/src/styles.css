@@ -1,0 +1,39 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* CSS de Leaflet (mapa). Se importa aquí para que cargue siempre,
+   sin depender solo de angular.json (que no recarga en caliente). */
+@import 'leaflet/dist/leaflet.css';
+
+/* Evita costuras/huecos entre los tiles del mapa (bug de sub-píxeles) */
+.leaflet-container .leaflet-tile {
+  width: 256px;
+  height: 256px;
+}
+
+/* Pin personalizado del mapa Leaflet (punto de ubicación) */
+.mapa-pin {
+  background: transparent;
+  border: none;
+}
+.mapa-pin .pin-dot {
+  display: block;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4), 0 2px 6px rgba(0, 0, 0, 0.35);
+  animation: pin-pulse 2s ease-out infinite;
+}
+
+@keyframes pin-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  70%  { box-shadow: 0 0 0 14px rgba(239, 68, 68, 0), 0 2px 6px rgba(0, 0, 0, 0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 2px 6px rgba(0, 0, 0, 0.35); }
+}
+
+/* Aseguramos que el contenedor del mapa de Leaflet ocupe todo el alto */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}

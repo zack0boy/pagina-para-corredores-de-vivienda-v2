@@ -1,0 +1,142 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-title">
+      <h2>Portal Agente</h2>
+      <small>Inmuebles Chile</small>
+    </div>
+
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+        <span class="material-symbols-outlined">dashboard</span> Inicio
+      </a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active">
+        <span class="material-symbols-outlined">domain_add</span> Nueva Propiedad
+      </a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active">
+        <span class="material-symbols-outlined">home</span> Mis Propiedades
+      </a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active">
+        <span class="material-symbols-outlined">fact_check</span> Publicaciones
+      </a>
+      <a routerLink="/corredor/historial" routerLinkActive="active">
+        <span class="material-symbols-outlined">history</span> Historial
+      </a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active">
+        <span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente
+      </a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active">
+        <span class="material-symbols-outlined">calendar_today</span> Calendario
+      </a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active">
+        <span class="material-symbols-outlined">payments</span> Pagos
+      </a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active">
+        <span class="material-symbols-outlined">person</span> Mi Perfil
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="btn-primary" routerLink="/corredor/nueva-propiedad">
+        Nueva Publicación
+      </button>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO -->
+  <main class="contenido">
+
+    <section class="header">
+      <h1>Mis Propiedades</h1>
+      <p>Administra las propiedades que has publicado en Inmuebles Chile.</p>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    <!-- BUSCADOR -->
+    <section class="busqueda">
+      <div class="search-box">
+        <span class="material-symbols-outlined">search</span>
+        <input
+          type="text"
+          placeholder="Buscar por título, dirección o código..."
+          [value]="busqueda()"
+          (input)="busqueda.set($any($event.target).value)" />
+      </div>
+      <div class="pending">{{ propiedadesFiltradas().length }} propiedad(es)</div>
+    </section>
+
+    <!-- ESTADOS -->
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando propiedades...</p>
+    } @else if (propiedadesFiltradas().length === 0) {
+      <div style="text-align:center; padding:60px 20px; color:#64748b">
+        <p>No tienes propiedades publicadas todavía.</p>
+        <button class="btn-more" style="margin-top:16px" routerLink="/corredor/nueva-propiedad">
+          Publicar mi primera propiedad
+        </button>
+      </div>
+    } @else {
+
+      <!-- GRID -->
+      <section class="cards">
+        @for (p of propiedadesFiltradas(); track p.id) {
+          <div class="property-card">
+
+            <div class="property-image">
+              <img
+                [src]="p.imagenes?.[0]?.url || 'placeholder-propiedad.svg'"
+                [alt]="p.titulo"
+                loading="lazy">
+              <span class="status">{{ p.estado }}</span>
+            </div>
+
+            <div class="property-info">
+
+              <div class="title-price">
+                <div>
+                  <h3>{{ p.titulo }}</h3>
+                  <p>{{ p.direccion }}</p>
+                </div>
+                <h2>{{ formatPrecio(p.precio) }}</h2>
+              </div>
+
+              <div class="features">
+                <span><span class="material-symbols-outlined">bed</span> {{ p.habitaciones ?? 0 }} Dorm.</span>
+                <span><span class="material-symbols-outlined">bathtub</span> {{ p.banos ?? 0 }} Baños</span>
+                <span><span class="material-symbols-outlined">square_foot</span> {{ p.metros_totales ?? '—' }} m²</span>
+              </div>
+
+              <!-- Cambiar estado -->
+              <div style="margin:10px 0">
+                <label style="font-size:13px;color:#64748b;margin-right:8px">Estado:</label>
+                <select
+                  [value]="p.estado"
+                  (change)="cambiarEstado(p.id, $any($event.target).value)"
+                  style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer">
+                  <option value="DISPONIBLE">Disponible</option>
+                  <option value="RESERVADA">Reservada</option>
+                  <option value="VENDIDA">Vendida</option>
+                  <option value="ARRENDADA">Arrendada</option>
+                  <option value="INACTIVA">Inactiva</option>
+                </select>
+              </div>
+
+              <div class="actions">
+                <button class="approve" [routerLink]="['/propiedad', p.id]">Ver</button>
+                <button class="approve" [routerLink]="['/corredor/editar', p.id]" style="background:#0ea5e9">Editar</button>
+                <button class="reject" (click)="eliminar(p.id)">Eliminar</button>
+              </div>
+
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+  </main>
+</div>

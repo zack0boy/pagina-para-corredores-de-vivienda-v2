@@ -1,0 +1,153 @@
+/* ===========================
+   FOOTER
+=========================== */
+
+footer {
+  background: #fff;
+  color: #000;
+  padding: 60px 40px 20px;
+  border-top: 1px solid #e5e5e5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+footer .max-w-7xl {
+  max-width: 1300px;
+  margin: auto;
+}
+
+/* Grid principal */
+
+footer .grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr;
+  gap: 40px;
+}
+
+/* Logo */
+
+footer .text-2xl {
+  display: inline-block;
+  background: white;
+  color: #0d02e2 !important;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Texto */
+
+footer p,
+footer span,
+footer li,
+footer a {
+  color: #000;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+footer a {
+  text-decoration: none;
+  transition: .3s;
+}
+
+footer a:hover {
+  color: #2563eb;
+}
+
+/* Titulos */
+
+footer h4 {
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 18px;
+  color: #000;
+}
+
+/* Listas */
+
+footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+footer li {
+  margin-bottom: 12px;
+}
+
+/* Redes */
+
+footer .flex.gap-4 {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+footer .w-10 {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #d9d9d9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: .3s;
+}
+
+footer .w-10:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+footer .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* Contacto */
+
+footer .items-start {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Parte inferior */
+
+footer .pt-8 {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e5e5;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+footer .text-outline {
+  color: #666 !important;
+}
+
+/* Responsive */
+
+@media (max-width:900px){
+
+footer .grid{
+grid-template-columns:1fr;
+gap:30px;
+}
+
+footer .pt-8{
+flex-direction:column;
+text-align:center;
+gap:10px;
+}
+
+footer .flex.gap-4{
+justify-content:center;
+}
+
+}

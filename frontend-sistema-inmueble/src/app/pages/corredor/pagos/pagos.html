@@ -1,0 +1,164 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="btn-primary" (click)="abrirForm()">+ Agregar Pago</button>
+    </div>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <div>
+        <h1>Registro de Pagos</h1>
+        <p>Registra los pagos recibidos y adjunta la evidencia (recibo).</p>
+      </div>
+      <button class="btn-add" (click)="abrirForm()">
+        <span class="material-symbols-outlined">add</span> Agregar Pago
+      </button>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando pagos...</p>
+    } @else if (pagos().length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <p>No has registrado pagos todavía. Usa el botón "Agregar Pago".</p>
+      </div>
+    } @else {
+      <div class="pago-list">
+        @for (p of pagos(); track p.id) {
+          <div class="pago-card">
+            <div class="pago-main">
+              <div class="pago-cliente">
+                <span class="material-symbols-outlined">person</span>
+                <strong>{{ p.cliente_nombre || 'Cliente' }}</strong>
+                <span class="badge tipo-{{ p.tipo_pago }}">{{ p.tipo_pago }}</span>
+              </div>
+              <div class="pago-monto">{{ formatPrecio(p.monto) }}</div>
+            </div>
+
+            @if (p.propiedad_titulo) {
+              <p class="pago-prop"><span class="material-symbols-outlined">home</span> {{ p.propiedad_titulo }}</p>
+            }
+
+            <div class="pago-meta">
+              <span><span class="material-symbols-outlined">event</span> {{ p.fecha_pago | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span class="estado estado-{{ p.estado }}">{{ p.estado }}</span>
+            </div>
+
+            @if (p.comentario) { <p class="pago-comentario">{{ p.comentario }}</p> }
+
+            <div class="pago-evidencia">
+              @if (p.comprobanteUrl) {
+                <a [href]="p.comprobanteUrl" target="_blank" class="ver-evidencia">
+                  <span class="material-symbols-outlined">image</span> Ver evidencia
+                </a>
+              } @else {
+                <label class="btn-evidencia">
+                  <span class="material-symbols-outlined">upload</span>
+                  {{ subiendo() === p.id ? 'Subiendo...' : 'Subir evidencia' }}
+                  <input type="file" accept="image/*,application/pdf" hidden
+                         [disabled]="subiendo() === p.id" (change)="subirEvidencia(p.id, $event)">
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Modal agregar pago -->
+@if (mostrarForm()) {
+  <div class="modal-overlay" (click)="mostrarForm.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Agregar pago</h3>
+      <form [formGroup]="form" (ngSubmit)="registrar()">
+
+        <div class="campo">
+          <label>Propiedad (buscar)</label>
+          <input list="lista-props" formControlName="propiedad_titulo"
+                 placeholder="Escribe para buscar tu propiedad..."
+                 (change)="onPropiedadSeleccionada($any($event.target).value)">
+          <datalist id="lista-props">
+            @for (prop of propiedades(); track prop.id) {
+              <option [value]="prop.titulo"></option>
+            }
+          </datalist>
+        </div>
+
+        <div class="campo">
+          <label>Cliente <span>*</span></label>
+          <input formControlName="cliente_nombre" placeholder="Nombre del cliente">
+        </div>
+
+        <div class="campo-row">
+          <div class="campo">
+            <label>Monto (CLP) <span>*</span></label>
+            <input type="text" inputmode="numeric" [value]="montoDisplay()"
+                   (input)="onMontoInput($event)" placeholder="150.000">
+          </div>
+          <div class="campo">
+            <label>Tipo</label>
+            <select formControlName="tipo_pago">
+              <option value="TRANSFERENCIA">Transferencia</option>
+              <option value="PRESENCIAL">Presencial</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Fecha del pago <span>*</span></label>
+          <input type="datetime-local" formControlName="fecha_pago">
+        </div>
+
+        <div class="campo">
+          <label>Comentario</label>
+          <textarea formControlName="comentario" rows="2" placeholder="Ej: abono, reserva..."></textarea>
+        </div>
+
+        <!-- Imagen opcional -->
+        <div class="campo">
+          <label>Evidencia (opcional)</label>
+          @if (imagenPreview()) {
+            <div class="img-preview">
+              <img [src]="imagenPreview()" alt="evidencia">
+              <button type="button" (click)="quitarImagen()">✕</button>
+            </div>
+          } @else {
+            <label class="dropzone-img">
+              <span class="material-symbols-outlined">add_photo_alternate</span>
+              <span>Adjuntar imagen del recibo</span>
+              <input type="file" accept="image/*" hidden (change)="onImagen($event)">
+            </label>
+          }
+        </div>
+
+        <div class="modal-acciones">
+          <button type="submit" class="approve" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : 'Registrar pago' }}
+          </button>
+          <button type="button" class="reject" (click)="mostrarForm.set(false)">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

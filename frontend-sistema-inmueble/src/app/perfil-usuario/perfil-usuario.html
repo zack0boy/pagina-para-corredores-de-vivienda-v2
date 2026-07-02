@@ -1,0 +1,129 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <main class="contenido">
+    <section class="header">
+      <h1>Mi Perfil</h1>
+      <p>Tus datos como usuario en Inmuebles Chile.</p>
+    </section>
+
+    <ng-container *ngIf="cargando(); else profileLoaded">
+      <p style="color:#64748b">Cargando perfil...</p>
+    </ng-container>
+
+    <ng-template #profileLoaded>
+      <ng-container *ngIf="user(); else noUser">
+        <div class="perfil-card">
+          <div class="perfil-top">
+            <div class="avatar">{{ iniciales() }}</div>
+            <div class="perfil-id">
+              <h2>{{ user()?.nombre || user()?.name || 'Usuario' }}</h2>
+              <span class="rol-badge">{{ user()?.rol || user()?.role || 'Cliente' }}</span>
+            </div>
+            <button *ngIf="!editando()" class="btn-edit" (click)="editar()">Editar perfil</button>
+          <a *ngIf="puedeVerAgregarPagos()" href="perfil-usuario/pagos"><button class="btn-edit">Agregar pagos</button></a>
+          </div>
+          <div *ngIf="toast()" class="toast-ok">{{ toast() }}</div>
+          <div *ngIf="error()" class="toast-err">{{ error() }}</div>
+
+          <ng-container *ngIf="!editando(); else editMode">
+            <div class="datos">
+              <div class="dato">
+                <span class="material-symbols-outlined">mail</span>
+                <div>
+                  <small>Correo</small>
+                  <strong>{{ user()?.email || '—' }}</strong>
+                </div>
+              </div>
+
+              <div class="dato">
+                <span class="material-symbols-outlined">phone</span>
+                <div>
+                  <small>Teléfono</small>
+                  <strong>{{ user()?.telefono || user()?.phone || '—' }}</strong>
+                </div>
+              </div>
+
+              <div class="dato full">
+                <span class="material-symbols-outlined">location_on</span>
+                <div>
+                  <small>Dirección</small>
+                  <strong>{{ user()?.direccion || user()?.ciudad || 'Sin dirección' }}</strong>
+                </div>
+              </div>
+
+              <ng-container *ngIf="corredor()">
+                <div class="dato full">
+                  <span class="material-symbols-outlined">badge</span>
+                  <div>
+                    <small>Licencia profesional</small>
+                    <strong>{{ corredor()?.licenciaProfesional || '—' }}</strong>
+                  </div>
+                </div>
+
+                <div class="dato full">
+                  <span class="material-symbols-outlined">description</span>
+                  <div>
+                    <small>Descripción</small>
+                    <strong>{{ corredor()?.descripcion || '—' }}</strong>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </ng-container>
+
+          <ng-template #editMode>
+            <form [formGroup]="form" class="form-edit" (ngSubmit)="guardar()">
+              <div class="campo">
+                <label>Nombre</label>
+                <input formControlName="nombre" placeholder="Tu nombre" />
+              </div>
+
+              <div class="campo">
+                <label>Correo</label>
+                <input formControlName="email" placeholder="Tu correo" type="email" />
+              </div>
+
+              <div class="campo">
+                <label>Teléfono</label>
+                <input formControlName="telefono" placeholder="Tu teléfono" />
+              </div>
+
+              <div class="campo full">
+                <label>Dirección</label>
+                <input formControlName="direccion" placeholder="Tu dirección" />
+              </div>
+
+              <ng-container *ngIf="corredor()">
+                <div class="campo">
+                  <label>Licencia profesional</label>
+                  <input formControlName="licenciaProfesional" placeholder="Número de licencia" />
+                </div>
+
+                <div class="campo full">
+                  <label>Descripción</label>
+                  <textarea formControlName="descripcion" placeholder="Descripción breve"></textarea>
+                </div>
+              </ng-container>
+
+              <div class="acciones">
+                <button type="submit" class="approve" [disabled]="guardando()">
+                  {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+                <button type="button" class="reject" (click)="cancelar()">Cancelar</button>
+              </div>
+            </form>
+          </ng-template>
+        </div>
+      </ng-container>
+
+      <ng-template #noUser>
+        <div class="noaccess">
+          <span class="material-symbols-outlined">lock</span>
+          <h2>No se encontró el perfil.</h2>
+          <p>Inicia sesión para acceder a tu perfil.</p>
+        </div>
+      </ng-template>
+    </ng-template>
+  </main>
+</div>

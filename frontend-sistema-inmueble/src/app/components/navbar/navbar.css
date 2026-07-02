@@ -1,0 +1,227 @@
+/* Contenedor principal del Navbar fijo arriba */
+.navbar {
+    position: sticky;
+    top:0;
+    left: 0;
+    width: 100%;
+    height: 64px; /* Equivalente a h-16 */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(197, 197, 211, 0.3);
+    z-index: 50;
+    box-sizing: border-box;
+}
+
+/* Alineación horizontal de todo el bloque interno */
+.navbar-container {
+    max-width: 1280px; /* max-w-7xl */
+    margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Estilos del Logo */
+.navbar-logo {
+    font-family: 'Manrope', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #00236f; /* Azul primario */
+    white-space: nowrap;
+}
+
+/* Lista de navegación horizontal */
+.navbar-menu {
+    display: flex;
+    flex-direction: row; /* Fuerza el diseño horizontal */
+    gap: 32px; /* Espaciado entre links */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilos para los enlaces */
+.menu-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    text-decoration: none;
+    color: #64748b; /* Gris slate-600 */
+    font-weight: 500;
+    transition: color 0.2s ease;
+    padding-bottom: 4px;
+}
+
+.menu-link:hover {
+    color: #1e40af; /* Azul hover */
+}
+
+/* Estado activo (para el botón "Inicio") */
+.menu-link.active {
+    color: #00236f;
+    font-weight: 700;
+    border-bottom: 2px solid #00236f; /* Línea de abajo */
+}
+
+/* Bloque de botones horizontal */
+.navbar-actions {
+    display: flex;
+    flex-direction: row; /* Fuerza horizontal */
+    align-items: center;
+    gap: 16px;
+}
+
+/* Botón Iniciar Sesión */
+.btn-login {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #00236f;
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-login:hover {
+    background-color: rgba(0, 35, 111, 0.05);
+}
+
+/* Botón Registrarse (Azul sólido) */
+.btn-register {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    background-color: #00236f;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: filter 0.2s;
+}
+
+.btn-register:hover {
+    filter: brightness(1.2); /* Hace el botón ligeramente más brillante al pasar el cursor */
+}
+
+/* Contenedor de las acciones de la derecha */
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* Espacio entre el texto y el botón */
+}
+
+/* Estilo para el texto "Hola, Andrés" */
+.user-name {
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: sans-serif;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #2563eb;
+  display: inline-block;
+}
+
+/* Botón de Cerrar Sesión */
+.btn-logout {
+  padding: 0.6rem 1.2rem;
+  background-color: #ef4444; /* Rojo moderno */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-logout:hover {
+  background-color: #dc2626; /* Rojo más oscuro al pasar el mouse */
+}
+
+.btn-logout:active {
+  transform: scale(0.98); /* Efecto de click */
+}
+.btn-perfil {
+  padding: 0.6rem 1.2rem;
+  background-color: transparent;
+  color: #334155;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+/* Botón Dashboard */
+
+.btn-dashboard{
+    padding: 0.6rem 1.2rem;
+    background-color: #00236f;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+.btn-dashboard:hover{
+    background-color: #1e40af;
+}
+
+/* Botón Perfil */
+
+.btn-perfil{
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    color: #334155;
+    border: 2px solid #00236f;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-perfil:hover{
+    background: #00236f;
+    color: white;
+}
+
+/* Asegura alineación horizontal */
+
+.navbar-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+/* Responsive */
+
+@media(max-width:900px){
+
+    .navbar-container{
+        padding:0 16px;
+    }
+
+    .navbar-menu{
+        gap:16px;
+    }
+
+    .btn-dashboard,
+    .btn-login,
+    .btn-register,
+    .btn-perfil,
+    .btn-logout{
+        font-size:13px;
+        padding:8px 12px;
+    }
+
+}

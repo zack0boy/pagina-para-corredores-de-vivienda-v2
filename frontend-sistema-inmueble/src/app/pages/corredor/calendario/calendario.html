@@ -1,0 +1,127 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-primary" (click)="nuevoEvento()">+ Nuevo Evento</button>
+    </div>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <h1>Calendario</h1>
+      <p>Organiza tus visitas, contactos y gestiones de pago.</p>
+    </section>
+
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    <!-- Controles del mes -->
+    <div class="cal-toolbar">
+      <div class="cal-nav">
+        <button (click)="mesAnterior()" aria-label="Anterior"><span class="material-symbols-outlined">chevron_left</span></button>
+        <h2 class="cal-mes">{{ tituloMes() }}</h2>
+        <button (click)="mesSiguiente()" aria-label="Siguiente"><span class="material-symbols-outlined">chevron_right</span></button>
+      </div>
+      <div class="cal-acciones">
+        <button class="btn-hoy" (click)="irHoy()">Hoy</button>
+        <button class="btn-add" (click)="nuevoEvento()"><span class="material-symbols-outlined">add</span> Evento</button>
+      </div>
+    </div>
+
+    <!-- Cuadrícula del mes -->
+    <div class="calendario">
+      <div class="cal-encabezado">
+        @for (d of nombresDias; track d) { <div class="cal-dia-nombre">{{ d }}</div> }
+      </div>
+      <div class="cal-grid">
+        @for (celda of dias(); track $index) {
+          <div class="cal-celda" [class.otro-mes]="celda.otroMes" [class.hoy]="celda.hoy" (click)="nuevoEvento(celda.fecha)">
+            <span class="cal-num">{{ celda.dia }}</span>
+            <div class="cal-eventos">
+              @for (e of celda.eventos; track e.id) {
+                <button class="cal-evento tipo-{{ e.tipo }}" [class.done]="e.completado"
+                        (click)="editarEvento(e); $event.stopPropagation()" [title]="e.titulo">
+                  {{ e.fecha_inicio | date:'HH:mm' }} {{ e.titulo }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Lista de próximos eventos -->
+    <h3 class="lista-titulo">Todos los eventos</h3>
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando...</p>
+    } @else if (eventos().length === 0) {
+      <div class="empty"><span class="material-symbols-outlined">calendar_today</span><p>Sin eventos.</p></div>
+    } @else {
+      <div class="evento-list">
+        @for (e of eventos(); track e.id) {
+          <div class="evento-card" [class.done]="e.completado">
+            <div class="evento-icon tipo-{{ e.tipo }}"><span class="material-symbols-outlined">{{ iconoTipo(e.tipo) }}</span></div>
+            <div class="evento-body">
+              <strong>{{ e.titulo }}</strong>
+              <span class="evento-fecha"><span class="material-symbols-outlined">schedule</span>
+                {{ e.fecha_inicio | date:'dd/MM/yyyy HH:mm' }} → {{ e.fecha_fin | date:'HH:mm' }}</span>
+              @if (e.descripcion) { <span class="evento-desc">{{ e.descripcion }}</span> }
+            </div>
+            <div class="evento-actions">
+              <button class="btn-ed" (click)="editarEvento(e)">Editar</button>
+              @if (e.completado) { <span class="badge-done">✓ Listo</span> }
+              @else { <button class="approve" (click)="completar(e.id)">Completar</button> }
+              <button class="reject" (click)="eliminar(e.id)">Eliminar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
+
+<!-- Modal crear/editar -->
+@if (mostrarForm()) {
+  <div class="modal-overlay" (click)="cancelarForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>{{ editandoId() ? 'Editar evento' : 'Nuevo evento' }}</h3>
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        <div class="campo">
+          <label>Título</label>
+          <input formControlName="titulo" placeholder="Ej: Visita PROP-001" maxlength="150">
+        </div>
+        <div class="campo">
+          <label>Tipo</label>
+          <select formControlName="tipo">
+            @for (t of tipos; track t.valor) { <option [value]="t.valor">{{ t.label }}</option> }
+          </select>
+        </div>
+        <div class="campo-row">
+          <div class="campo"><label>Inicio</label><input type="datetime-local" formControlName="fecha_inicio"></div>
+          <div class="campo"><label>Fin</label><input type="datetime-local" formControlName="fecha_fin"></div>
+        </div>
+        <div class="campo">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion" rows="2" placeholder="Notas..."></textarea>
+        </div>
+        <div class="modal-acciones">
+          <button type="submit" class="approve">{{ editandoId() ? 'Guardar cambios' : 'Crear evento' }}</button>
+          <button type="button" class="reject" (click)="cancelarForm()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
