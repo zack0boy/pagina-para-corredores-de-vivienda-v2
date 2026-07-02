@@ -191,25 +191,65 @@ export class UsersService {
     return this.usuarioRepository.findOne({ where: { id } });
   }
 
+  async getCurrentUserProfile(id: string): Promise<any> {
+    const usuario = await this.findById(id);
+    if (usuario) {
+      return usuario;
+    }
+
+    const cliente = await this.findClienteById(id);
+    if (cliente) {
+      return {
+        id: cliente.id,
+        nombre: cliente.nombre,
+        apellido: cliente.apellido,
+        email: cliente.email,
+        telefono: cliente.telefono,
+        rol: RolUsuario.CLIENTE,
+        activo: cliente.activo,
+        empresa_id: cliente.empresa_id,
+        estado: cliente.estado,
+        createdAt: cliente.createdAt,
+        updatedAt: cliente.updatedAt,
+      };
+    }
+
+    return null;
+  }
+
   async updatePassword(id: string, password: string): Promise<void> {
     await this.usuarioRepository.update({ id }, { password });
   }
 
 
-  async updateCurrentUser(id: string, data: Partial<Usuario>): Promise<Usuario> {
+  async updateCurrentUser(id: string, data: Partial<Usuario>): Promise<any> {
     const usuario = await this.findById(id);
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
-
-    // Solo permitimos actualizar campos seguros en la entidad Usuario
-    const allowed: Array<keyof Usuario> = ['nombre', 'telefono', 'email'];
-    for (const key of allowed) {
-      if (data[key] !== undefined) {
-        // @ts-ignore
-        usuario[key] = data[key] as any;
+    if (usuario) {
+      const allowed: Array<keyof Usuario> = ['nombre', 'telefono', 'email'];
+      for (const key of allowed) {
+        if (data[key] !== undefined) {
+          // @ts-ignore
+          usuario[key] = data[key] as any;
+        }
       }
+
+      return this.usuarioRepository.save(usuario);
     }
 
-    return this.usuarioRepository.save(usuario);
+    const cliente = await this.findClienteById(id);
+    if (cliente) {
+      const allowedCliente: Array<keyof Cliente> = ['nombre', 'telefono', 'email'];
+      for (const key of allowedCliente) {
+        if (data[key] !== undefined) {
+          // @ts-ignore
+          cliente[key] = data[key] as any;
+        }
+      }
+
+      return this.clienteRepository.save(cliente);
+    }
+
+    throw new NotFoundException('Usuario no encontrado');
   }
 
   async findUsuariosWithFilters(filters: FilterUsuarioDto) {

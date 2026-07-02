@@ -36,7 +36,7 @@ export class UsersController {
   async getCurrentUser(
     @Request() request: any,
   ) {
-    return this.userService.findById(request.user.id);
+    return this.userService.getCurrentUserProfile(request.user.id);
   }
 
   @Patch('me')

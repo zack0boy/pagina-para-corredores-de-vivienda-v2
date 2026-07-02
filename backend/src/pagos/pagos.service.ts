@@ -1,19 +1,46 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { Pago } from './entities/pago.entity';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { ValidarPagoDto } from './dto/validar-pago.dto';
 import { EstadoPago } from '../common/enum/estado.enum';
+import { Propiedades } from '../propiedades/entities/propiedades.entity';
 
 @Injectable()
 export class PagosService {
   constructor(
     @InjectRepository(Pago)
     private readonly pagoRepository: Repository<Pago>,
+    @InjectRepository(Propiedades)
+    private readonly propiedadesRepository: Repository<Propiedades>,
   ) {}
 
   async create(dto: CreatePagoDto): Promise<Pago> {
+    if (!dto.corredor_id) {
+      if (dto.propiedad_id) {
+        const propiedad = await this.propiedadesRepository.findOne({
+          where: { id: dto.propiedad_id },
+          select: { corredor_id: true },
+        });
+
+        if (propiedad?.corredor_id) {
+          dto.corredor_id = propiedad.corredor_id;
+        }
+      }
+
+      if (!dto.corredor_id && dto.propiedad_titulo) {
+        const propiedad = await this.propiedadesRepository.findOne({
+          where: { titulo: ILike(dto.propiedad_titulo.trim()) },
+          select: { corredor_id: true },
+        });
+
+        if (propiedad?.corredor_id) {
+          dto.corredor_id = propiedad.corredor_id;
+        }
+      }
+    }
+
     const pago = this.pagoRepository.create({
       ...dto,
       fecha_pago: new Date(dto.fecha_pago),
@@ -34,7 +61,36 @@ export class PagosService {
   }
 
   async findByCorredor(corredor_id: string): Promise<Pago[]> {
-    return this.pagoRepository.find({ where: { corredor_id }, order: { created_at: 'DESC' } });
+    const pagosDirectos = await this.pagoRepository.find({
+      where: { corredor_id },
+      order: { created_at: 'DESC' },
+    });
+
+    const propiedades = await this.propiedadesRepository.find({
+      where: { corredor_id },
+      select: { id: true },
+    });
+
+    const propiedadIds = propiedades.map((propiedad) => propiedad.id);
+
+    let pagosPorPropiedad: Pago[] = [];
+    if (propiedadIds.length > 0) {
+      pagosPorPropiedad = await this.pagoRepository.find({
+        where: { propiedad_id: In(propiedadIds) },
+        order: { created_at: 'DESC' },
+      });
+    }
+
+    const combinados = [...pagosDirectos, ...pagosPorPropiedad];
+    const vistos = new Set<string>();
+
+    return combinados.filter((pago) => {
+      if (!pago.id || vistos.has(pago.id)) {
+        return false;
+      }
+      vistos.add(pago.id);
+      return true;
+    });
   }
 
   async findOne(id: string): Promise<Pago> {
