@@ -1,112 +1,417 @@
--- ============================================================
---  MIGRACIONES - Inmuebles Chile (SaaS Corredores)
---  Ejecutar todo de una vez en PostgreSQL (DataGrip/psql).
---  Es idempotente: se puede correr varias veces sin romper.
--- ============================================================
-
--- Extensión para generar UUIDs (por si no está)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ─── TIPOS ENUM ───
+CREATE TYPE "clientes_estado_enum" AS ENUM ('PENDIENTE_VALIDACION', 'ACTIVO', 'RECHAZADO', 'SUSPENDIDO');
+CREATE TYPE "contratos_estado_enum" AS ENUM ('BORRADOR', 'ACTIVO', 'FINALIZADO', 'CANCELADO');
+CREATE TYPE "contratos_tipo_enum" AS ENUM ('VENTA', 'ARRIENDO', 'RESERVA');
+CREATE TYPE "cuotas_estado_enum" AS ENUM ('PENDIENTE', 'PARCIAL', 'PAGADA', 'VENCIDA', 'ANULADA');
+CREATE TYPE "empresas_estado_enum" AS ENUM ('ACTIVA', 'SUSPENDIDA');
+CREATE TYPE "eventos_calendario_tipo_enum" AS ENUM ('VISITA', 'CONTACTO_CLIENTE', 'GESTION_PAGO', 'OTRO');
+CREATE TYPE "leads_estado_enum" AS ENUM ('NUEVO', 'ASIGNADO', 'CONTACTADO', 'VISITA_PROGRAMADA', 'NEGOCIACION', 'CONVERTIDO', 'PERDIDO', 'REASIGNADO');
+CREATE TYPE "notificaciones_tipo_enum" AS ENUM ('LEAD', 'VISITA', 'PAGO', 'SISTEMA');
+CREATE TYPE "pagos_estado_enum" AS ENUM ('PENDIENTE_VALIDACION', 'VALIDADO', 'RECHAZADO');
+CREATE TYPE "pagos_tipo_pago_enum" AS ENUM ('TRANSFERENCIA', 'PRESENCIAL');
+CREATE TYPE "solicitudes_cliente_estado_enum" AS ENUM ('PENDIENTE', 'APROBADA', 'RECHAZADA', 'EXPIRADA');
+CREATE TYPE "visitas_estado_enum" AS ENUM ('PROGRAMADA', 'CONFIRMADA', 'REALIZADA', 'CANCELADA', 'NO_ASISTIO');
 
--- ============================================================
---  1) IMÁGENES DE PROPIEDADES
---  Columnas que usa la entidad PropiedadImagen
--- ============================================================
-ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS public_id  VARCHAR(255);
-ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS orden      INTEGER DEFAULT 1;
-ALTER TABLE propiedad_imagenes ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
-
-
--- ============================================================
---  2) CLIENTES - verificación de correo
--- ============================================================
-ALTER TABLE clientes ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN NOT NULL DEFAULT false;
-
--- Tabla de códigos de verificación de correo (registro)
-CREATE TABLE IF NOT EXISTS email_verifications (
-  id         SERIAL PRIMARY KEY,
-  email      VARCHAR(255) NOT NULL,
-  token      VARCHAR(10)  NOT NULL,
-  expires_at TIMESTAMP    NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
+-- ─── TABLAS ───
+CREATE TABLE "categorias" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "nombre" VARCHAR(100) NOT NULL,
+  "descripcion" TEXT,
+  "activa" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
-
--- ============================================================
---  3) PAGOS - registro manual + evidencia
--- ============================================================
-ALTER TABLE pagos ALTER COLUMN cuota_id   DROP NOT NULL;
-ALTER TABLE pagos ALTER COLUMN cliente_id DROP NOT NULL;
-ALTER TABLE pagos ADD COLUMN IF NOT EXISTS cliente_nombre   TEXT;
-ALTER TABLE pagos ADD COLUMN IF NOT EXISTS corredor_id      UUID;
-ALTER TABLE pagos ADD COLUMN IF NOT EXISTS propiedad_id     UUID;
-ALTER TABLE pagos ADD COLUMN IF NOT EXISTS propiedad_titulo TEXT;
-
-
--- ============================================================
---  4) CALENDARIO - sincronización con Google
--- ============================================================
-ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS google_event_id TEXT;
-
-
--- ============================================================
---  5) SOLICITUDES DE PUBLICACIÓN (persona -> corredor aprueba)
--- ============================================================
-CREATE TABLE IF NOT EXISTS solicitudes_propiedad (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  empresa_id           UUID,
-  solicitante_nombre   VARCHAR(255) NOT NULL,
-  solicitante_email    VARCHAR(255),
-  solicitante_telefono VARCHAR(255),
-  titulo               VARCHAR(255) NOT NULL,
-  descripcion          TEXT,
-  direccion            VARCHAR(255) NOT NULL,
-  precio               NUMERIC(15,2) NOT NULL,
-  tipo_operacion       VARCHAR(50) DEFAULT 'VENTA',
-  categoria_id         UUID,
-  estado               VARCHAR(50) DEFAULT 'PENDIENTE',
-  corredor_id          UUID,
-  motivo_rechazo       TEXT,
-  propiedad_id         UUID,
-  created_at           TIMESTAMP DEFAULT NOW()
+CREATE TABLE "clientes" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "nombre" VARCHAR(100) NOT NULL,
+  "apellido" VARCHAR(100) NOT NULL,
+  "email" VARCHAR(150),
+  "telefono" VARCHAR(30) NOT NULL,
+  "password_hash" TEXT,
+  "google_id" VARCHAR,
+  "activo" BOOLEAN NOT NULL DEFAULT true,
+  "email_verificado" BOOLEAN NOT NULL DEFAULT false,
+  "estado" "clientes_estado_enum" NOT NULL DEFAULT 'PENDIENTE_VALIDACION'::clientes_estado_enum,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
-
--- ============================================================
---  6) FICHA DE CORREDOR (licencia / descripción) - Mi Perfil
--- ============================================================
-CREATE TABLE IF NOT EXISTS corredor (
-  id_usuario           UUID PRIMARY KEY,
-  licencia_profesional VARCHAR(50),
-  descripcion          TEXT,
-  created_at           TIMESTAMP DEFAULT NOW()
+CREATE TABLE "comprobantes" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "pago_id" UUID NOT NULL,
+  "archivo_url" TEXT NOT NULL,
+  "nombre_archivo" VARCHAR(255),
+  "tipo_archivo" VARCHAR(50),
+  "observaciones" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
-
--- ============================================================
---  7) HISTORIAL DE CAMBIOS DE PROPIEDADES
--- ============================================================
-CREATE TABLE IF NOT EXISTS historial_propiedad (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  propiedad_id UUID,
-  corredor_id  UUID,
-  accion       VARCHAR(50) NOT NULL,   -- CREADA | ACTUALIZADA | ESTADO_CAMBIADO | ELIMINADA
-  detalle      TEXT,
-  created_at   TIMESTAMP DEFAULT NOW()
+CREATE TABLE "contratos" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "propiedad_id" UUID NOT NULL,
+  "cliente_id" UUID NOT NULL,
+  "corredor_id" UUID NOT NULL,
+  "numero_contrato" VARCHAR(100) NOT NULL,
+  "tipo" "contratos_tipo_enum" NOT NULL,
+  "monto_total" NUMERIC(15,2) NOT NULL,
+  "fecha_inicio" DATE NOT NULL,
+  "fecha_fin" DATE,
+  "contrato_url" TEXT,
+  "estado" "contratos_estado_enum" NOT NULL DEFAULT 'BORRADOR'::contratos_estado_enum,
+  "observaciones" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE TABLE "corredor" (
+  "id_usuario" UUID NOT NULL,
+  "licencia_profesional" VARCHAR(50),
+  "descripcion" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
 
--- ============================================================
---  8) (OPCIONAL) IDs automáticos por defecto en la base de datos
---  Red de seguridad: si insertas por SQL sin ID, la BD lo genera.
---  Descomenta las tablas que apliquen a tu esquema.
--- ============================================================
--- ALTER TABLE propiedades        ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE clientes           ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE usuarios           ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE categorias         ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE propiedad_imagenes ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE pagos              ALTER COLUMN id SET DEFAULT gen_random_uuid();
--- ALTER TABLE eventos_calendario ALTER COLUMN id SET DEFAULT gen_random_uuid();
+CREATE TABLE "corredores" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "nombre" VARCHAR NOT NULL,
+  "email" VARCHAR,
+  "telefono" VARCHAR,
+  "activo" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
 
--- FIN
+CREATE TABLE "cuotas" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "contrato_id" UUID NOT NULL,
+  "numero_cuota" INTEGER NOT NULL,
+  "monto_total" NUMERIC(15,2) NOT NULL,
+  "monto_pagado" NUMERIC(15,2) NOT NULL DEFAULT '0'::numeric,
+  "saldo_pendiente" NUMERIC(15,2) NOT NULL,
+  "fecha_vencimiento" DATE NOT NULL,
+  "fecha_pago" DATE,
+  "estado" "cuotas_estado_enum" NOT NULL DEFAULT 'PENDIENTE'::cuotas_estado_enum,
+  "observaciones" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "email_verifications" (
+  "id" SERIAL,
+  "email" VARCHAR(255) NOT NULL,
+  "token" VARCHAR(10) NOT NULL,
+  "expires_at" TIMESTAMP NOT NULL,
+  "created_at" TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE "empresas" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "nombre" VARCHAR(150) NOT NULL,
+  "rut" VARCHAR(20),
+  "email" VARCHAR,
+  "telefono" VARCHAR,
+  "direccion" TEXT,
+  "logo_url" VARCHAR,
+  "plan" VARCHAR(50) NOT NULL DEFAULT 'BASICO'::character varying,
+  "fecha_vencimiento" DATE,
+  "estado" "empresas_estado_enum" NOT NULL DEFAULT 'ACTIVA'::empresas_estado_enum,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "eventos_calendario" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "corredor_id" UUID NOT NULL,
+  "cliente_id" UUID,
+  "visita_id" UUID,
+  "tipo" "eventos_calendario_tipo_enum" NOT NULL,
+  "titulo" VARCHAR(150) NOT NULL,
+  "descripcion" TEXT,
+  "fecha_inicio" TIMESTAMP NOT NULL,
+  "fecha_fin" TIMESTAMP NOT NULL,
+  "completado" BOOLEAN NOT NULL DEFAULT false,
+  "google_event_id" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "historial_propiedad" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "propiedad_id" UUID,
+  "corredor_id" UUID,
+  "accion" VARCHAR NOT NULL,
+  "detalle" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "lead_auditoria" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "lead_id" UUID NOT NULL,
+  "accion" VARCHAR NOT NULL,
+  "datos_anteriores" JSONB,
+  "datos_nuevos" JSONB,
+  "motivo" VARCHAR,
+  "realizado_por" VARCHAR NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "leads" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "propiedad_id" UUID NOT NULL,
+  "cliente_id" UUID,
+  "corredor_id" UUID,
+  "nombre" VARCHAR NOT NULL,
+  "telefono" VARCHAR NOT NULL,
+  "email" VARCHAR,
+  "mensaje" TEXT,
+  "estado" "leads_estado_enum" NOT NULL DEFAULT 'NUEVO'::leads_estado_enum,
+  "fecha_asignacion" TIMESTAMP,
+  "ultimo_contacto" TIMESTAMP,
+  "observaciones" VARCHAR,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "notificaciones" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "usuario_id" UUID NOT NULL,
+  "tipo" "notificaciones_tipo_enum" NOT NULL DEFAULT 'SISTEMA'::notificaciones_tipo_enum,
+  "titulo" VARCHAR(255) NOT NULL,
+  "mensaje" TEXT NOT NULL,
+  "leida" BOOLEAN NOT NULL DEFAULT false,
+  "fecha_lectura" TIMESTAMP,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "pagos" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "cuota_id" UUID,
+  "cliente_id" UUID,
+  "cliente_nombre" TEXT,
+  "corredor_id" UUID,
+  "propiedad_id" UUID,
+  "propiedad_titulo" TEXT,
+  "monto" NUMERIC(15,2) NOT NULL,
+  "fecha_pago" TIMESTAMP NOT NULL,
+  "estado" "pagos_estado_enum" NOT NULL DEFAULT 'PENDIENTE_VALIDACION'::pagos_estado_enum,
+  "tipo_pago" "pagos_tipo_pago_enum" NOT NULL DEFAULT 'TRANSFERENCIA'::pagos_tipo_pago_enum,
+  "comentario" TEXT,
+  "validado_por" UUID,
+  "fecha_validacion" TIMESTAMP,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "password_resets" (
+  "id" SERIAL,
+  "email" VARCHAR(255) NOT NULL,
+  "token" VARCHAR(10) NOT NULL,
+  "expires_at" TIMESTAMP NOT NULL,
+  "created_at" TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE "plantillas_email" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "nombre" VARCHAR(150) NOT NULL,
+  "asunto" VARCHAR(255) NOT NULL,
+  "contenido" TEXT NOT NULL,
+  "activa" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "propiedad_imagenes" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "propiedad_id" UUID NOT NULL,
+  "url" VARCHAR NOT NULL,
+  "public_id" VARCHAR,
+  "orden" INTEGER DEFAULT 1,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "propiedades" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "corredor_id" UUID,
+  "categoria_id" UUID NOT NULL,
+  "codigo" VARCHAR(50) NOT NULL,
+  "titulo" VARCHAR(100) NOT NULL,
+  "descripcion" TEXT,
+  "direccion" VARCHAR NOT NULL,
+  "precio" NUMERIC(15,2) NOT NULL,
+  "tipo_operacion" VARCHAR NOT NULL,
+  "latitud" NUMERIC(10,8),
+  "longitud" NUMERIC(11,8),
+  "estado" VARCHAR NOT NULL DEFAULT 'DISPONIBLE'::character varying,
+  "habitaciones" INTEGER DEFAULT 0,
+  "banos" INTEGER DEFAULT 0,
+  "estacionamientos" INTEGER DEFAULT 0,
+  "metros_totales" NUMERIC(10,2),
+  "metros_construidos" NUMERIC(10,2),
+  "created_by" UUID,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "solicitudes_cliente" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "cliente_id" UUID NOT NULL,
+  "corredor_id" UUID,
+  "estado" "solicitudes_cliente_estado_enum" NOT NULL DEFAULT 'PENDIENTE'::solicitudes_cliente_estado_enum,
+  "mensaje" TEXT,
+  "motivo_rechazo" TEXT,
+  "fecha_expiracion" TIMESTAMP NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "solicitudes_propiedad" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID,
+  "solicitante_nombre" VARCHAR NOT NULL,
+  "solicitante_email" VARCHAR,
+  "solicitante_telefono" VARCHAR,
+  "titulo" VARCHAR NOT NULL,
+  "descripcion" TEXT,
+  "direccion" VARCHAR NOT NULL,
+  "precio" NUMERIC(15,2) NOT NULL,
+  "tipo_operacion" VARCHAR NOT NULL DEFAULT 'VENTA'::character varying,
+  "categoria_id" UUID,
+  "estado" VARCHAR NOT NULL DEFAULT 'PENDIENTE'::character varying,
+  "corredor_id" UUID,
+  "motivo_rechazo" TEXT,
+  "propiedad_id" UUID,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "usuarios" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID,
+  "nombre" VARCHAR NOT NULL,
+  "apellido" VARCHAR,
+  "email" VARCHAR NOT NULL,
+  "telefono" VARCHAR,
+  "password_hash" VARCHAR NOT NULL,
+  "google_id" VARCHAR,
+  "rol" VARCHAR NOT NULL,
+  "activo" BOOLEAN NOT NULL DEFAULT true,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE "visitas" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID NOT NULL,
+  "lead_id" UUID,
+  "propiedad_id" UUID NOT NULL,
+  "cliente_id" UUID NOT NULL,
+  "corredor_id" UUID NOT NULL,
+  "fecha_inicio" TIMESTAMP NOT NULL,
+  "fecha_fin" TIMESTAMP NOT NULL,
+  "estado" "visitas_estado_enum" NOT NULL DEFAULT 'PROGRAMADA'::visitas_estado_enum,
+  "google_event_id" VARCHAR(255),
+  "observaciones" TEXT,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
+-- ─── RESTRICCIONES (PK / UNIQUE / FK / CHECK) ───
+ALTER TABLE categorias ADD CONSTRAINT "PK_3886a26251605c571c6b4f861fe" PRIMARY KEY (id);
+ALTER TABLE clientes ADD CONSTRAINT "PK_d76bf3571d906e4e86470482c08" PRIMARY KEY (id);
+ALTER TABLE comprobantes ADD CONSTRAINT "PK_0c3ac75b725717ec0f082ece89b" PRIMARY KEY (id);
+ALTER TABLE contratos ADD CONSTRAINT "PK_cfae35069d6f59da899c17ed397" PRIMARY KEY (id);
+ALTER TABLE corredor ADD CONSTRAINT "PK_4874dc7c78d32abf70483ab4fc1" PRIMARY KEY (id_usuario);
+ALTER TABLE corredores ADD CONSTRAINT "PK_726210fdc55a252869fa6cdbd80" PRIMARY KEY (id);
+ALTER TABLE cuotas ADD CONSTRAINT "PK_fb728d76452f13f226db1943bdb" PRIMARY KEY (id);
+ALTER TABLE email_verifications ADD CONSTRAINT "email_verifications_pkey" PRIMARY KEY (id);
+ALTER TABLE empresas ADD CONSTRAINT "PK_ce7b122b37c6499bfd6520873e1" PRIMARY KEY (id);
+ALTER TABLE eventos_calendario ADD CONSTRAINT "PK_b4887ecf4eb7273687d560c6d8a" PRIMARY KEY (id);
+ALTER TABLE historial_propiedad ADD CONSTRAINT "PK_63b477efcfabc7140464a05e761" PRIMARY KEY (id);
+ALTER TABLE lead_auditoria ADD CONSTRAINT "PK_a6113757bfddbf3cd0629d7fe73" PRIMARY KEY (id);
+ALTER TABLE leads ADD CONSTRAINT "PK_cd102ed7a9a4ca7d4d8bfeba406" PRIMARY KEY (id);
+ALTER TABLE notificaciones ADD CONSTRAINT "PK_a9d32a419ff58b53a38b5ef85d4" PRIMARY KEY (id);
+ALTER TABLE pagos ADD CONSTRAINT "PK_37321ca70a2ed50885dc205beb2" PRIMARY KEY (id);
+ALTER TABLE password_resets ADD CONSTRAINT "password_resets_pkey" PRIMARY KEY (id);
+ALTER TABLE plantillas_email ADD CONSTRAINT "PK_3810db19468e0062c72e3ebdc53" PRIMARY KEY (id);
+ALTER TABLE propiedades ADD CONSTRAINT "PK_ee3a1dc8c0d17c197d54bc2ff37" PRIMARY KEY (id);
+ALTER TABLE propiedad_imagenes ADD CONSTRAINT "PK_e35206e167ee60425aff7c4c87d" PRIMARY KEY (id);
+ALTER TABLE solicitudes_cliente ADD CONSTRAINT "PK_25ce61e19829efada40e96dfa64" PRIMARY KEY (id);
+ALTER TABLE solicitudes_propiedad ADD CONSTRAINT "PK_c42c94da81d9e19b5e63c072d08" PRIMARY KEY (id);
+ALTER TABLE usuarios ADD CONSTRAINT "PK_d7281c63c176e152e4c531594a8" PRIMARY KEY (id);
+ALTER TABLE visitas ADD CONSTRAINT "PK_d1245dc9e45b6dd4eef05f68bba" PRIMARY KEY (id);
+ALTER TABLE clientes ADD CONSTRAINT "UQ_3cd5652ab34ca1a0a2c7a255313" UNIQUE (email);
+ALTER TABLE contratos ADD CONSTRAINT "UQ_288b05163da67d313b8facfd122" UNIQUE (numero_contrato);
+ALTER TABLE propiedades ADD CONSTRAINT "UQ_bfbb68c0fb2781f9c05037da410" UNIQUE (codigo);
+ALTER TABLE usuarios ADD CONSTRAINT "UQ_446adfc18b35418aac32ae0b7b5" UNIQUE (email);
+ALTER TABLE corredor ADD CONSTRAINT "FK_4874dc7c78d32abf70483ab4fc1" FOREIGN KEY (id_usuario) REFERENCES usuarios(id);
+
+-- ─── ÍNDICES ───
+CREATE INDEX "IDX_3ce809993f778f2137901b8016" ON public.clientes USING btree (empresa_id);
+CREATE INDEX "IDX_0deb2d8cf72b6904c676ae5ee0" ON public.contratos USING btree (tipo);
+CREATE INDEX "IDX_24dd4d8f48044f6f34edde8d55" ON public.contratos USING btree (corredor_id);
+CREATE INDEX "IDX_4b115ca6c2ed3a2d502b3fad05" ON public.contratos USING btree (cliente_id);
+CREATE INDEX "IDX_5fc6f60ce3656b4d4ce2f59df1" ON public.contratos USING btree (estado);
+CREATE INDEX "IDX_9548434f5c846cd89ca6745b50" ON public.contratos USING btree (propiedad_id);
+CREATE INDEX "IDX_f4c48faad5e870abd0b4eac069" ON public.contratos USING btree (empresa_id);
+CREATE INDEX "IDX_85720598a2771307ffc6344b48" ON public.cuotas USING btree (fecha_vencimiento);
+CREATE INDEX "IDX_91bc1fc5db1a19a6d8d74a631e" ON public.cuotas USING btree (estado);
+CREATE INDEX "IDX_ea04f37b303704b339308ca5b9" ON public.cuotas USING btree (contrato_id);
+CREATE INDEX "IDX_9df9d6e3a9e66f582d19daeefa" ON public.eventos_calendario USING btree (corredor_id);
+CREATE INDEX "IDX_a6364a9cb29b80807705b937eb" ON public.eventos_calendario USING btree (fecha_inicio);
+CREATE INDEX "IDX_e33cd93295dbfceec171b77079" ON public.eventos_calendario USING btree (empresa_id);
+CREATE INDEX "IDX_fec48b82b1d3d5501bb66883b1" ON public.eventos_calendario USING btree (tipo);
+CREATE INDEX "IDX_4835d23d64a2f6c36e4a55650d" ON public.historial_propiedad USING btree (corredor_id);
+CREATE INDEX "IDX_c1064b18117769fac4d3e1417f" ON public.historial_propiedad USING btree (propiedad_id);
+CREATE INDEX "IDX_0e991b4928c09964472e68f6f9" ON public.leads USING btree (estado);
+CREATE INDEX "IDX_2fd6ca8403c12edb75bf5f48e3" ON public.leads USING btree (corredor_id);
+CREATE INDEX "IDX_72e717b39bbb4528e6702c2259" ON public.leads USING btree (propiedad_id);
+CREATE INDEX "IDX_7a2141de6b4909386c64e582ab" ON public.leads USING btree (cliente_id);
+CREATE INDEX "IDX_c1bd083a5d03538d2e23015c25" ON public.leads USING btree (empresa_id);
+CREATE INDEX "IDX_3fa5cbaf018b1004741ff1afca" ON public.pagos USING btree (cliente_id);
+CREATE INDEX "IDX_8db60595261a9d7060c05b92df" ON public.pagos USING btree (cuota_id);
+CREATE INDEX "IDX_f9b08d4001933ed10b808f6d2e" ON public.pagos USING btree (estado);
+CREATE INDEX "IDX_59b11e3652925b3cdc2aa3ebe6" ON public.propiedades USING btree (estado);
+CREATE INDEX "IDX_719dcb70583acb95e21a2bb27f" ON public.propiedades USING btree (categoria_id);
+CREATE INDEX "IDX_be678b50960cfc98f7dbc02e87" ON public.propiedades USING btree (tipo_operacion);
+CREATE INDEX "IDX_bf89ce8b03ffa2fb877ab1b834" ON public.propiedades USING btree (empresa_id);
+CREATE INDEX "IDX_6d8ff4f199fec82e6d67ac3f22" ON public.solicitudes_cliente USING btree (corredor_id);
+CREATE INDEX "IDX_94fae003d08d4309c1c6b77bc7" ON public.solicitudes_cliente USING btree (cliente_id);
+CREATE INDEX "IDX_ea04670fab160d09edab79be63" ON public.solicitudes_cliente USING btree (empresa_id);
+CREATE INDEX "IDX_edc60d7e178d871444dc5ee681" ON public.solicitudes_cliente USING btree (estado);
+CREATE INDEX "IDX_81c5d57ff6c1445edaf940ea3f" ON public.solicitudes_propiedad USING btree (estado);
+CREATE INDEX "IDX_10b8ce63ff807ff15f5e57a1c0" ON public.visitas USING btree (cliente_id);
+CREATE INDEX "IDX_2a4ff22a0a93e12838329c8477" ON public.visitas USING btree (empresa_id);
+CREATE INDEX "IDX_2ad2c4336bd29a639238531eac" ON public.visitas USING btree (fecha_inicio);
+CREATE INDEX "IDX_51fc5f41a9431ed13ba6899d89" ON public.visitas USING btree (propiedad_id);
+CREATE INDEX "IDX_8690d5aca0d15cb2adb9d50b71" ON public.visitas USING btree (corredor_id);
+CREATE INDEX "IDX_b0323a1674fe1df1afc9be9760" ON public.visitas USING btree (estado);
+
+-- ─── DATOS ───
+-- Datos de categorias (3 filas)
+INSERT INTO "categorias" ("id", "empresa_id", "nombre", "descripcion", "activa", "created_at", "updated_at") VALUES ('c1111111-1111-4111-8111-111111111111', '00000000-0000-0000-0000-000000000001', 'Casa', 'Casas independientes', true, '2026-07-03T21:48:49.681Z', '2026-07-03T21:48:49.681Z');
+INSERT INTO "categorias" ("id", "empresa_id", "nombre", "descripcion", "activa", "created_at", "updated_at") VALUES ('c2222222-2222-4222-8222-222222222222', '00000000-0000-0000-0000-000000000001', 'Departamento', 'Departamentos y lofts', true, '2026-07-03T21:48:49.681Z', '2026-07-03T21:48:49.681Z');
+INSERT INTO "categorias" ("id", "empresa_id", "nombre", "descripcion", "activa", "created_at", "updated_at") VALUES ('c3333333-3333-4333-8333-333333333333', '00000000-0000-0000-0000-000000000001', 'Oficina', 'Oficinas y locales', true, '2026-07-03T21:48:49.681Z', '2026-07-03T21:48:49.681Z');
+
+-- Datos de clientes (6 filas)
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('95ff86e4-8aae-42bd-bbd8-f5e0307759f0', '00000000-0000-0000-0000-000000000001', 'Nicklix028', '123', 'andrediaz1234512345@gmail.com', '+56923134563', '$2b$10$VWMU4QnXSu4FOAfdNtPepuiL/gnarU0ogSQwvvbOPi01C7KBzqHGW', NULL, true, false, 'PENDIENTE_VALIDACION', '2026-07-03T21:37:26.167Z', '2026-07-03T21:37:26.167Z');
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('8fa971ce-ca49-4d93-9995-21ff60355483', '00000000-0000-0000-0000-000000000001', 'francisco', 'rojas', 'basuras335@gmail.com', '+5690866543', '$2b$10$Af52YiofQssYDDFHisAvs.NClNRvfcVK1TesunuAvnhUAlCGpD3Bi', NULL, true, false, 'PENDIENTE_VALIDACION', '2026-07-03T21:41:03.687Z', '2026-07-03T21:41:03.687Z');
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('22886e19-f810-4e6b-8cf2-d11551e06184', '00000000-0000-0000-0000-000000000001', 'Nicklix028', '123123', 'npro0330@gmail.com', '+56923134563', '$2b$10$KTZjKPO2rU9p2yRANh4Wzu2XBQ4CJpGUTcLNLpbZu2eOcwgjHyDuS', NULL, true, false, 'PENDIENTE_VALIDACION', '2026-07-03T21:47:16.543Z', '2026-07-03T21:47:16.543Z');
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('7b781c3b-e80d-4dd8-baa5-61dc76a05cc8', '00000000-0000-0000-0000-000000000001', 'Nicklix028', '123123', 'kiwilara62@gmail.com', '+56923134563', '$2b$10$qRmhpowrjeKBHlatO7sJXO74BIx7U1A9Bq0g8ErberGfCP7SDp.cG', NULL, true, true, 'PENDIENTE_VALIDACION', '2026-07-03T21:51:17.489Z', '2026-07-03T21:51:17.489Z');
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('58e0192e-c241-4da0-875a-78d6ddee9783', '00000000-0000-0000-0000-000000000001', 'Gonzalo', 'Castillo', 'gonzaacastillo3@gmail.com', '', NULL, '103516985430900283019', true, true, 'PENDIENTE_VALIDACION', '2026-07-03T21:54:26.500Z', '2026-07-03T21:54:26.500Z');
+INSERT INTO "clientes" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "activo", "email_verificado", "estado", "created_at", "updated_at") VALUES ('91d86d72-3e81-4060-8153-e7cbd3f138f1', '00000000-0000-0000-0000-000000000001', 'Hwhegdh', 'Bdbdbdb', 'hwhegdhbdbdbdb@gmail.com', '', NULL, '117487675854463102658', true, true, 'PENDIENTE_VALIDACION', '2026-07-03T21:55:08.028Z', '2026-07-03T21:55:08.028Z');
+
+-- Datos de empresas (1 filas)
+INSERT INTO "empresas" ("id", "nombre", "rut", "email", "telefono", "direccion", "logo_url", "plan", "fecha_vencimiento", "estado", "created_at", "updated_at") VALUES ('00000000-0000-0000-0000-000000000001', 'Inmuebles Chile SaaS', NULL, NULL, NULL, NULL, NULL, 'BASICO', NULL, 'ACTIVA', '2026-07-03T21:48:49.494Z', '2026-07-03T21:48:49.494Z');
+
+-- Datos de usuarios (1 filas)
+INSERT INTO "usuarios" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "rol", "activo", "created_at", "updated_at") VALUES ('44444444-4444-4444-8444-444444444444', '00000000-0000-0000-0000-000000000001', 'Admin', 'Demo', 'admin.demo@inmuebles.cl', '+56 9 4444 4444', '$2b$10$SbfHSmc36ImAlcoivVxfP.uZHWujLmIvMW3HLXDUZ1lAoktkzKegG', NULL, 'SUPER_ADMIN', true, '2026-07-03T21:48:49.867Z', '2026-07-03T21:48:49.867Z');
