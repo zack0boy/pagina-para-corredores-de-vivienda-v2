@@ -23,6 +23,7 @@ export class PagosCorredor implements OnInit {
 
   pagos = signal<any[]>([]);
   propiedades = signal<any[]>([]);
+  resumen = signal<{ totalVendido: number; totalPendiente: number; cantidadPagos: number } | null>(null);
   cargando = signal<boolean>(true);
   error = signal<string>('');
   toast = signal<string>('');
@@ -50,6 +51,17 @@ export class PagosCorredor implements OnInit {
   ngOnInit(): void {
     this.cargar();
     this.cargarPropiedades();
+    this.cargarResumen();
+  }
+
+  // Cuánto ha vendido ESTE corredor (nunca lo que venden otros corredores)
+  cargarResumen(): void {
+    const corredorId = this.authService.obtenerUsuarioActual()?.id;
+    if (!corredorId) return;
+    this.service.resumenCorredor(corredorId).subscribe({
+      next: (r) => this.resumen.set(r),
+      error: () => {},
+    });
   }
 
   cargar(): void {
@@ -163,6 +175,7 @@ export class PagosCorredor implements OnInit {
       this.mostrarForm.set(false);
       this.mostrarToast('Pago registrado');
       this.cargar();
+      this.cargarResumen();
     } catch {
       this.guardando.set(false);
       this.error.set('No se pudo registrar el pago.');

@@ -48,6 +48,34 @@ export class Comprobante {
   })
   observaciones?: string;
 
+  @Column({
+    type: 'enum',
+    enum: ComprobanteEstado,
+    default: ComprobanteEstado.PENDIENTE,
+  })
+  estado!: ComprobanteEstado;
+
+  @Column({
+    name: 'public_id',
+    type: 'text',
+    nullable: true,
+  })
+  publicId?: string;
+
+  @Column({
+    name: 'validado_por',
+    type: 'uuid',
+    nullable: true,
+  })
+  validadoPor?: string;
+
+  @Column({
+    name: 'fecha_validacion',
+    type: 'timestamp',
+    nullable: true,
+  })
+  fechaValidacion?: Date;
+
   @CreateDateColumn({
     name: 'created_at',
   })

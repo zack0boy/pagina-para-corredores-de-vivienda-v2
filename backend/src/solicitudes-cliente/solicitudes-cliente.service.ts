@@ -5,12 +5,18 @@ import { SolicitudCliente } from './entities/solicitud-cliente.entity';
 import { CreateSolicitudClienteDto } from './dto/create-solicitud-cliente.dto';
 import { ResolverSolicitudDto } from './dto/resolver-solicitud.dto';
 import { EstadoSolicitudCliente } from '../common/enum/estado.enum';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { Usuario } from '../users/entities/usuario.entity';
+import { RolUsuario } from '../common/enum/roles.enum';
 
 @Injectable()
 export class SolicitudesClienteService {
   constructor(
     @InjectRepository(SolicitudCliente)
     private readonly repo: Repository<SolicitudCliente>,
+    @InjectRepository(Usuario)
+    private readonly usuarioRepository: Repository<Usuario>,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async create(dto: CreateSolicitudClienteDto): Promise<SolicitudCliente> {
@@ -21,7 +27,35 @@ export class SolicitudesClienteService {
       ...dto,
       fecha_expiracion: fechaExpiracion,
     });
-    return this.repo.save(solicitud);
+    const guardada = await this.repo.save(solicitud);
+
+    try {
+      if (guardada.corredor_id) {
+        await this.notificacionesService.notificarNuevaSolicitud(
+          guardada.empresa_id,
+          guardada.corredor_id,
+          guardada.mensaje || 'Nueva solicitud de cliente pendiente de revisión',
+        );
+      } else {
+        const admins = await this.usuarioRepository.find({
+          where: [
+            { empresaId: guardada.empresa_id, rol: RolUsuario.ADMIN_EMPRESA },
+            { empresaId: guardada.empresa_id, rol: RolUsuario.SUPER_ADMIN },
+          ],
+        });
+        for (const admin of admins) {
+          await this.notificacionesService.notificarNuevaSolicitud(
+            guardada.empresa_id,
+            admin.id,
+            guardada.mensaje || 'Nueva solicitud de cliente pendiente de revisión',
+          );
+        }
+      }
+    } catch (error) {
+      console.warn('Error creando notificación de nueva solicitud:', error);
+    }
+
+    return guardada;
   }
 
   async findAll(): Promise<SolicitudCliente[]> {

@@ -37,7 +37,7 @@ const { Client } = require(path.join(backendDir, 'node_modules', 'pg'));
 
   // 1) ENUMs
   const enums = await client.query(`
-    SELECT t.typname, array_agg(e.enumlabel ORDER BY e.enumsortorder) AS labels
+    SELECT t.typname, array_agg(e.enumlabel::text ORDER BY e.enumsortorder) AS labels
     FROM pg_type t JOIN pg_enum e ON e.enumtypid = t.oid
     JOIN pg_namespace n ON n.oid = t.typnamespace
     WHERE n.nspname = 'public'

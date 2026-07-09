@@ -12,6 +12,8 @@ import { TipoEvento } from '../../common/enum/estado.enum';
 @Index(['corredor_id'])
 @Index(['fecha_inicio'])
 @Index(['tipo'])
+@Index(['contrato_id'])
+@Index(['cuota_id'])
 export class EventoCalendario {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -27,6 +29,12 @@ export class EventoCalendario {
 
   @Column('uuid', { nullable: true })
   visita_id?: string;
+
+  @Column('uuid', { nullable: true })
+  contrato_id?: string;
+
+  @Column('uuid', { nullable: true })
+  cuota_id?: string;
 
   @Column({ type: 'enum', enum: TipoEvento })
   tipo!: TipoEvento;

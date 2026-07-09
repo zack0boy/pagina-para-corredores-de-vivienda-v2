@@ -103,6 +103,7 @@ export class UsersController {
   @Roles(
     RolUsuario.SUPER_ADMIN,
     RolUsuario.ADMIN_EMPRESA,
+    RolUsuario.CORREDOR,
     RolUsuario.CLIENTE,
   )
   async getAllClientes(@Query() filters: FilterClienteDto) {

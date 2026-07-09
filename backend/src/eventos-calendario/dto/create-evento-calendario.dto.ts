@@ -18,6 +18,14 @@ export class CreateEventoCalendarioDto {
   @IsOptional()
   visita_id?: string;
 
+  @IsString()
+  @IsOptional()
+  contrato_id?: string;
+
+  @IsString()
+  @IsOptional()
+  cuota_id?: string;
+
   @IsEnum(TipoEvento)
   tipo!: TipoEvento;
 

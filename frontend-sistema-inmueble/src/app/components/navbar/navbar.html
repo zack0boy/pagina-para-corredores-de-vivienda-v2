@@ -28,6 +28,7 @@
         <button class="btn-register" routerLink="/registro">Registrarse</button>
       </ng-container>
       <ng-template #logged>
+        <app-notificaciones-bell *ngIf="esStaff()"></app-notificaciones-bell>
         <button class="btn-perfil" routerLink="/perfil-usuario">Hola, {{ authService.obtenerUsuarioActual()?.nombre }}</button>
         <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
       </ng-template>

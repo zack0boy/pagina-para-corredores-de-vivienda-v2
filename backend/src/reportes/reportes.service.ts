@@ -35,17 +35,25 @@ export class ReportesService {
 
   // Resumen común para SUPER_ADMIN y ADMIN_EMPRESA:
   // totales generales + resumen financiero del período (por defecto últimos 30 días)
-  async resumen(desde?: string, hasta?: string) {
+  // Si se pasa empresa_id (caso ADMIN_EMPRESA), todo se filtra a esa empresa.
+  async resumen(desde?: string, hasta?: string, empresa_id?: string) {
     const { inicio, fin } = this.rango(desde, hasta);
+
+    const filtroEmpresaUsuarios = empresa_id ? { empresaId: empresa_id } : {};
+    const filtroEmpresaPropiedad = empresa_id ? { empresa_id } : {};
+    const filtroPagos: any = { fecha_pago: Between(inicio, fin) };
+    if (empresa_id) filtroPagos.empresa_id = empresa_id;
 
     const [empresas, usuarios, propiedades, corredores, pagosPeriodo] =
       await Promise.all([
-        this.empresaRepository.count(),
-        this.usuarioRepository.count(),
-        this.propiedadRepository.count(),
-        this.usuarioRepository.count({ where: { rol: RolUsuario.CORREDOR } }),
+        empresa_id ? Promise.resolve(1) : this.empresaRepository.count(),
+        this.usuarioRepository.count({ where: filtroEmpresaUsuarios }),
+        this.propiedadRepository.count({ where: filtroEmpresaPropiedad }),
+        this.usuarioRepository.count({
+          where: { ...filtroEmpresaUsuarios, rol: RolUsuario.CORREDOR },
+        }),
         this.pagoRepository.find({
-          where: { fecha_pago: Between(inicio, fin) },
+          where: filtroPagos,
           order: { fecha_pago: 'DESC' },
         }),
       ]);
@@ -148,17 +156,19 @@ export class ReportesService {
     );
   }
 
-  async pagosDetalle(desde?: string, hasta?: string): Promise<Pago[]> {
+  async pagosDetalle(desde?: string, hasta?: string, empresa_id?: string): Promise<Pago[]> {
     const { inicio, fin } = this.rango(desde, hasta);
+    const filtro: any = { fecha_pago: Between(inicio, fin) };
+    if (empresa_id) filtro.empresa_id = empresa_id;
     return this.pagoRepository.find({
-      where: { fecha_pago: Between(inicio, fin) },
+      where: filtro,
       order: { fecha_pago: 'DESC' },
     });
   }
 
   // Documento CSV con el detalle de pagos del período
-  async exportarPagosCsv(desde?: string, hasta?: string): Promise<string> {
-    const pagos = await this.pagosDetalle(desde, hasta);
+  async exportarPagosCsv(desde?: string, hasta?: string, empresa_id?: string): Promise<string> {
+    const pagos = await this.pagosDetalle(desde, hasta, empresa_id);
 
     const escapar = (valor: unknown): string => {
       const texto = valor === null || valor === undefined ? '' : String(valor);

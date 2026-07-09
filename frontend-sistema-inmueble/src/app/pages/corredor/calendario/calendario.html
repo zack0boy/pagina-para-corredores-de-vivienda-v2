@@ -7,6 +7,7 @@
       <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
       <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
       <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/contratos" routerLinkActive="active"><span class="material-symbols-outlined">description</span> Contratos</a>
       <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
       <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
       <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
@@ -81,10 +82,14 @@
               @if (e.descripcion) { <span class="evento-desc">{{ e.descripcion }}</span> }
             </div>
             <div class="evento-actions">
-              <button class="btn-ed" (click)="editarEvento(e)">Editar</button>
-              @if (e.completado) { <span class="badge-done">✓ Listo</span> }
-              @else { <button class="approve" (click)="completar(e.id)">Completar</button> }
-              <button class="reject" (click)="eliminar(e.id)">Eliminar</button>
+              @if (e.tipo === 'VENCIMIENTO_CUOTA') {
+                <button class="btn-ed" (click)="verDetalleCuota(e)">Ver cuota</button>
+              } @else {
+                <button class="btn-ed" (click)="editarEvento(e)">Editar</button>
+                @if (e.completado) { <span class="badge-done">✓ Listo</span> }
+                @else { <button class="approve" (click)="completar(e.id)">Completar</button> }
+                <button class="reject" (click)="eliminar(e.id)">Eliminar</button>
+              }
             </div>
           </div>
         }
@@ -122,6 +127,36 @@
           <button type="button" class="reject" (click)="cancelarForm()">Cancelar</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- Detalle de solo lectura de un vencimiento de cuota -->
+@if (detalleCuota()) {
+  <div class="modal-overlay" (click)="cerrarDetalleCuota()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Vencimiento de cuota</h3>
+      <p class="evento-desc" style="margin-bottom:14px">{{ detalleCuota().evento.titulo }}</p>
+
+      @if (cargandoDetalleCuota()) {
+        <p style="color:#64748b">Cargando detalle...</p>
+      } @else if (detalleCuota().cuota) {
+        <dl class="cuota-dl">
+          <dt>N° cuota</dt><dd>{{ detalleCuota().cuota.numero_cuota }}</dd>
+          <dt>Monto</dt><dd>${{ detalleCuota().cuota.monto_total | number:'1.0-0' }}</dd>
+          <dt>Vencimiento</dt><dd>{{ detalleCuota().cuota.fecha_vencimiento | date:'dd/MM/yyyy' }}</dd>
+          <dt>Estado</dt><dd><span class="estado-cuota estado-cuota-{{ detalleCuota().cuota.estado }}">{{ detalleCuota().cuota.estado }}</span></dd>
+        </dl>
+      } @else {
+        <p class="hint">No se pudo cargar el detalle de la cuota.</p>
+      }
+
+      <div class="modal-acciones">
+        @if (detalleCuota().evento.contrato_id) {
+          <a class="approve" [routerLink]="['/corredor/contratos', detalleCuota().evento.contrato_id]">Ver contrato</a>
+        }
+        <button type="button" class="reject" (click)="cerrarDetalleCuota()">Cerrar</button>
+      </div>
     </div>
   </div>
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -44,6 +44,23 @@ export class NotificacionesService {
 
     if (!notificacion) {
       throw new NotFoundException('Notificación no encontrada');
+    }
+
+    notificacion.leida = true;
+    notificacion.fecha_lectura = new Date();
+
+    return await this.notificacionRepository.save(notificacion);
+  }
+
+  async marcarComoLeidaDeUsuario(id: string, usuario_id: string): Promise<Notificacion> {
+    const notificacion = await this.notificacionRepository.findOneBy({ id });
+
+    if (!notificacion) {
+      throw new NotFoundException('Notificación no encontrada');
+    }
+
+    if (notificacion.usuario_id !== usuario_id) {
+      throw new ForbiddenException('No tiene acceso a esta notificación');
     }
 
     notificacion.leida = true;
@@ -107,7 +124,7 @@ export class NotificacionesService {
 
   async notificarCuotaProxima(
     empresa_id: string,
-    cliente_id: string,
+    corredor_id: string,
     numero_cuota: number,
     fecha_vencimiento: Date,
     dias_para_vencer: number,
@@ -125,11 +142,14 @@ export class NotificacionesService {
     } else if (dias_para_vencer === 1) {
       titulo = 'Cuota vence mañana';
       mensaje = `La cuota #${numero_cuota} vence MAÑANA (${fecha})`;
+    } else if (dias_para_vencer === 0) {
+      titulo = 'Cuota vencida hoy';
+      mensaje = `La cuota #${numero_cuota} venció HOY (${fecha})`;
     }
 
     return await this.crearNotificacion({
       empresa_id,
-      usuario_id: cliente_id,
+      usuario_id: corredor_id,
       tipo: TipoNotificacion.PAGO,
       titulo,
       mensaje,
@@ -137,50 +157,73 @@ export class NotificacionesService {
   }
 
   // ====================================
-  // Validación de Cuotas por Vencer
+  // Eventos - PAGO (registro/validación)
   // ====================================
 
-  async obtenerCuotasProximas(): Promise<any[]> {
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-
-    const proximosDias = [1, 3, 7];
-    const cuotasProximas: any[] = [];
-
-    for (const dias of proximosDias) {
-      const fecha = new Date(hoy);
-      fecha.setDate(fecha.getDate() + dias);
-
-      const cuotas = await this.notificacionRepository.query(`
-        SELECT c.id, c.numero_cuota, c.fecha_vencimiento, co.cliente_id, co.empresa_id
-        FROM cuotas c
-        JOIN contratos co ON c.contrato_id = co.id
-        WHERE DATE(c.fecha_vencimiento) = DATE($1)
-        AND c.estado IN ('PENDIENTE', 'PARCIAL')
-      `, [fecha]);
-
-      cuotasProximas.push(...cuotas.map(c => ({ ...c, dias })));
-    }
-
-    return cuotasProximas;
+  async notificarNuevoPago(
+    empresa_id: string,
+    admin_id: string,
+    monto: number,
+    referencia: string,
+  ): Promise<Notificacion> {
+    return await this.crearNotificacion({
+      empresa_id,
+      usuario_id: admin_id,
+      tipo: TipoNotificacion.PAGO,
+      titulo: 'Nuevo pago registrado',
+      mensaje: `Se registró un pago de $${monto} (${referencia}) pendiente de validación`,
+    });
   }
 
-  async crearNotificacionesCuotasProximas(): Promise<number> {
-    const cuotas = await this.obtenerCuotasProximas();
-    let creadas = 0;
+  async notificarPagoValidado(
+    empresa_id: string,
+    corredor_id: string,
+    monto: number,
+    aprobado: boolean,
+  ): Promise<Notificacion> {
+    return await this.crearNotificacion({
+      empresa_id,
+      usuario_id: corredor_id,
+      tipo: TipoNotificacion.PAGO,
+      titulo: aprobado ? 'Pago validado' : 'Pago rechazado',
+      mensaje: `Tu pago de $${monto} fue ${aprobado ? 'validado' : 'rechazado'}.`,
+    });
+  }
 
-    for (const cuota of cuotas) {
-      await this.notificarCuotaProxima(
-        cuota.empresa_id,
-        cuota.cliente_id,
-        cuota.numero_cuota,
-        cuota.fecha_vencimiento,
-        cuota.dias,
-      );
-      creadas++;
-    }
+  // ====================================
+  // Eventos - CONTRATO
+  // ====================================
 
-    return creadas;
+  async notificarContratoActivado(
+    empresa_id: string,
+    corredor_id: string,
+    numero_contrato: string,
+  ): Promise<Notificacion> {
+    return await this.crearNotificacion({
+      empresa_id,
+      usuario_id: corredor_id,
+      tipo: TipoNotificacion.CONTRATO,
+      titulo: 'Contrato activado',
+      mensaje: `El contrato ${numero_contrato} fue activado y ya está vigente.`,
+    });
+  }
+
+  // ====================================
+  // Eventos - SOLICITUD
+  // ====================================
+
+  async notificarNuevaSolicitud(
+    empresa_id: string,
+    usuario_id: string,
+    detalle: string,
+  ): Promise<Notificacion> {
+    return await this.crearNotificacion({
+      empresa_id,
+      usuario_id,
+      tipo: TipoNotificacion.SOLICITUD,
+      titulo: 'Nueva solicitud de cliente',
+      mensaje: detalle,
+    });
   }
 
   // ====================================

@@ -21,11 +21,41 @@ export class PagosAdmin implements OnInit {
   cargando = signal<boolean>(true);
   procesando = signal<string>(''); // id del pago en proceso
   filtro = signal<'TODOS' | 'PENDIENTE_VALIDACION' | 'VALIDADO' | 'RECHAZADO'>('TODOS');
+  filtroTipoPago = signal<'TODOS' | 'TRANSFERENCIA' | 'PRESENCIAL'>('TODOS');
+  filtroTexto = signal<string>('');
+  filtroDesde = signal<string>('');
+  filtroHasta = signal<string>('');
+
+  // Resumen por empresa (SUPER_ADMIN, separadas entre sí) o por corredor dentro de la empresa (ADMIN_EMPRESA)
+  resumenesPorEmpresa = signal<any[]>([]);
+  resumenEmpresaPropia = signal<any | null>(null);
+
+  comprobantesAbiertos = signal<string>(''); // id del pago cuyos comprobantes se muestran
+  comprobantes = signal<any[]>([]);
 
   pagosFiltrados = computed(() => {
+    let lista = this.pagos();
     const f = this.filtro();
-    if (f === 'TODOS') return this.pagos();
-    return this.pagos().filter((p) => p.estado === f);
+    if (f !== 'TODOS') lista = lista.filter((p) => p.estado === f);
+
+    const tipo = this.filtroTipoPago();
+    if (tipo !== 'TODOS') lista = lista.filter((p) => p.tipo_pago === tipo);
+
+    const texto = this.filtroTexto().trim().toLowerCase();
+    if (texto) {
+      lista = lista.filter((p) =>
+        (p.cliente_nombre || '').toLowerCase().includes(texto) ||
+        (p.propiedad_titulo || '').toLowerCase().includes(texto),
+      );
+    }
+
+    const desde = this.filtroDesde();
+    if (desde) lista = lista.filter((p) => new Date(p.fecha_pago) >= new Date(desde));
+
+    const hasta = this.filtroHasta();
+    if (hasta) lista = lista.filter((p) => new Date(p.fecha_pago) <= new Date(hasta + 'T23:59:59'));
+
+    return lista;
   });
 
   pendientesCount = computed(() =>
@@ -47,6 +77,7 @@ export class PagosAdmin implements OnInit {
       return;
     }
     this.cargar();
+    this.cargarResumenes();
   }
 
   cargar(): void {
@@ -60,6 +91,36 @@ export class PagosAdmin implements OnInit {
         console.error('Error cargando pagos', e);
         this.cargando.set(false);
       },
+    });
+  }
+
+  // SUPER_ADMIN: una tabla por empresa, NUNCA sumadas entre sí.
+  // ADMIN_EMPRESA: una tabla con el desglose por corredor de su propia empresa.
+  cargarResumenes(): void {
+    if (this.esSuperAdmin()) {
+      this.pagosService.resumenTodasEmpresas().subscribe({
+        next: (res) => this.resumenesPorEmpresa.set(res ?? []),
+        error: () => {},
+      });
+    } else {
+      const empresaId = this.user()?.empresa_id;
+      if (!empresaId) return;
+      this.pagosService.resumenEmpresa(empresaId).subscribe({
+        next: (res) => this.resumenEmpresaPropia.set(res),
+        error: () => {},
+      });
+    }
+  }
+
+  verComprobantes(pago: any): void {
+    if (this.comprobantesAbiertos() === pago.id) {
+      this.comprobantesAbiertos.set('');
+      return;
+    }
+    this.comprobantesAbiertos.set(pago.id);
+    this.pagosService.comprobantesPorPago(pago.id).subscribe({
+      next: (res) => this.comprobantes.set(Array.isArray(res) ? res : []),
+      error: () => this.comprobantes.set([]),
     });
   }
 
@@ -84,6 +145,7 @@ export class PagosAdmin implements OnInit {
       next: () => {
         this.procesando.set('');
         this.cargar();
+        this.cargarResumenes();
       },
       error: (e) => {
         this.procesando.set('');
@@ -98,5 +160,9 @@ export class PagosAdmin implements OnInit {
 
   rechazarPago(pago: any): void {
     this.resolver(pago, 'RECHAZADO');
+  }
+
+  formatPrecio(valor: number): string {
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(valor || 0);
   }
 }

@@ -5,6 +5,8 @@ export enum TipoNotificacion {
   VISITA = 'VISITA',
   PAGO = 'PAGO',
   SISTEMA = 'SISTEMA',
+  CONTRATO = 'CONTRATO',
+  SOLICITUD = 'SOLICITUD',
 }
 
 @Entity('notificaciones')

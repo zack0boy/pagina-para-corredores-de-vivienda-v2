@@ -56,6 +56,58 @@
         </div>
       </section>
 
+      <!-- SUPER_ADMIN: una tabla por empresa, nunca sumadas -->
+      <ng-container *ngIf="esSuperAdmin()">
+        <section class="panel" *ngFor="let emp of resumenesPorEmpresa()">
+          <div class="card-title">
+            <h2>Ventas — Empresa {{ emp.empresa_id | slice:0:8 }}</h2>
+            <span>{{ emp.totalEmpresa.cantidadPagos }} pagos</span>
+          </div>
+          <div class="resumen-totales">
+            <div><strong>{{ '$' + (emp.totalEmpresa.totalVendido | number:'1.0-0') }}</strong><small>Vendido</small></div>
+            <div><strong>{{ '$' + (emp.totalEmpresa.totalPendiente | number:'1.0-0') }}</strong><small>Pendiente</small></div>
+          </div>
+          <div class="tabla-wrap">
+            <table class="tabla-pagos">
+              <thead><tr><th>Corredor</th><th>Vendido</th><th>Pendiente</th><th>N° pagos</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let c of emp.porCorredor">
+                  <td>{{ c.nombre }}</td>
+                  <td>{{ '$' + (c.totalVendido | number:'1.0-0') }}</td>
+                  <td>{{ '$' + (c.totalPendiente | number:'1.0-0') }}</td>
+                  <td>{{ c.cantidadPagos }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </ng-container>
+
+      <!-- ADMIN_EMPRESA: desglose por corredor de SU empresa -->
+      <section class="panel" *ngIf="!esSuperAdmin() && resumenEmpresaPropia()">
+        <div class="card-title">
+          <h2>Ventas por corredor</h2>
+          <span>{{ resumenEmpresaPropia().totalEmpresa.cantidadPagos }} pagos</span>
+        </div>
+        <div class="resumen-totales">
+          <div><strong>{{ '$' + (resumenEmpresaPropia().totalEmpresa.totalVendido | number:'1.0-0') }}</strong><small>Vendido</small></div>
+          <div><strong>{{ '$' + (resumenEmpresaPropia().totalEmpresa.totalPendiente | number:'1.0-0') }}</strong><small>Pendiente</small></div>
+        </div>
+        <div class="tabla-wrap">
+          <table class="tabla-pagos">
+            <thead><tr><th>Corredor</th><th>Vendido</th><th>Pendiente</th><th>N° pagos</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of resumenEmpresaPropia().porCorredor">
+                <td>{{ c.nombre }}</td>
+                <td>{{ '$' + (c.totalVendido | number:'1.0-0') }}</td>
+                <td>{{ '$' + (c.totalPendiente | number:'1.0-0') }}</td>
+                <td>{{ c.cantidadPagos }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel filtros">
         <button class="chip" [class.chip-activo]="filtro() === 'TODOS'" (click)="filtro.set('TODOS')">
           Todos ({{ pagos().length }})
@@ -69,6 +121,18 @@
         <button class="chip" [class.chip-activo]="filtro() === 'RECHAZADO'" (click)="filtro.set('RECHAZADO')">
           Rechazados
         </button>
+      </section>
+
+      <section class="panel filtros-extra">
+        <input type="text" placeholder="Buscar cliente o propiedad..." [value]="filtroTexto()"
+               (input)="filtroTexto.set($any($event.target).value)">
+        <select [value]="filtroTipoPago()" (change)="filtroTipoPago.set($any($event.target).value)">
+          <option value="TODOS">Todos los tipos</option>
+          <option value="TRANSFERENCIA">Transferencia</option>
+          <option value="PRESENCIAL">Presencial</option>
+        </select>
+        <label>Desde <input type="date" [value]="filtroDesde()" (change)="filtroDesde.set($any($event.target).value)"></label>
+        <label>Hasta <input type="date" [value]="filtroHasta()" (change)="filtroHasta.set($any($event.target).value)"></label>
       </section>
 
       <section class="panel">
@@ -91,34 +155,49 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let p of pagosFiltrados()">
-                <td>{{ p.fecha_pago | date:'dd-MM-yyyy' }}</td>
-                <td>{{ p.cliente_nombre || '—' }}</td>
-                <td>{{ p.propiedad_titulo || '—' }}</td>
-                <td><strong>{{ '$' + (p.monto | number:'1.0-0') }}</strong></td>
-                <td>{{ p.tipo_pago }}</td>
-                <td>
-                  <span class="badge"
-                        [class.badge-ok]="p.estado === 'VALIDADO'"
-                        [class.badge-warn]="p.estado === 'PENDIENTE_VALIDACION'"
-                        [class.badge-bad]="p.estado === 'RECHAZADO'">
-                    {{ p.estado === 'PENDIENTE_VALIDACION' ? 'PENDIENTE' : p.estado }}
-                  </span>
-                </td>
-                <td class="celda-acciones">
-                  <ng-container *ngIf="p.estado === 'PENDIENTE_VALIDACION'; else sinAcciones">
-                    <button class="btn-mini btn-ok" (click)="validarPago(p)" [disabled]="procesando() === p.id">
-                      ✔ Validar
+              <ng-container *ngFor="let p of pagosFiltrados()">
+                <tr>
+                  <td>{{ p.fecha_pago | date:'dd-MM-yyyy' }}</td>
+                  <td>{{ p.cliente_nombre || '—' }}</td>
+                  <td>{{ p.propiedad_titulo || '—' }}</td>
+                  <td><strong>{{ '$' + (p.monto | number:'1.0-0') }}</strong></td>
+                  <td>{{ p.tipo_pago }}</td>
+                  <td>
+                    <span class="badge"
+                          [class.badge-ok]="p.estado === 'VALIDADO'"
+                          [class.badge-warn]="p.estado === 'PENDIENTE_VALIDACION'"
+                          [class.badge-bad]="p.estado === 'RECHAZADO'">
+                      {{ p.estado === 'PENDIENTE_VALIDACION' ? 'PENDIENTE' : p.estado }}
+                    </span>
+                  </td>
+                  <td class="celda-acciones">
+                    <ng-container *ngIf="p.estado === 'PENDIENTE_VALIDACION'">
+                      <button class="btn-mini btn-ok" (click)="validarPago(p)" [disabled]="procesando() === p.id">
+                        ✔ Validar
+                      </button>
+                      <button class="btn-mini btn-bad" (click)="rechazarPago(p)" [disabled]="procesando() === p.id">
+                        ✕ Rechazar
+                      </button>
+                    </ng-container>
+                    <button class="btn-mini btn-ver" (click)="verComprobantes(p)">
+                      📎 {{ comprobantesAbiertos() === p.id ? 'Ocultar' : 'Ver comprobante' }}
                     </button>
-                    <button class="btn-mini btn-bad" (click)="rechazarPago(p)" [disabled]="procesando() === p.id">
-                      ✕ Rechazar
-                    </button>
-                  </ng-container>
-                  <ng-template #sinAcciones>
                     <span class="sin-acciones" *ngIf="p.comentario" [title]="p.comentario">💬</span>
-                  </ng-template>
-                </td>
-              </tr>
+                  </td>
+                </tr>
+                <tr *ngIf="comprobantesAbiertos() === p.id">
+                  <td colspan="7" class="fila-comprobantes">
+                    <div *ngIf="comprobantes().length === 0" class="sin-datos">Sin comprobantes subidos para este pago.</div>
+                    <div class="comprobantes-lista" *ngIf="comprobantes().length > 0">
+                      <a *ngFor="let c of comprobantes()" [href]="c.archivoUrl" target="_blank" class="comprobante-link">
+                        <span class="material-symbols-outlined">description</span>
+                        {{ c.nombreArchivo || 'Comprobante' }}
+                        <span class="badge" [class.badge-ok]="c.estado === 'aprobado'" [class.badge-bad]="c.estado === 'rechazado'" [class.badge-warn]="c.estado === 'pendiente'">{{ c.estado }}</span>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
               <tr *ngIf="!cargando() && pagosFiltrados().length === 0">
                 <td colspan="7" class="sin-datos">No hay pagos con este filtro.</td>
               </tr>

@@ -6,11 +6,13 @@ import { Contrato } from '../contratos/entities/contrato.entity';
 import { CuotasService } from './cuotas.service';
 import { CuotasController } from './cuotas.controller';
 import { NotificacionesModule } from '../notificaciones/notificaciones.module';
+import { EventosCalendarioModule } from '../eventos-calendario/eventos-calendario.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Cuota, Contrato]),
     NotificacionesModule,
+    EventosCalendarioModule,
   ],
   controllers: [CuotasController],
   providers: [CuotasService],

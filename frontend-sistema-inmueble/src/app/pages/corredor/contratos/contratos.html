@@ -1,0 +1,81 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/nueva-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">domain_add</span> Nueva Propiedad</a>
+      <a routerLink="/corredor/gestion" routerLinkActive="active"><span class="material-symbols-outlined">home</span> Mis Propiedades</a>
+      <a routerLink="/corredor/contratos" routerLinkActive="active"><span class="material-symbols-outlined">description</span> Contratos</a>
+      <a routerLink="/corredor/solicitudes-propiedad" routerLinkActive="active"><span class="material-symbols-outlined">fact_check</span> Publicaciones</a>
+      <a routerLink="/corredor/historial" routerLinkActive="active"><span class="material-symbols-outlined">history</span> Historial</a>
+      <a routerLink="/corredor/solicitudes" routerLinkActive="active"><span class="material-symbols-outlined">pending_actions</span> Solicitudes Cliente</a>
+      <a routerLink="/corredor/calendario" routerLinkActive="active"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/perfil" routerLinkActive="active"><span class="material-symbols-outlined">person</span> Mi Perfil</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-primary" routerLink="/corredor/contratos/nuevo">+ Nuevo Contrato</button>
+    </div>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <div>
+        <h1>Contratos</h1>
+        <p>{{ esAdmin() ? 'Contratos de tu empresa' : 'Tus contratos como corredor' }}</p>
+      </div>
+      <button class="btn-add" routerLink="/corredor/contratos/nuevo">
+        <span class="material-symbols-outlined">add</span> Nuevo Contrato
+      </button>
+    </section>
+
+    <div class="filtros">
+      <select [value]="filtroEstado()" (change)="filtroEstado.set($any($event.target).value)">
+        <option value="TODOS">Todos los estados</option>
+        <option value="BORRADOR">Borrador</option>
+        <option value="ACTIVO">Activo</option>
+        <option value="FINALIZADO">Finalizado</option>
+        <option value="CANCELADO">Cancelado</option>
+      </select>
+      <select [value]="filtroTipo()" (change)="filtroTipo.set($any($event.target).value)">
+        <option value="TODOS">Todos los tipos</option>
+        <option value="VENTA">Venta</option>
+        <option value="ARRIENDO">Arriendo</option>
+        <option value="RESERVA">Reserva</option>
+      </select>
+    </div>
+
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando contratos...</p>
+    } @else if (contratosFiltrados().length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">description</span>
+        <p>No hay contratos que coincidan con el filtro.</p>
+      </div>
+    } @else {
+      <div class="contrato-list">
+        @for (c of contratosFiltrados(); track c.id) {
+          <a class="contrato-card" [routerLink]="['/corredor/contratos', c.id]">
+            <div class="contrato-main">
+              <div class="contrato-num">
+                <span class="material-symbols-outlined">description</span>
+                <strong>{{ c.numero_contrato }}</strong>
+                <span class="badge tipo-{{ c.tipo }}">{{ c.tipo }}</span>
+              </div>
+              <div class="contrato-monto">{{ formatPrecio(c.monto_total) }}</div>
+            </div>
+            <div class="contrato-meta">
+              <span><span class="material-symbols-outlined">event</span> {{ c.fecha_inicio | date:'dd/MM/yyyy' }}</span>
+              <span class="estado estado-{{ c.estado }}">{{ c.estado }}</span>
+              <span class="forma-pago">{{ c.forma_pago === 'CUOTAS' ? 'Por cuotas' : 'Pago único' }}</span>
+            </div>
+          </a>
+        }
+      </div>
+    }
+  </main>
+</div>

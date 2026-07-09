@@ -1,0 +1,80 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.layout { display: flex; margin-top: 64px; min-height: calc(100vh - 64px); }
+
+.sidebar {
+  width: 260px; background: #f8fafc; border-right: 1px solid #e2e8f0;
+  padding: 25px 20px; display: flex; flex-direction: column;
+  position: fixed; top: 64px; left: 0; bottom: 0;
+}
+.sidebar-title h2 { font-size: 22px; color: #00236f; font-weight: 700; margin-bottom: 4px; }
+.sidebar-title small { color: #64748b; font-size: 13px; }
+.sidebar nav { display: flex; flex-direction: column; gap: 8px; margin-top: 30px; }
+.sidebar nav a {
+  text-decoration: none; color: #475569; display: flex; align-items: center; gap: 12px;
+  padding: 12px; border-radius: 10px; transition: .2s; font-weight: 500;
+}
+.sidebar nav a:hover { background: #eef2ff; color: #00236f; }
+.sidebar nav a.active { background: #dbeafe; color: #00236f; font-weight: 700; }
+.sidebar-bottom { margin-top: auto; }
+.btn-primary {
+  width: 100%; background: #00236f; color: #fff; border: none; padding: 14px;
+  border-radius: 10px; cursor: pointer; font-weight: 700; transition: .2s;
+}
+.btn-primary:hover { opacity: .9; }
+
+.contenido { margin-left: 260px; width: 100%; padding: 35px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.header h1 { font-size: 32px; color: #00236f; font-weight: 800; margin-bottom: 8px; }
+.header p { color: #64748b; font-size: 15px; }
+.btn-add {
+  display: inline-flex; align-items: center; gap: 6px; background: #00236f; color: #fff;
+  border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; white-space: nowrap;
+  text-decoration: none;
+}
+.btn-add:hover { background: #1e3a8a; }
+.btn-add .material-symbols-outlined { font-size: 18px; }
+
+.filtros { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.filtros select {
+  padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;
+  background: #fff; color: #1e293b;
+}
+
+.toast-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; font-weight: 600; }
+
+.empty { text-align: center; padding: 60px 20px; color: #94a3b8; }
+.empty .material-symbols-outlined { font-size: 48px; }
+
+.contrato-list { display: flex; flex-direction: column; gap: 14px; }
+.contrato-card {
+  background: #fff; border-radius: 14px; padding: 20px 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06); border-left: 4px solid #00236f;
+  text-decoration: none; color: inherit; display: block; transition: .15s;
+}
+.contrato-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
+.contrato-main { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.contrato-num { display: flex; align-items: center; gap: 8px; }
+.contrato-num .material-symbols-outlined { color: #64748b; font-size: 20px; }
+.contrato-num strong { color: #1e293b; font-size: 16px; }
+.contrato-monto { font-size: 22px; font-weight: 800; color: #00236f; }
+
+.badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; }
+.tipo-VENTA { background: #dcfce7; color: #166534; }
+.tipo-ARRIENDO { background: #dbeafe; color: #1d4ed8; }
+.tipo-RESERVA { background: #fef3c7; color: #b45309; }
+
+.contrato-meta { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.contrato-meta span { display: inline-flex; align-items: center; gap: 5px; color: #64748b; font-size: 13px; }
+.contrato-meta .material-symbols-outlined { font-size: 15px; }
+.estado { font-weight: 700; padding: 3px 10px; border-radius: 20px; font-size: 12px; }
+.estado-BORRADOR { background: #f1f5f9; color: #475569; }
+.estado-ACTIVO { background: #dcfce7; color: #166534; }
+.estado-FINALIZADO { background: #dbeafe; color: #1d4ed8; }
+.estado-CANCELADO { background: #fee2e2; color: #991b1b; }
+.forma-pago { font-style: italic; }
+
+@media (max-width: 992px) {
+  .sidebar { display: none; }
+  .contenido { margin-left: 0; padding: 20px; }
+}

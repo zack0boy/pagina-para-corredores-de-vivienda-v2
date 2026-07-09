@@ -23,6 +23,11 @@ export class UsersService {
     return this.http.get(`${this.apiUrl}/me`);
   }
 
+  // GET /users/clientes
+  getClientes(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/clientes`);
+  }
+
   // GET /users/corredores/:id
   getCorredor(id: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/corredores/${id}`);

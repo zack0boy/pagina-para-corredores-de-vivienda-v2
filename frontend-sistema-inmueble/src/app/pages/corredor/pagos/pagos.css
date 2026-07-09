@@ -59,6 +59,16 @@
 .img-preview img { width: 100%; height: 100%; object-fit: cover; }
 .img-preview button { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; }
 
+.mis-ventas { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.venta-stat {
+  flex: 1; min-width: 200px; display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px; padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid #e2e8f0;
+}
+.venta-stat .material-symbols-outlined { font-size: 28px; color: #00236f; }
+.venta-stat strong { display: block; font-size: 20px; color: #1e293b; }
+.venta-stat small { color: #64748b; font-size: 12px; }
+
 .toast-ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; font-weight: 600; }
 .toast-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 12px 16px; border-radius: 8px; margin-bottom: 18px; font-weight: 600; }
 

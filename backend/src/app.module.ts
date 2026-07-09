@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,6 +30,7 @@ import { SolicitudesClienteModule } from './solicitudes-cliente/solicitudes-clie
 import { EventosCalendarioModule } from './eventos-calendario/eventos-calendario.module';
 import { SolicitudesPropiedadModule } from './solicitudes-propiedad/solicitudes-propiedad.module';
 import { ReportesModule } from './reportes/reportes.module';
+import { CronModule } from './cron/cron.module';
 
 @Module({
   imports: [
@@ -36,6 +38,7 @@ import { ReportesModule } from './reportes/reportes.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync(typeormConfig),
     UsersModule,
     AuthModule,
@@ -60,6 +63,7 @@ import { ReportesModule } from './reportes/reportes.module';
     EventosCalendarioModule,
     SolicitudesPropiedadModule,
     ReportesModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [AppService],

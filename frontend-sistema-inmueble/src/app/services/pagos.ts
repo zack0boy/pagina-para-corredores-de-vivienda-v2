@@ -59,4 +59,19 @@ export class PagosService {
   comprobantesPorPago(pagoId: string): Observable<any> {
     return this.http.get(`${this.comprobanteUrl}/pago/${pagoId}`);
   }
+
+  // Ventas del propio corredor (nunca de otros corredores)
+  resumenCorredor(corredorId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/resumen/corredor/${corredorId}`);
+  }
+
+  // Tabla de ventas por corredor dentro de una empresa (admin/superadmin)
+  resumenEmpresa(empresaId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/resumen/empresa/${empresaId}`);
+  }
+
+  // Todas las empresas, separadas entre sí (solo superadmin)
+  resumenTodasEmpresas(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/resumen/todas-empresas`);
+  }
 }

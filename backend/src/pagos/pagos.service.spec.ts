@@ -3,12 +3,18 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { PagosService } from './pagos.service';
 import { Pago } from './entities/pago.entity';
 import { Propiedades } from '../propiedades/entities/propiedades.entity';
+import { Usuario } from '../users/entities/usuario.entity';
 import { TipoPago } from '../common/enum/estado.enum';
+import { RolUsuario } from '../common/enum/roles.enum';
+import { ComprobanteService } from '../comprobante/comprobante.service';
+import { CuotasService } from '../cuotas/cuotas.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 describe('PagosService', () => {
   let service: PagosService;
   let pagoRepository: { create: jest.Mock; save: jest.Mock; find: jest.Mock; findOne: jest.Mock };
   let propiedadesRepository: { findOne: jest.Mock; find: jest.Mock };
+  let usuarioRepository: { findOne: jest.Mock; find: jest.Mock };
 
   beforeEach(async () => {
     pagoRepository = {
@@ -23,11 +29,20 @@ describe('PagosService', () => {
       find: jest.fn(),
     };
 
+    usuarioRepository = {
+      findOne: jest.fn().mockResolvedValue(null),
+      find: jest.fn().mockResolvedValue([]),
+    };
+
     const module = await Test.createTestingModule({
       providers: [
         PagosService,
         { provide: getRepositoryToken(Pago), useValue: pagoRepository },
         { provide: getRepositoryToken(Propiedades), useValue: propiedadesRepository },
+        { provide: getRepositoryToken(Usuario), useValue: usuarioRepository },
+        { provide: ComprobanteService, useValue: { marcarEstadoPorPago: jest.fn() } },
+        { provide: CuotasService, useValue: { registrarPago: jest.fn() } },
+        { provide: NotificacionesService, useValue: { notificarNuevoPago: jest.fn(), notificarPagoValidado: jest.fn() } },
       ],
     }).compile();
 
@@ -48,7 +63,9 @@ describe('PagosService', () => {
       propiedad_titulo: 'Casa bonita',
     };
 
-    await service.create(dto as any);
+    const actor = { id: 'super-1', role: RolUsuario.SUPER_ADMIN };
+
+    await service.create(dto as any, actor);
 
     expect(propiedadesRepository.findOne).toHaveBeenCalled();
     expect(pagoRepository.create).toHaveBeenCalledWith(

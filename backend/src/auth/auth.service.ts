@@ -133,6 +133,7 @@ export class AuthService {
         sub: usuario.id,
         email: usuario.email,
         role: usuario.rol,
+        empresa_id: usuario.empresaId,
         tipo: 'staff',
       });
 
@@ -144,6 +145,7 @@ export class AuthService {
           email: usuario.email,
           rol: usuario.rol,
           tipo: 'staff',
+          empresa_id: usuario.empresaId,
         },
       };
     }
@@ -214,6 +216,7 @@ export class AuthService {
           sub: usuario.id,
           email: usuario.email,
           role: usuario.rol,
+          empresa_id: usuario.empresaId,
           tipo: 'staff',
         });
 
@@ -226,6 +229,7 @@ export class AuthService {
             email: usuario.email,
             rol: usuario.rol,
             tipo: 'staff',
+            empresa_id: usuario.empresaId,
           },
         };
       }

@@ -1,0 +1,144 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" ><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/contratos" class="active"><span class="material-symbols-outlined">description</span> Contratos</a>
+      <a routerLink="/corredor/pagos"><span class="material-symbols-outlined">payments</span> Pagos</a>
+      <a routerLink="/corredor/calendario"><span class="material-symbols-outlined">calendar_today</span> Calendario</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    @if (toast()) { <div class="toast-ok">✓ {{ toast() }}</div> }
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando contrato...</p>
+    } @else if (!contrato()) {
+      <div class="empty"><p>Contrato no encontrado.</p></div>
+    } @else {
+      <section class="header">
+        <div>
+          <h1>{{ contrato().numero_contrato }}</h1>
+          <div class="badges">
+            <span class="badge tipo-{{ contrato().tipo }}">{{ contrato().tipo }}</span>
+            <span class="estado estado-{{ contrato().estado }}">{{ contrato().estado }}</span>
+            <span class="forma-pago">{{ contrato().forma_pago === 'CUOTAS' ? 'Por cuotas' : 'Pago único' }}</span>
+          </div>
+        </div>
+        <a class="btn-back" routerLink="/corredor/contratos">
+          <span class="material-symbols-outlined">arrow_back</span> Volver
+        </a>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <h3>Datos del contrato</h3>
+          <dl>
+            <dt>Monto total</dt><dd>{{ formatPrecio(contrato().monto_total) }}</dd>
+            <dt>Fecha de inicio</dt><dd>{{ contrato().fecha_inicio | date:'dd/MM/yyyy' }}</dd>
+            <dt>Fecha de término</dt><dd>{{ contrato().fecha_fin ? (contrato().fecha_fin | date:'dd/MM/yyyy') : '—' }}</dd>
+            @if (contrato().monto_cuota_mensual) {
+              <dt>Cuota mensual</dt><dd>{{ formatPrecio(contrato().monto_cuota_mensual) }}</dd>
+              <dt>Día de pago</dt><dd>Día {{ contrato().dia_pago_mensual }} de cada mes</dd>
+            }
+            @if (contrato().observaciones) { <dt>Observaciones</dt><dd>{{ contrato().observaciones }}</dd> }
+          </dl>
+        </section>
+
+        <section class="card">
+          <h3>Documento firmado</h3>
+          @if (contrato().contrato_url) {
+            <a class="ver-firmado" [href]="contrato().contrato_url" target="_blank">
+              <span class="material-symbols-outlined">picture_as_pdf</span> Ver contrato firmado
+            </a>
+          } @else {
+            <p class="hint">Aún no se ha subido el contrato firmado.</p>
+          }
+
+          <div class="acciones-doc">
+            <button class="btn-secundario" (click)="descargarPdf()" [disabled]="procesando() === 'pdf'">
+              <span class="material-symbols-outlined">download</span>
+              {{ procesando() === 'pdf' ? 'Generando...' : 'Descargar PDF para firmar' }}
+            </button>
+
+            @if (puedeEditar()) {
+              <label class="btn-secundario">
+                <span class="material-symbols-outlined">upload_file</span>
+                {{ procesando() === 'upload' ? 'Subiendo...' : 'Subir firmado' }}
+                <input type="file" accept="application/pdf,image/*" hidden
+                       [disabled]="procesando() === 'upload'" (change)="subirFirmado($event)">
+              </label>
+            }
+          </div>
+        </section>
+      </div>
+
+      @if (contrato().forma_pago === 'CUOTAS') {
+        <section class="card">
+          <h3>Cuotas</h3>
+          @if (cuotas().length === 0) {
+            <p class="hint">
+              @if (contrato().estado === 'BORRADOR') {
+                Las cuotas se generarán automáticamente al activar el contrato (si es ARRIENDO).
+              } @else {
+                Este contrato no tiene cuotas generadas.
+              }
+            </p>
+          } @else {
+            <table class="tabla-cuotas">
+              <thead>
+                <tr><th>N°</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                @for (cuota of cuotas(); track cuota.id) {
+                  <tr>
+                    <td>{{ cuota.numero_cuota }}</td>
+                    <td>{{ formatPrecio(cuota.monto_total) }}</td>
+                    <td>{{ cuota.fecha_vencimiento | date:'dd/MM/yyyy' }}</td>
+                    <td><span class="estado-cuota estado-cuota-{{ cuota.estado }}">{{ cuota.estado }}</span></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </section>
+      }
+
+      <section class="acciones-contrato">
+        @if (puedeEditar()) {
+          <a class="btn-secundario" [routerLink]="['/corredor/contratos', contrato().id, 'editar']">
+            <span class="material-symbols-outlined">edit</span> Editar
+          </a>
+        }
+        @if (puedeActivar()) {
+          <button class="approve" (click)="activar()" [disabled]="procesando() === 'activar'">
+            <span class="material-symbols-outlined">check_circle</span>
+            {{ procesando() === 'activar' ? 'Activando...' : 'Activar (validar firmado)' }}
+          </button>
+        }
+        @if (puedeEditar() && !contrato().contrato_url && esAdmin()) {
+          <p class="hint-warning">Debe subirse el contrato firmado antes de poder activarlo.</p>
+        }
+        @if (puedeFinalizar()) {
+          <button class="btn-secundario" (click)="finalizar()" [disabled]="procesando() === 'finalizar'">
+            <span class="material-symbols-outlined">task_alt</span> Finalizar
+          </button>
+        }
+        @if (puedeCancelar()) {
+          <button class="reject" (click)="cancelar()" [disabled]="procesando() === 'cancelar'">
+            <span class="material-symbols-outlined">cancel</span> Cancelar
+          </button>
+        }
+        @if (esAdmin()) {
+          <button class="reject" (click)="eliminar()" [disabled]="procesando() === 'eliminar'">
+            <span class="material-symbols-outlined">delete</span> Eliminar
+          </button>
+        }
+      </section>
+    }
+  </main>
+</div>

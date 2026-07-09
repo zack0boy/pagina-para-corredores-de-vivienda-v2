@@ -5,6 +5,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { EventosCalendarioService } from '../../../services/eventos-calendario';
 import { AuthService } from '../../../services/auth';
+import { CuotasService } from '../../../services/cuotas';
 
 const EMPRESA_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -26,7 +27,12 @@ interface DiaCalendario {
 export class CalendarioCorredor implements OnInit {
   private service = inject(EventosCalendarioService);
   private authService = inject(AuthService);
+  private cuotasService = inject(CuotasService);
   private fb = inject(FormBuilder);
+
+  // Detalle de solo lectura para eventos derivados de una cuota (vencimientos)
+  detalleCuota = signal<any | null>(null);
+  cargandoDetalleCuota = signal<boolean>(false);
 
   eventos = signal<any[]>([]);
   cargando = signal<boolean>(true);
@@ -44,6 +50,7 @@ export class CalendarioCorredor implements OnInit {
     { valor: 'VISITA', label: 'Visita a propiedad', icono: 'home' },
     { valor: 'CONTACTO_CLIENTE', label: 'Contacto con cliente', icono: 'call' },
     { valor: 'GESTION_PAGO', label: 'Gestión de pago', icono: 'payments' },
+    { valor: 'VENCIMIENTO_CUOTA', label: 'Vencimiento de cuota', icono: 'payments' },
     { valor: 'OTRO', label: 'Otro', icono: 'event' },
   ];
 
@@ -144,8 +151,13 @@ export class CalendarioCorredor implements OnInit {
     this.mostrarForm.set(true);
   }
 
-  // Abrir formulario para EDITAR un evento existente
+  // Abrir formulario para EDITAR un evento existente (o el detalle de solo lectura si es
+  // un vencimiento de cuota derivado automáticamente al activar un contrato).
   editarEvento(e: any): void {
+    if (e.tipo === 'VENCIMIENTO_CUOTA') {
+      this.verDetalleCuota(e);
+      return;
+    }
     this.editandoId.set(e.id);
     this.form.reset({
       titulo: e.titulo,
@@ -160,6 +172,23 @@ export class CalendarioCorredor implements OnInit {
   cancelarForm(): void {
     this.mostrarForm.set(false);
     this.editandoId.set(null);
+  }
+
+  verDetalleCuota(e: any): void {
+    this.detalleCuota.set({ evento: e, cuota: null });
+    if (!e.cuota_id) return;
+    this.cargandoDetalleCuota.set(true);
+    this.cuotasService.findOne(e.cuota_id).subscribe({
+      next: (cuota) => {
+        this.detalleCuota.set({ evento: e, cuota });
+        this.cargandoDetalleCuota.set(false);
+      },
+      error: () => this.cargandoDetalleCuota.set(false),
+    });
+  }
+
+  cerrarDetalleCuota(): void {
+    this.detalleCuota.set(null);
   }
 
   guardar(): void {

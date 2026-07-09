@@ -1,0 +1,134 @@
+<app-navbar></app-navbar>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title"><h2>Portal Agente</h2><small>Inmuebles Chile</small></div>
+    <nav>
+      <a routerLink="/corredor" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a routerLink="/corredor/contratos" routerLinkActive="active"><span class="material-symbols-outlined">description</span> Contratos</a>
+      <a routerLink="/corredor/pagos" routerLinkActive="active"><span class="material-symbols-outlined">payments</span> Pagos</a>
+    </nav>
+  </aside>
+
+  <main class="contenido">
+    <section class="header">
+      <div>
+        <h1>{{ esEdicion() ? 'Editar contrato' : 'Nuevo contrato' }}</h1>
+        <p>Define los datos del contrato. Podrás generar y descargar el PDF desde el detalle.</p>
+      </div>
+      <a class="btn-back" routerLink="/corredor/contratos">
+        <span class="material-symbols-outlined">arrow_back</span> Volver
+      </a>
+    </section>
+
+    @if (error()) { <div class="toast-err">{{ error() }}</div> }
+
+    @if (cargando()) {
+      <p style="color:#64748b">Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="guardar()" class="contrato-form">
+        <div class="form-grid">
+          <div class="campo full">
+            <label>Propiedad <span>*</span></label>
+            <input list="lista-props" formControlName="propiedad_titulo"
+                   placeholder="Escribe para buscar tu propiedad..."
+                   (change)="onPropiedadSeleccionada($any($event.target).value)">
+            <datalist id="lista-props">
+              @for (prop of propiedades(); track prop.id) {
+                <option [value]="prop.titulo"></option>
+              }
+            </datalist>
+          </div>
+
+          <div class="campo full">
+            <label>Cliente <span>*</span></label>
+            <input list="lista-clientes" formControlName="cliente_nombre"
+                   placeholder="Escribe para buscar al cliente..."
+                   (change)="onClienteSeleccionado($any($event.target).value)">
+            <datalist id="lista-clientes">
+              @for (cli of clientes(); track cli.id) {
+                <option [value]="cli.nombre + ' ' + cli.apellido"></option>
+              }
+            </datalist>
+          </div>
+
+          <div class="campo">
+            <label>N° de contrato <span>*</span></label>
+            <input formControlName="numero_contrato">
+          </div>
+
+          <div class="campo">
+            <label>Tipo <span>*</span></label>
+            <select formControlName="tipo">
+              <option value="VENTA">Venta</option>
+              <option value="ARRIENDO">Arriendo</option>
+              <option value="RESERVA">Reserva</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label>Forma de pago <span>*</span></label>
+            <select formControlName="forma_pago">
+              <option value="PAGO_UNICO">Pago único</option>
+              <option value="CUOTAS">Por cuotas</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label>Monto total (CLP) <span>*</span></label>
+            <input type="text" inputmode="numeric" [value]="montoDisplay()"
+                   (input)="onMontoInput($event)" placeholder="15.000.000">
+          </div>
+
+          <div class="campo">
+            <label>Fecha de inicio <span>*</span></label>
+            <input type="date" formControlName="fecha_inicio">
+          </div>
+
+          @if (!esPorCuotas()) {
+            <div class="campo">
+              <label>Fecha de término</label>
+              <input type="date" formControlName="fecha_fin">
+            </div>
+          }
+
+          @if (esPorCuotas()) {
+            <div class="campo">
+              <label>Monto por cuota mensual</label>
+              <input type="text" inputmode="numeric" [value]="montoCuotaDisplay()"
+                     (input)="onMontoCuotaInput($event)" placeholder="Ej: 250.000">
+              <small class="hint">El sistema calcula solo cuántos meses toma y la fecha de término.</small>
+            </div>
+
+            <div class="campo">
+              <label>Día de pago (cada mes)</label>
+              <select formControlName="dia_pago_mensual">
+                @for (d of diasDelMes; track d) { <option [value]="d">Día {{ d }}</option> }
+              </select>
+            </div>
+
+            @if (previewCuotas()) {
+              <div class="campo full preview-cuotas">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                Se generarán <strong>{{ previewCuotas()!.meses }}</strong> cuotas, terminando el
+                <strong>{{ previewCuotas()!.fechaFin }}</strong>.
+              </div>
+            }
+          }
+
+          <div class="campo full">
+            <label>Observaciones</label>
+            <textarea formControlName="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="approve" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : (esEdicion() ? 'Guardar cambios' : 'Crear contrato') }}
+          </button>
+          <a class="reject" routerLink="/corredor/contratos">Cancelar</a>
+        </div>
+      </form>
+    }
+  </main>
+</div>

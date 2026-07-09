@@ -5,7 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Comprobante } from './entities/comprobante.entity';
+import { Comprobante, ComprobanteEstado } from './entities/comprobante.entity';
 import { CreateComprobanteDto } from './dto/create-comprobante.dto';
 import { UpdateComprobanteDto } from './dto/update-comprobante.dto';
 import { ValidarComprobanteDto } from './dto/validar-comprobante.dto';
@@ -43,6 +43,7 @@ export class ComprobanteService {
     const comprobante = this.comprobanteRepository.create({
       pagoId,
       archivoUrl: resultado.secure_url,
+      publicId: resultado.public_id,
       nombreArchivo: file.originalname,
       tipoArchivo: file.mimetype,
       observaciones,
@@ -61,6 +62,9 @@ export class ComprobanteService {
   ) {
     const comprobante = await this.findOne(id);
 
+    comprobante.estado = dto.estado;
+    comprobante.validadoPor = dto.validado_por;
+    comprobante.fechaValidacion = new Date();
     if (dto.observaciones) {
       comprobante.observaciones = dto.observaciones;
     }
@@ -68,6 +72,23 @@ export class ComprobanteService {
     return await this.comprobanteRepository.save(
       comprobante,
     );
+  }
+
+  // Usado en cascada desde PagosService.validar(): sincroniza el estado de todos los
+  // comprobantes de un pago cuando se valida/rechaza el pago completo.
+  async marcarEstadoPorPago(
+    pagoId: string,
+    estado: ComprobanteEstado,
+    validado_por: string,
+  ): Promise<void> {
+    const comprobantes = await this.findByPago(pagoId);
+    const fechaValidacion = new Date();
+    for (const comprobante of comprobantes) {
+      comprobante.estado = estado;
+      comprobante.validadoPor = validado_por;
+      comprobante.fechaValidacion = fechaValidacion;
+      await this.comprobanteRepository.save(comprobante);
+    }
   }
 
   async findAll() {
@@ -106,6 +127,10 @@ export class ComprobanteService {
   async remove(id: string) {
     const comprobante =
       await this.findOne(id);
+
+    if (comprobante.publicId) {
+      await this.cloudinaryService.deleteImage(comprobante.publicId);
+    }
 
     await this.comprobanteRepository.remove(
       comprobante,

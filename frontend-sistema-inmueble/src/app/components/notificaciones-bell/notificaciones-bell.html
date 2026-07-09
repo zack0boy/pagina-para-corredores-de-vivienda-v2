@@ -1,0 +1,31 @@
+<div class="bell-wrap">
+  <button class="bell-btn" (click)="toggle()" [class.abierto]="abierto()" aria-label="Notificaciones">
+    <span class="material-symbols-outlined">notifications</span>
+    @if (noLeidasCount() > 0) {
+      <span class="bell-badge">{{ noLeidasCount() > 9 ? '9+' : noLeidasCount() }}</span>
+    }
+  </button>
+
+  @if (abierto()) {
+    <div class="bell-overlay" (click)="toggle()"></div>
+    <div class="bell-dropdown">
+      <div class="bell-header">
+        <strong>Notificaciones</strong>
+      </div>
+      @if (notificaciones().length === 0) {
+        <div class="bell-empty">Sin notificaciones.</div>
+      } @else {
+        <div class="bell-list">
+          @for (n of notificaciones(); track n.id) {
+            <a class="bell-item" [class.no-leida]="!n.leida"
+               [routerLink]="rutaDe(n) || null" (click)="marcarLeida(n)">
+              <span class="bell-item-titulo">{{ n.titulo }}</span>
+              <span class="bell-item-msg">{{ n.mensaje }}</span>
+              <span class="bell-item-fecha">{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</span>
+            </a>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -11,9 +11,13 @@ import { EstadoPago, TipoPago } from '../../common/enum/estado.enum';
 @Index(['cuota_id'])
 @Index(['cliente_id'])
 @Index(['estado'])
+@Index(['empresa_id'])
 export class Pago {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column('uuid', { nullable: true })
+  empresa_id?: string;
 
   @Column('uuid', { nullable: true })
   cuota_id?: string;

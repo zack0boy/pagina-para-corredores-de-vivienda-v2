@@ -2,18 +2,26 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─── TIPOS ENUM ───
+-- NOTA: los nombres de los tipos ENUM de este bloque (estilo "tabla_columna_enum") son los que
+-- generaría TypeORM por defecto, pero la base real en Aiven fue creada a mano con nombres
+-- distintos (estilo "estado_entidad" / "tipo_entidad", ver BaseDeDatos/base_datos_completa.sql
+-- para el volcado 100% fiel al esquema real). Se dejan así por compatibilidad histórica de este
+-- archivo; los dos tipos nuevos de más abajo (estado_comprobante, forma_pago_contrato) SÍ usan
+-- los nombres reales porque son los que quedaron creados en Aiven.
 CREATE TYPE "clientes_estado_enum" AS ENUM ('PENDIENTE_VALIDACION', 'ACTIVO', 'RECHAZADO', 'SUSPENDIDO');
 CREATE TYPE "contratos_estado_enum" AS ENUM ('BORRADOR', 'ACTIVO', 'FINALIZADO', 'CANCELADO');
 CREATE TYPE "contratos_tipo_enum" AS ENUM ('VENTA', 'ARRIENDO', 'RESERVA');
 CREATE TYPE "cuotas_estado_enum" AS ENUM ('PENDIENTE', 'PARCIAL', 'PAGADA', 'VENCIDA', 'ANULADA');
 CREATE TYPE "empresas_estado_enum" AS ENUM ('ACTIVA', 'SUSPENDIDA');
-CREATE TYPE "eventos_calendario_tipo_enum" AS ENUM ('VISITA', 'CONTACTO_CLIENTE', 'GESTION_PAGO', 'OTRO');
+CREATE TYPE "eventos_calendario_tipo_enum" AS ENUM ('VISITA', 'CONTACTO_CLIENTE', 'GESTION_PAGO', 'VENCIMIENTO_CUOTA', 'OTRO');
 CREATE TYPE "leads_estado_enum" AS ENUM ('NUEVO', 'ASIGNADO', 'CONTACTADO', 'VISITA_PROGRAMADA', 'NEGOCIACION', 'CONVERTIDO', 'PERDIDO', 'REASIGNADO');
-CREATE TYPE "notificaciones_tipo_enum" AS ENUM ('LEAD', 'VISITA', 'PAGO', 'SISTEMA');
+CREATE TYPE "notificaciones_tipo_enum" AS ENUM ('LEAD', 'VISITA', 'PAGO', 'SISTEMA', 'CONTRATO', 'SOLICITUD');
 CREATE TYPE "pagos_estado_enum" AS ENUM ('PENDIENTE_VALIDACION', 'VALIDADO', 'RECHAZADO');
 CREATE TYPE "pagos_tipo_pago_enum" AS ENUM ('TRANSFERENCIA', 'PRESENCIAL');
 CREATE TYPE "solicitudes_cliente_estado_enum" AS ENUM ('PENDIENTE', 'APROBADA', 'RECHAZADA', 'EXPIRADA');
 CREATE TYPE "visitas_estado_enum" AS ENUM ('PROGRAMADA', 'CONFIRMADA', 'REALIZADA', 'CANCELADA', 'NO_ASISTIO');
+CREATE TYPE "estado_comprobante" AS ENUM ('pendiente', 'aprobado', 'rechazado');
+CREATE TYPE "forma_pago_contrato" AS ENUM ('CUOTAS', 'PAGO_UNICO');
 
 -- ─── TABLAS ───
 CREATE TABLE "categorias" (
@@ -49,6 +57,10 @@ CREATE TABLE "comprobantes" (
   "nombre_archivo" VARCHAR(255),
   "tipo_archivo" VARCHAR(50),
   "observaciones" TEXT,
+  "estado" "estado_comprobante" NOT NULL DEFAULT 'pendiente'::estado_comprobante,
+  "public_id" TEXT,
+  "validado_por" UUID,
+  "fecha_validacion" TIMESTAMP,
   "created_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -64,6 +76,10 @@ CREATE TABLE "contratos" (
   "fecha_inicio" DATE NOT NULL,
   "fecha_fin" DATE,
   "contrato_url" TEXT,
+  "public_id" TEXT,
+  "forma_pago" "forma_pago_contrato" NOT NULL DEFAULT 'PAGO_UNICO'::forma_pago_contrato,
+  "monto_cuota_mensual" NUMERIC(15,2),
+  "dia_pago_mensual" SMALLINT,
   "estado" "contratos_estado_enum" NOT NULL DEFAULT 'BORRADOR'::contratos_estado_enum,
   "observaciones" TEXT,
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
@@ -132,6 +148,8 @@ CREATE TABLE "eventos_calendario" (
   "corredor_id" UUID NOT NULL,
   "cliente_id" UUID,
   "visita_id" UUID,
+  "contrato_id" UUID,
+  "cuota_id" UUID,
   "tipo" "eventos_calendario_tipo_enum" NOT NULL,
   "titulo" VARCHAR(150) NOT NULL,
   "descripcion" TEXT,
@@ -194,6 +212,7 @@ CREATE TABLE "notificaciones" (
 
 CREATE TABLE "pagos" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "empresa_id" UUID,
   "cuota_id" UUID,
   "cliente_id" UUID,
   "cliente_nombre" TEXT,
@@ -415,3 +434,49 @@ INSERT INTO "empresas" ("id", "nombre", "rut", "email", "telefono", "direccion",
 
 -- Datos de usuarios (1 filas)
 INSERT INTO "usuarios" ("id", "empresa_id", "nombre", "apellido", "email", "telefono", "password_hash", "google_id", "rol", "activo", "created_at", "updated_at") VALUES ('44444444-4444-4444-8444-444444444444', '00000000-0000-0000-0000-000000000001', 'Admin', 'Demo', 'admin.demo@inmuebles.cl', '+56 9 4444 4444', '$2b$10$SbfHSmc36ImAlcoivVxfP.uZHWujLmIvMW3HLXDUZ1lAoktkzKegG', NULL, 'SUPER_ADMIN', true, '2026-07-03T21:48:49.867Z', '2026-07-03T21:48:49.867Z');
+
+-- ─── MIGRACIÓN: Contratos, Pagos, Cuotas, Comprobantes, Calendario y Notificaciones ───
+-- Este es el bloque REALMENTE ejecutado sobre la base existente en Aiven (2026-07-09).
+-- Los nombres de tipo ENUM usados aquí (estado_comprobante, forma_pago_contrato, tipo_evento,
+-- tipo_notificacion) son los NOMBRES REALES verificados contra la base, no los de la sección
+-- "TIPOS ENUM"/CREATE TABLE de más arriba (que documentan una convención de nombres que
+-- nunca se usó en la base real). Es seguro re-ejecutar este bloque (usa IF NOT EXISTS).
+
+-- Nuevos tipos ENUM
+DO $$ BEGIN
+  CREATE TYPE estado_comprobante AS ENUM ('pendiente', 'aprobado', 'rechazado');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE forma_pago_contrato AS ENUM ('CUOTAS', 'PAGO_UNICO');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Nuevos valores en tipos ENUM existentes (tipo_notificacion ya tenía 'CONTRATO' agregado antes)
+ALTER TYPE tipo_evento ADD VALUE IF NOT EXISTS 'VENCIMIENTO_CUOTA';
+ALTER TYPE tipo_notificacion ADD VALUE IF NOT EXISTS 'CONTRATO';
+ALTER TYPE tipo_notificacion ADD VALUE IF NOT EXISTS 'SOLICITUD';
+
+-- comprobantes: validación real de aprobación/rechazo + public_id de Cloudinary
+ALTER TABLE comprobantes ADD COLUMN IF NOT EXISTS estado estado_comprobante NOT NULL DEFAULT 'pendiente'::estado_comprobante;
+ALTER TABLE comprobantes ADD COLUMN IF NOT EXISTS public_id TEXT;
+ALTER TABLE comprobantes ADD COLUMN IF NOT EXISTS validado_por UUID;
+ALTER TABLE comprobantes ADD COLUMN IF NOT EXISTS fecha_validacion TIMESTAMP;
+
+-- contratos: forma de pago (cuotas vs pago único) + public_id del PDF firmado
+ALTER TABLE contratos ADD COLUMN IF NOT EXISTS public_id TEXT;
+ALTER TABLE contratos ADD COLUMN IF NOT EXISTS forma_pago forma_pago_contrato NOT NULL DEFAULT 'PAGO_UNICO'::forma_pago_contrato;
+
+-- contratos: cuota mensual deseada + día de pago, para que el corredor no tenga que
+-- calcular ni escribir fecha_fin a mano (el servidor la calcula automáticamente).
+ALTER TABLE contratos ADD COLUMN IF NOT EXISTS monto_cuota_mensual NUMERIC(15,2);
+ALTER TABLE contratos ADD COLUMN IF NOT EXISTS dia_pago_mensual SMALLINT;
+
+-- eventos_calendario: vínculo con contrato/cuota para poder abrir el detalle al hacer clic
+ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS contrato_id UUID;
+ALTER TABLE eventos_calendario ADD COLUMN IF NOT EXISTS cuota_id UUID;
+CREATE INDEX IF NOT EXISTS idx_eventos_calendario_contrato_id ON public.eventos_calendario USING btree (contrato_id);
+CREATE INDEX IF NOT EXISTS idx_eventos_calendario_cuota_id ON public.eventos_calendario USING btree (cuota_id);
+
+-- pagos: empresa_id para poder aislar por empresa (admin/superadmin)
+ALTER TABLE pagos ADD COLUMN IF NOT EXISTS empresa_id UUID;
+CREATE INDEX IF NOT EXISTS idx_pagos_empresa_id ON public.pagos USING btree (empresa_id);

@@ -20,6 +20,11 @@ export enum EstadoContrato {
   CANCELADO = 'CANCELADO',
 }
 
+export enum FormaPagoContrato {
+  CUOTAS = 'CUOTAS',
+  PAGO_UNICO = 'PAGO_UNICO',
+}
+
 @Entity('contratos')
 @Index(['empresa_id'])
 @Index(['cliente_id'])
@@ -66,6 +71,26 @@ export class Contrato {
 
   @Column({ type: 'text', nullable: true })
   contrato_url?: string;
+
+  @Column({ type: 'text', nullable: true })
+  public_id?: string;
+
+  @Column({
+    type: 'enum',
+    enum: FormaPagoContrato,
+    default: FormaPagoContrato.PAGO_UNICO,
+  })
+  forma_pago!: FormaPagoContrato;
+
+  // Monto deseado por cuota mensual (solo CUOTAS). Junto con dia_pago_mensual, el servidor
+  // calcula automáticamente cuántas cuotas se generan y fecha_fin — no se le pide al
+  // corredor que calcule ni escriba la fecha de término a mano.
+  @Column('decimal', { precision: 15, scale: 2, nullable: true })
+  monto_cuota_mensual?: number;
+
+  // Día del mes (1-28) en que vence cada cuota.
+  @Column('smallint', { nullable: true })
+  dia_pago_mensual?: number;
 
   @Column({
     type: 'enum',

@@ -1,22 +1,24 @@
-import { Controller, Get, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Patch, Param, ParseUUIDPipe, UseGuards, Request } from '@nestjs/common';
 import { NotificacionesService } from './notificaciones.service';
+import { JwtAuthGuard } from '../common/guards/jwt.auth.guard';
 
 @Controller('notificaciones')
+@UseGuards(JwtAuthGuard)
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
 
   @Get()
-  obtenerNotificaciones(@Query('usuario_id') usuario_id: string) {
-    return this.notificacionesService.obtenerPorUsuario(usuario_id);
+  obtenerNotificaciones(@Request() req) {
+    return this.notificacionesService.obtenerPorUsuario(req.user.id);
   }
 
   @Get('no-leidas')
-  obtenerNoLeidas(@Query('usuario_id') usuario_id: string) {
-    return this.notificacionesService.obtenerNoLeidas(usuario_id);
+  obtenerNoLeidas(@Request() req) {
+    return this.notificacionesService.obtenerNoLeidas(req.user.id);
   }
 
   @Patch(':id/leer')
-  marcarComoLeida(@Param('id') id: string) {
-    return this.notificacionesService.marcarComoLeida(id);
+  marcarComoLeida(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    return this.notificacionesService.marcarComoLeidaDeUsuario(id, req.user.id);
   }
 }

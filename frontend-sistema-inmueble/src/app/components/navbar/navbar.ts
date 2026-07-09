@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth';
+import { NotificacionesBell } from '../notificaciones-bell/notificaciones-bell';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterLink, RouterLinkActive, CommonModule, NotificacionesBell],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
@@ -31,6 +32,12 @@ isAdmin(): boolean {
     'ADMIN_EMPRESA'
   ].includes(rol);
 }
+
+  // Las notificaciones son solo para staff (corredor/admin/superadmin), no para clientes.
+  esStaff(): boolean {
+    const rol = (this.authService.obtenerUsuarioActual()?.rol || '').toString().toUpperCase();
+    return ['CORREDOR', 'ADMIN_EMPRESA', 'SUPER_ADMIN'].includes(rol);
+  }
 
   // Cierra sesión y redirige al inicio
   cerrarSesion(): void {
